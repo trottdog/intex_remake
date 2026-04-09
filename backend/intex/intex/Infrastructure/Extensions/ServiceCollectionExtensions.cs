@@ -79,6 +79,10 @@ public static class ServiceCollectionExtensions
         var connectionString = configuration.GetConnectionString("PostgreSql");
         if (string.IsNullOrWhiteSpace(connectionString))
         {
+            connectionString = configuration.GetConnectionString("DefaultConnection");
+        }
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
             connectionString = configuration["DATABASE_URL"];
         }
 
@@ -92,13 +96,17 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton(dataSource);
         services.AddSingleton<IPostgresConnectionFactory, PostgresConnectionFactory>();
-        services.AddDbContext<BeaconDbContext>(options =>
+        services.AddPooledDbContextFactory<BeaconDbContext>(options =>
+        {
             options.UseNpgsql(connectionString, npgsql =>
             {
                 npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery);
-                npgsql.CommandTimeout(60);
-                npgsql.EnableRetryOnFailure(maxRetryCount: 3, maxRetryDelay: TimeSpan.FromSeconds(5), errorCodesToAdd: null);
-            }));
+                npgsql.CommandTimeout(15);
+                npgsql.EnableRetryOnFailure(maxRetryCount: 2, maxRetryDelay: TimeSpan.FromSeconds(3), errorCodesToAdd: null);
+            });
+        });
+        services.AddScoped(sp =>
+            sp.GetRequiredService<IDbContextFactory<BeaconDbContext>>().CreateDbContext());
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<ICampaignRepository, CampaignRepository>();
         services.AddScoped<ICaseManagementRepository, CaseManagementRepository>();
