@@ -33,3 +33,9 @@ pnpm-debug.log*
 .idea/
 .vscode/
 *.swp
+
+**/bin/
+**/obj/
+TestResults/
+*.user
+*.suo
