@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { PublicLayout } from "@/components/layouts/PublicLayout";
+import handsImg from "@assets/Hands_Circle_1775623133974.jpg";
 import { CheckCircle, Share2, Users, Package, Building2, Globe, ChevronRight } from "lucide-react";
 import { triggerDonationConfetti } from "@/lib/confetti";
-import sunsetImg from "@assets/SunsetArmsUp_1775623133974.jpg";
-import handsImg from "@assets/Hands_Circle_1775623133974.jpg";
 import { apiFetch } from "@/services/api";
 
 const PRESET_AMOUNTS = [500, 1000, 2500, 5000, 10000];
@@ -88,11 +87,9 @@ export default function DonatePage() {
   return (
     <PublicLayout>
       {/* ── Hero ── */}
-      <section className="relative bg-[#0e2118] py-24 px-6 overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-          <img src={sunsetImg} alt="" className="w-full h-full object-cover object-top" />
-          <div className="absolute inset-0 bg-[#0e2118]/60" />
-        </div>
+      <section className="relative bg-[#214636] py-24 px-6 overflow-hidden">
+        <img src={`${import.meta.env.BASE_URL}donate-building.jpg`} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-black/45" />
         <div className="relative max-w-3xl mx-auto text-center">
           <div className="text-xs text-[#2a9d72] font-bold uppercase tracking-widest mb-3">Give Hope</div>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-5">
@@ -114,7 +111,7 @@ export default function DonatePage() {
                 <div className="w-16 h-16 bg-[#f0faf6] rounded-full flex items-center justify-center mx-auto mb-5">
                   <CheckCircle className="w-8 h-8 text-[#2a9d72]" />
                 </div>
-                <h2 className="text-2xl font-bold text-[#0e2118] mb-3">Thank you, {form.name.split(" ")[0]}!</h2>
+                <h2 className="text-2xl font-bold text-[#214636] mb-3">Thank you, {form.name.split(" ")[0]}!</h2>
                 <p className="text-gray-600 mb-2">
                   Your {frequency === "monthly" ? "monthly" : "one-time"} gift of <strong>₱{finalAmount?.toLocaleString()}</strong> is making a real difference.
                 </p>
@@ -136,7 +133,7 @@ export default function DonatePage() {
               /* ── Step 1: Choose Destination ── */
               <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm space-y-6">
                 <div>
-                  <h2 className="text-xl font-bold text-[#0e2118]">Where should your gift go?</h2>
+                  <h2 className="text-xl font-bold text-[#214636]">Where should your gift go?</h2>
                   <p className="text-sm text-gray-500 mt-1">You can direct your donation to the General Fund or to a specific safehouse.</p>
                 </div>
 
@@ -154,7 +151,7 @@ export default function DonatePage() {
                         <Globe className={`w-5 h-5 ${destination === "general" ? "text-white" : "text-gray-400"}`} />
                       </div>
                       <div>
-                        <div className="font-bold text-[#0e2118] text-sm">General Fund</div>
+                        <div className="font-bold text-[#214636] text-sm">General Fund</div>
                         <div className="text-xs text-gray-500 mt-0.5">Our team will allocate your gift to where the need is greatest</div>
                       </div>
                       {destination === "general" && <CheckCircle className="w-5 h-5 text-[#2a9d72] ml-auto shrink-0" />}
@@ -180,7 +177,7 @@ export default function DonatePage() {
                             <Building2 className={`w-5 h-5 ${destination === s.safehouseId ? "text-white" : "text-gray-400"}`} />
                           </div>
                           <div>
-                            <div className="font-bold text-[#0e2118] text-sm">{s.safehouseName ?? `Safehouse #${s.safehouseId}`}</div>
+                            <div className="font-bold text-[#214636] text-sm">{s.safehouseName ?? `Safehouse #${s.safehouseId}`}</div>
                             <div className="text-xs text-gray-500 mt-0.5">Your full donation goes directly to this home</div>
                           </div>
                           {destination === s.safehouseId && <CheckCircle className="w-5 h-5 text-[#2a9d72] ml-auto shrink-0" />}
@@ -207,14 +204,14 @@ export default function DonatePage() {
                     ? <Globe className="w-4 h-4 text-[#2a9d72] shrink-0" />
                     : <Building2 className="w-4 h-4 text-[#2a9d72] shrink-0" />}
                   <div className="text-sm">
-                    <span className="font-semibold text-[#0e2118]">
+                    <span className="font-semibold text-[#214636]">
                       {destination === "general" ? "General Fund" : (selectedSafehouse?.safehouseName ?? "Safehouse")}
                     </span>
                     <button type="button" onClick={() => setStep("destination")} className="ml-2 text-xs text-[#2a9d72] hover:underline">Change</button>
                   </div>
                 </div>
 
-                <h2 className="text-xl font-bold text-[#0e2118]">Make your donation</h2>
+                <h2 className="text-xl font-bold text-[#214636]">Make your donation</h2>
 
                 {/* Frequency */}
                 <div>
@@ -223,7 +220,7 @@ export default function DonatePage() {
                     {(["once", "monthly"] as const).map((f) => (
                       <button key={f} type="button" onClick={() => setFrequency(f)}
                         className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors ${
-                          frequency === f ? "bg-[#0e2118] border-[#0e2118] text-white" : "border-gray-200 text-gray-600 hover:border-gray-300"
+                          frequency === f ? "bg-[#214636] border-[#214636] text-white" : "border-gray-200 text-gray-600 hover:border-gray-300"
                         }`}>{f === "once" ? "Give Once" : "Give Monthly"}</button>
                     ))}
                   </div>
@@ -249,7 +246,7 @@ export default function DonatePage() {
                     </div>
                   </div>
                   {finalAmount > 0 && IMPACT_MAP[finalAmount] && (
-                    <div className="bg-[#f0faf6] border border-[#2a9d72]/20 rounded-xl px-4 py-3 text-sm text-[#0e2118]">
+                    <div className="bg-[#f0faf6] border border-[#2a9d72]/20 rounded-xl px-4 py-3 text-sm text-[#214636]">
                       <span className="font-semibold">Your impact: </span>{IMPACT_MAP[finalAmount].desc}
                     </div>
                   )}
@@ -288,20 +285,20 @@ export default function DonatePage() {
               <img src={handsImg} alt="Community" className="w-full h-full object-cover" />
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-              <h3 className="font-bold text-[#0e2118] mb-4 text-sm uppercase tracking-wide">What your gift does</h3>
+              <h3 className="font-bold text-[#214636] mb-4 text-sm uppercase tracking-wide">What your gift does</h3>
               <div className="space-y-3">
                 {Object.values(IMPACT_MAP).map((item) => (
                   <div key={item.label} className="flex gap-3">
                     <div className="w-1.5 h-1.5 bg-[#2a9d72] rounded-full mt-1.5 shrink-0" />
                     <div>
-                      <span className="text-sm font-bold text-[#0e2118]">{item.label} — </span>
+                      <span className="text-sm font-bold text-[#214636]">{item.label} — </span>
                       <span className="text-sm text-gray-500">{item.desc}</span>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="bg-[#0e2118] rounded-2xl p-6 text-white">
+            <div className="bg-[#214636] rounded-2xl p-6 text-white">
               <div className="text-2xl font-bold text-[#2a9d72] mb-1">100%</div>
               <div className="font-semibold mb-2">Direct to Programs</div>
               <p className="text-white/60 text-sm leading-relaxed">Every peso you give funds shelter, food, counseling, and education directly. Our operational costs are covered by separate institutional grants.</p>
@@ -315,14 +312,14 @@ export default function DonatePage() {
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-10">
             <div className="text-xs text-[#2a9d72] font-bold uppercase tracking-widest mb-3">Questions?</div>
-            <h2 className="text-2xl font-bold text-[#0e2118]">Frequently Asked Questions</h2>
+            <h2 className="text-2xl font-bold text-[#214636]">Frequently Asked Questions</h2>
           </div>
           <div className="space-y-3">
             {FAQ.map((item, i) => (
               <div key={i} className="border border-gray-100 rounded-2xl overflow-hidden">
                 <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="w-full text-left px-6 py-4 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors">
-                  <span className="font-semibold text-[#0e2118] text-sm">{item.q}</span>
+                  <span className="font-semibold text-[#214636] text-sm">{item.q}</span>
                   <span className={`text-[#2a9d72] text-lg transition-transform ${openFaq === i ? "rotate-45" : ""}`}>+</span>
                 </button>
                 {openFaq === i && <div className="px-6 pb-5 bg-[#f9f9f7] text-sm text-gray-600 leading-relaxed">{item.a}</div>}
@@ -340,7 +337,7 @@ export default function DonatePage() {
       <section className="bg-[#f9f9f7] py-16 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-[#0e2118]">Other ways to make a difference</h2>
+            <h2 className="text-2xl font-bold text-[#214636]">Other ways to make a difference</h2>
           </div>
           <div className="grid md:grid-cols-3 gap-5">
             {OTHER_WAYS.map((item) => (
@@ -348,7 +345,7 @@ export default function DonatePage() {
                 <div className="w-10 h-10 bg-[#f0faf6] rounded-xl flex items-center justify-center mb-4">
                   <item.Icon className="w-5 h-5 text-[#2a9d72]" />
                 </div>
-                <h3 className="font-bold text-[#0e2118] mb-2">{item.title}</h3>
+                <h3 className="font-bold text-[#214636] mb-2">{item.title}</h3>
                 <p className="text-sm text-gray-500 leading-relaxed mb-4">{item.desc}</p>
                 <span className="text-sm text-[#2a9d72] font-semibold group-hover:underline">{item.action} →</span>
               </a>

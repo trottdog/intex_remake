@@ -33,9 +33,10 @@ pnpm-debug.log*
 .idea/
 .vscode/
 *.swp
-
 **/bin/
 **/obj/
 TestResults/
 *.user
 *.suo
+LANDING_PAGE_REDESIGN_RULES.md
+Asset-Manager/workspace-*.tgz

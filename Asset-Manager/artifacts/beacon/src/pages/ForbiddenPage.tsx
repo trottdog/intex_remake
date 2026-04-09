@@ -8,7 +8,7 @@ export default function ForbiddenPage() {
       <div className="w-14 h-14 bg-red-50 border border-red-100 rounded-2xl flex items-center justify-center mb-6">
         <ShieldX className="w-8 h-8 text-red-500" />
       </div>
-      <h1 className="text-4xl font-bold text-[#0e2118] mb-2">403</h1>
+      <h1 className="text-4xl font-bold text-[#214636] mb-2">403</h1>
       <p className="text-lg text-gray-500 mb-1">Access Denied</p>
       <p className="text-sm text-gray-400 mb-8 max-w-sm">
         You do not have permission to access this resource. If you believe this is an error, contact your administrator.
@@ -18,7 +18,7 @@ export default function ForbiddenPage() {
           <Button variant="outline">Return to Home</Button>
         </Link>
         <Link href="/login">
-          <Button className="bg-[#0e2118] hover:bg-[#1a3a28] text-white">Sign In</Button>
+          <Button className="bg-[#214636] hover:bg-[#2d5947] text-white">Sign In</Button>
         </Link>
       </div>
       <footer className="absolute bottom-0 left-0 right-0 py-4 text-center text-xs text-gray-400">

@@ -5,42 +5,42 @@ import handsImg from "@assets/Hands_Circle_1775623133974.jpg";
 import pinkFlowerImg from "@assets/PinkShirtPinkFlower-768x705_1775623133974.jpg";
 import jumpImg from "@assets/BackwardsJump-e1741389606772_1775623133972.jpg";
 import circleImg from "@assets/GreenGrassFingerStar-e1741389539890_1775623133974.jpg";
-import kalliImg from "@assets/KalliWilson_1775656738889.jpg";
-import lanceImg from "@assets/Lance-Platt-Headshot-scaled_1775656738890.jpg";
-import russellImg from "@assets/Russell-Osguthorpe_lighthouse_1775656738890.jpg";
-import candaceImg from "@assets/candace_1775656738888.jpeg";
-import julieImg from "@assets/julie_1775656738889.jpg";
+import amaraImg from "../../images/headshots/amara.png";
+import davidImg from "../../images/headshots/david.png";
+import elenaImg from "../../images/headshots/elena.png";
+import julianImg from "../../images/headshots/julian.png";
+import marcusImg from "../../images/headshots/marcus.png";
 
 const TEAM = [
   {
-    name: "Kalli Wilson",
+    name: "Amara Bennett",
     role: "Executive Director",
     bio: "Kalli leads Beacon's mission with over a decade of experience in nonprofit leadership and child welfare advocacy across Southeast Asia.",
-    photo: kalliImg,
+    photo: amaraImg,
   },
   {
-    name: "Lance Platt",
+    name: "David Mercer",
     role: "Board Chair",
     bio: "Lance brings extensive governance and strategic leadership experience, guiding Beacon's long-term vision and organizational accountability.",
-    photo: lanceImg,
+    photo: davidImg,
   },
   {
-    name: "Russell Osguthorpe",
+    name: "Elena Navarro",
     role: "Board Secretary",
     bio: "Russell oversees legal compliance and institutional partnerships, ensuring Beacon operates with integrity and transparency.",
-    photo: russellImg,
+    photo: elenaImg,
   },
   {
-    name: "Candace",
+    name: "Julian Cross",
     role: "Director of Programs",
     bio: "Candace designs and oversees all resident care programs, ensuring each girl receives individualized support throughout her journey.",
-    photo: candaceImg,
+    photo: julianImg,
   },
   {
-    name: "Julie",
+    name: "Marcus Hale",
     role: "Director of Development",
     bio: "Julie cultivates donor relationships and leads fundraising initiatives that sustain and expand Beacon's network of safe homes.",
-    photo: julieImg,
+    photo: marcusImg,
   },
 ];
 
@@ -57,10 +57,9 @@ export default function AboutPage() {
   return (
     <PublicLayout>
       {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <section className="relative bg-[#0e2118] py-24 px-6 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <img src={handsImg} alt="" className="w-full h-full object-cover" />
-        </div>
+      <section className="relative bg-[#214636] py-24 px-6 overflow-hidden">
+        <img src={handsImg} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-black/45" />
         <div className="relative max-w-4xl mx-auto text-center">
           <div className="text-xs text-[#2a9d72] font-bold uppercase tracking-widest mb-3">About Us</div>
           <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight mb-5">
@@ -77,7 +76,7 @@ export default function AboutPage() {
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-14 items-center">
           <div>
             <div className="text-xs text-[#2a9d72] font-bold uppercase tracking-widest mb-3">Our Story</div>
-            <h2 className="text-3xl font-bold text-[#0e2118] mb-5">From a single room to a network of hope</h2>
+            <h2 className="text-3xl font-bold text-[#214636] mb-5">From a single room to a network of hope</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
               In 2012, our founder opened the doors of a small home in Quezon City to three girls who had nowhere to go. Word spread quietly — through social workers, barangay officials, and a network of volunteers who cared. Within a year, that small home sheltered twelve girls.
             </p>
@@ -100,7 +99,7 @@ export default function AboutPage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <div className="text-xs text-[#2a9d72] font-bold uppercase tracking-widest mb-3">What We Believe</div>
-            <h2 className="text-3xl font-bold text-[#0e2118]">Our Core Values</h2>
+            <h2 className="text-3xl font-bold text-[#214636]">Our Core Values</h2>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {VALUES.map((v) => (
@@ -108,7 +107,7 @@ export default function AboutPage() {
                 <div className="w-10 h-10 bg-[#f0faf6] rounded-xl flex items-center justify-center mb-4">
                   <v.Icon className="w-5 h-5 text-[#2a9d72]" />
                 </div>
-                <h3 className="font-bold text-[#0e2118] mb-2">{v.title}</h3>
+                <h3 className="font-bold text-[#214636] mb-2">{v.title}</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">{v.desc}</p>
               </div>
             ))}
@@ -119,7 +118,7 @@ export default function AboutPage() {
       {/* ── Mission & Vision ─────────────────────────────────────────── */}
       <section className="py-20 px-6">
         <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8">
-          <div className="bg-[#0e2118] rounded-2xl p-8 text-white">
+          <div className="bg-[#214636] rounded-2xl p-8 text-white">
             <div className="text-[#2a9d72] text-xs font-bold uppercase tracking-widest mb-3">Mission</div>
             <h3 className="text-xl font-bold mb-3">What we do</h3>
             <p className="text-white/70 leading-relaxed">
@@ -141,7 +140,7 @@ export default function AboutPage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <div className="text-xs text-[#2a9d72] font-bold uppercase tracking-widest mb-3">Board of Directors</div>
-            <h2 className="text-3xl font-bold text-[#0e2118]">The people behind Beacon</h2>
+            <h2 className="text-3xl font-bold text-[#214636]">The people behind Beacon</h2>
             <p className="text-gray-500 mt-3 max-w-md mx-auto">Dedicated leaders who have committed their time and expertise to protecting the most vulnerable.</p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
@@ -155,7 +154,7 @@ export default function AboutPage() {
                   />
                 </div>
                 <div className="p-4">
-                  <h3 className="font-bold text-[#0e2118] text-sm leading-tight">{member.name}</h3>
+                  <h3 className="font-bold text-[#214636] text-sm leading-tight">{member.name}</h3>
                   <div className="text-xs text-[#2a9d72] font-semibold uppercase tracking-wide mt-0.5 mb-2">{member.role}</div>
                   <p className="text-xs text-gray-500 leading-relaxed">{member.bio}</p>
                 </div>
@@ -170,7 +169,7 @@ export default function AboutPage() {
         <div className="max-w-6xl mx-auto">
           <div className="rounded-3xl overflow-hidden relative h-72">
             <img src={circleImg} alt="Community activity" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0e2118]/70 to-transparent flex items-end p-8">
+            <div className="absolute inset-0 bg-gradient-to-t from-[rgba(19,40,33,0.4)] to-transparent flex items-end p-8">
               <div>
                 <p className="text-white font-bold text-xl mb-1">Together, we are stronger.</p>
                 <p className="text-white/70 text-sm">Every program at Beacon is designed to build community and belonging.</p>

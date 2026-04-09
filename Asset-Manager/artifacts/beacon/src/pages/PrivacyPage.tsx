@@ -6,17 +6,17 @@ export default function PrivacyPage() {
     <div className="min-h-screen bg-[#f9f9f8]">
       <nav className="bg-white border-b border-gray-100 px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-[#0e2118] rounded flex items-center justify-center">
+          <div className="w-7 h-7 bg-[#214636] rounded flex items-center justify-center">
             <Shield className="w-4 h-4 text-[#2a9d72]" />
           </div>
-          <span className="font-bold text-[#0e2118]">Beacon</span>
+          <span className="font-bold text-[#214636]">Beacon</span>
         </div>
         <Link href="/" className="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1">
           <ArrowLeft className="w-4 h-4" /> Back
         </Link>
       </nav>
       <div className="max-w-3xl mx-auto px-6 py-12 prose prose-gray">
-        <h1 className="text-3xl font-bold text-[#0e2118] mb-2">Privacy Policy</h1>
+        <h1 className="text-3xl font-bold text-[#214636] mb-2">Privacy Policy</h1>
         <p className="text-gray-500 text-sm mb-8">Last updated: January 2026</p>
 
         <h2>1. Information We Collect</h2>

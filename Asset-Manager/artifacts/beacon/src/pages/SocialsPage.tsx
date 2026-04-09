@@ -102,8 +102,10 @@ export default function SocialsPage() {
   return (
     <PublicLayout>
       {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <section className="bg-[#0e2118] py-20 px-6 text-center">
-        <div className="max-w-2xl mx-auto">
+      <section className="relative bg-[#214636] py-20 px-6 text-center overflow-hidden">
+        <img src={sunsetImg} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-black/45" />
+        <div className="relative max-w-2xl mx-auto">
           <div className="text-xs text-[#2a9d72] font-bold uppercase tracking-widest mb-3">Connect With Us</div>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-5">
             Follow our story.<br />
@@ -115,45 +117,12 @@ export default function SocialsPage() {
         </div>
       </section>
 
-      {/* ── Social Channels ──────────────────────────────────────────── */}
-      <section className="py-16 px-6 bg-[#f9f9f7]">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10">
-            <div className="text-xs text-[#2a9d72] font-bold uppercase tracking-widest mb-3">Where to Find Us</div>
-            <h2 className="text-2xl font-bold text-[#0e2118]">Our Social Media Channels</h2>
-          </div>
-          <div className="grid md:grid-cols-2 gap-5">
-            {SOCIAL_CHANNELS.map((ch) => (
-              <a
-                key={ch.name}
-                href={ch.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-md transition-shadow flex items-start gap-5 group"
-              >
-                <div className={`w-12 h-12 ${ch.color} rounded-xl flex items-center justify-center shrink-0 shadow-sm`}>
-                  <span className="text-white font-bold text-lg">{ch.initial}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-0.5">
-                    <h3 className="font-bold text-[#0e2118]">{ch.name}</h3>
-                    <span className="text-xs text-gray-400">{ch.followers} followers</span>
-                  </div>
-                  <div className="text-sm text-[#2a9d72] font-medium mb-1.5">{ch.handle}</div>
-                  <p className="text-sm text-gray-500 leading-relaxed">{ch.description}</p>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── Recent Posts ─────────────────────────────────────────────── */}
       <section className="py-20 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <div className="text-xs text-[#2a9d72] font-bold uppercase tracking-widest mb-3">Recent Posts</div>
-            <h2 className="text-3xl font-bold text-[#0e2118]">What we've been sharing</h2>
+            <h2 className="text-3xl font-bold text-[#214636]">What we've been sharing</h2>
             <p className="text-gray-500 mt-2">Real moments from real lives inside Beacon.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -185,8 +154,41 @@ export default function SocialsPage() {
         </div>
       </section>
 
+      {/* ── Social Channels ──────────────────────────────────────────── */}
+      <section className="py-16 px-6 bg-[#f9f9f7]">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <div className="text-xs text-[#2a9d72] font-bold uppercase tracking-widest mb-3">Where to Find Us</div>
+            <h2 className="text-2xl font-bold text-[#214636]">Our Social Media Channels</h2>
+          </div>
+          <div className="grid md:grid-cols-2 gap-5">
+            {SOCIAL_CHANNELS.map((ch) => (
+              <a
+                key={ch.name}
+                href={ch.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-md transition-shadow flex items-start gap-5 group"
+              >
+                <div className={`w-12 h-12 ${ch.color} rounded-xl flex items-center justify-center shrink-0 shadow-sm`}>
+                  <span className="text-white font-bold text-lg">{ch.initial}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <h3 className="font-bold text-[#214636]">{ch.name}</h3>
+                    <span className="text-xs text-gray-400">{ch.followers} followers</span>
+                  </div>
+                  <div className="text-sm text-[#2a9d72] font-medium mb-1.5">{ch.handle}</div>
+                  <p className="text-sm text-gray-500 leading-relaxed">{ch.description}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── Share CTA ────────────────────────────────────────────────── */}
-      <section className="bg-gradient-to-br from-[#0e2118] to-[#1a3a28] py-16 px-6">
+      <section className="bg-gradient-to-br from-[#214636] to-[#3a6a54] py-16 px-6">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-white mb-4">Your share is a lifeline.</h2>
           <p className="text-white/70 mb-8 max-w-xl mx-auto">

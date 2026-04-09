@@ -44,9 +44,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0e2118] flex">
+    <div className="min-h-screen bg-[#214636] flex">
       <div className="hidden lg:flex lg:flex-col lg:justify-between lg:w-1/2 p-12 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0e2118] via-[#0e2118] to-[#1a3a28]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#214636] via-[#214636] to-[#3a6a54]" />
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-16">
             <div className="flex items-center gap-3">
@@ -88,14 +88,14 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#0e2118] rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-[#214636] rounded-lg flex items-center justify-center">
                 <Shield className="w-6 h-6 text-[#2a9d72]" />
               </div>
-              <span className="text-[#0e2118] text-2xl font-bold">Beacon</span>
+              <span className="text-[#214636] text-2xl font-bold">Beacon</span>
             </div>
             <a
               href="/"
-              className="flex items-center gap-1.5 text-gray-500 hover:text-[#0e2118] text-sm transition-colors"
+              className="flex items-center gap-1.5 text-gray-500 hover:text-[#214636] text-sm transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Back to site
@@ -103,7 +103,7 @@ export default function LoginPage() {
           </div>
           <a
             href="/"
-            className="hidden lg:flex items-center gap-1.5 text-gray-400 hover:text-[#0e2118] text-sm transition-colors mb-6"
+            className="hidden lg:flex items-center gap-1.5 text-gray-400 hover:text-[#214636] text-sm transition-colors mb-6"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Back to site
@@ -165,7 +165,7 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-[#0e2118] hover:bg-[#1a3a28] text-white h-11 font-medium"
+                className="w-full bg-[#214636] hover:bg-[#2d5947] text-white h-11 font-medium"
               >
                 {isLoading ? (
                   <>

@@ -1,20 +1,11 @@
 import { Link } from "wouter";
 import { PublicLayout } from "@/components/layouts/PublicLayout";
-import { useGetPublicImpact } from "@/services/public.service";
+import { Button } from "@/components/ui/button";
 import { triggerDonationConfetti } from "@/lib/confetti";
-import heroImg from "@assets/HoldingHandsAtBeach_1775623758874.jpg";
 import jumpImg from "@assets/BackwardsJump-e1741389606772_1775623133972.jpg";
 import circleImg from "@assets/GreenGrassFingerStar-e1741389539890_1775623133974.jpg";
 import handsImg from "@assets/Hands_Circle_1775623133974.jpg";
-
-const DONATION_AMOUNTS = [500, 1000, 2500, 5000];
-
-const IMPACT_EQUIV: Record<number, string> = {
-  500: "provides school supplies for one child for a month",
-  1000: "covers a week of nutritious meals for one resident",
-  2500: "funds a counseling session for a survivor",
-  5000: "supports one month of safe housing for a girl in need",
-};
+import heroHandsImg from "../../images/bracelets.jpeg";
 
 const PHASES = [
   {
@@ -35,75 +26,62 @@ const PHASES = [
 ];
 
 export default function LandingPage() {
-  const { data: impact } = useGetPublicImpact();
-
   return (
     <PublicLayout>
       {/* ── Hero ───────────────────────────────────────────────────────── */}
-      <section className="relative min-h-[600px] flex items-center overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src={heroImg}
-            alt="Residents holding hands at the beach"
-            className="w-full h-full object-cover object-center"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0e2118]/85 via-[#0e2118]/60 to-transparent" />
-        </div>
-        <div className="relative max-w-6xl mx-auto px-6 py-28 md:py-36">
-          <div className="max-w-xl">
-            <div className="inline-flex items-center gap-2 bg-[#2a9d72]/20 border border-[#2a9d72]/40 rounded-full px-4 py-1.5 text-[#4db88d] text-sm font-medium mb-6">
-              <span className="w-2 h-2 bg-[#2a9d72] rounded-full animate-pulse" />
-              Nonprofit · Philippines
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
-              Safe Spaces.<br />
-              <span className="text-[#2a9d72]">Restored Lives.</span>
-            </h1>
-            <p className="text-lg text-white/80 leading-relaxed mb-8">
-              Beacon Sanctuary provides a safe home, healing, and hope for girls who have survived abuse and trafficking in the Philippines. Every donation restores a life.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Link
-                href="/donate"
-                className="bg-[#2a9d72] hover:bg-[#248c64] text-white px-8 py-3.5 rounded-full font-semibold text-base transition-colors shadow-lg"
-              >
-                Donate Today
-              </Link>
-              <Link
-                href="/about"
-                className="bg-white/10 hover:bg-white/20 border border-white/30 text-white px-8 py-3.5 rounded-full font-semibold text-base transition-colors"
-              >
-                Learn Our Story
-              </Link>
+      <section className="bg-[#FCFAF7] px-6 py-10 md:py-14 lg:py-16">
+        <div className="mx-auto max-w-6xl">
+          <div className="overflow-hidden rounded-[40px] border border-[#e8ede6] bg-white shadow-[0_32px_80px_rgba(27,67,50,0.05)]">
+            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.9fr)_minmax(320px,1.1fr)]">
+              <div className="relative z-10 px-6 py-8 md:px-10 md:py-10 lg:px-12 lg:py-14">
+                <div className="max-w-[30rem]">
+                  <h1 className="flex flex-col text-[3rem] font-bold leading-[0.9] tracking-tighter text-[#1B4332] md:text-[4.25rem] lg:text-[5.2rem]">
+                    <span>Safety.</span>
+                    <span>Healing.</span>
+                    <span>Justice.</span>
+                    <span>Empowerment.</span>
+                  </h1>
+                  <p className="mt-6 max-w-md text-base leading-7 text-[#66786e] md:text-lg">
+                    Beacon helps survivors rebuild their lives through compassionate housing, trauma-informed support, and long-term care designed for lasting reintegration.
+                  </p>
+                  <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                    <Button
+                      asChild
+                      className="min-h-12 rounded-full bg-[#1B4332] px-6 py-3.5 text-base font-semibold text-white shadow-[0_16px_30px_rgba(27,67,50,0.14)] transition-transform duration-200 hover:scale-105 hover:bg-[#1B4332]"
+                    >
+                      <Link href="/donate">Give Safety Today</Link>
+                    </Button>
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="min-h-12 rounded-full border-2 border-[#d3ddd5] bg-white/70 px-6 py-3.5 text-base font-medium text-[#1B4332]/70 transition-colors hover:border-[#1B4332] hover:bg-white hover:text-[#1B4332]"
+                    >
+                      <Link href="/impact">See How Beacon Works</Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="relative min-h-[320px] overflow-hidden md:min-h-[420px] lg:min-h-full">
+                <img
+                  src={heroHandsImg}
+                  alt="Colorful bracelets held by Beacon residents"
+                  className="absolute inset-0 h-full w-full object-cover object-center"
+                />
+                <div className="absolute inset-y-0 left-0 w-[56%] bg-[linear-gradient(90deg,rgba(255,255,255,1)_0%,rgba(255,255,255,0.98)_18%,rgba(255,255,255,0.9)_36%,rgba(255,255,255,0.72)_54%,rgba(255,255,255,0.4)_74%,rgba(255,255,255,0.14)_90%,rgba(255,255,255,0)_100%)]" />
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Stats Banner ───────────────────────────────────────────────── */}
-      <section className="bg-[#f9f9f7] border-y border-gray-100 py-12">
-        <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-          {[
-            { value: impact?.residentsServedTotal ? `${impact.residentsServedTotal}+` : "500+", label: "Survivors Served" },
-            { value: impact?.safehouseCount ? String(impact.safehouseCount) : "3", label: "Safe Homes" },
-            { value: impact?.reintegrationCount ? String(impact.reintegrationCount) : "87", label: "Reintegrations" },
-            { value: "12+", label: "Years of Service" },
-          ].map((s) => (
-            <div key={s.label}>
-              <div className="text-3xl md:text-4xl font-bold text-[#0e2118]">{s.value}</div>
-              <div className="text-xs text-gray-500 font-semibold uppercase tracking-widest mt-1">{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* ── Who We Help ─────────────────────────────────────────────────── */}
-      <section className="py-20 px-6">
+      <section className="px-6 pb-20 pt-14">
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-2 gap-14 items-center">
             <div>
               <div className="text-xs text-[#2a9d72] font-bold uppercase tracking-widest mb-3">Our Mission</div>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#0e2118] leading-tight mb-5">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#214636] leading-tight mb-5">
                 Every child deserves to feel safe, loved, and free.
               </h2>
               <p className="text-gray-600 leading-relaxed mb-5">
@@ -114,7 +92,7 @@ export default function LandingPage() {
               </p>
               <Link
                 href="/donate"
-                className="inline-flex items-center gap-2 bg-[#0e2118] hover:bg-[#1a3a28] text-white px-7 py-3 rounded-full font-semibold transition-colors"
+                className="inline-flex items-center gap-2 bg-[#214636] hover:bg-[#2d5947] text-white px-7 py-3 rounded-full font-semibold transition-colors"
               >
                 Support a Survivor
               </Link>
@@ -135,46 +113,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Donation CTA ────────────────────────────────────────────────── */}
-      <section className="bg-gradient-to-br from-[#0e2118] to-[#1a3a28] py-20 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="text-xs text-[#2a9d72] font-bold uppercase tracking-widest mb-3">Make a Difference</div>
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Your gift changes everything.</h2>
-          <p className="text-white/70 mb-10 max-w-xl mx-auto">
-            100% of your donation goes directly to shelter, food, counseling, and education for the girls in our care.
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {DONATION_AMOUNTS.map((amt) => (
-              <Link
-                key={amt}
-                href={`/donate?amount=${amt}`}
-                onClick={() => triggerDonationConfetti()}
-                className="group bg-white/10 hover:bg-[#2a9d72] border border-white/20 hover:border-[#2a9d72] rounded-2xl p-5 transition-all cursor-pointer"
-              >
-                <div className="text-2xl font-bold text-white mb-1">₱{amt.toLocaleString()}</div>
-                <div className="text-xs text-white/60 group-hover:text-white/80 leading-snug">
-                  {IMPACT_EQUIV[amt]}
-                </div>
-              </Link>
-            ))}
-          </div>
-          <Link
-            href="/donate"
-            onClick={() => triggerDonationConfetti()}
-            className="inline-block bg-[#2a9d72] hover:bg-[#248c64] text-white px-10 py-4 rounded-full font-bold text-lg transition-colors shadow-xl"
-          >
-            Donate Now
-          </Link>
-          <p className="text-white/40 text-xs mt-4">Secure giving. Every peso is accounted for.</p>
-        </div>
-      </section>
-
       {/* ── Photo Story ─────────────────────────────────────────────────── */}
-      <section className="py-20 px-6 bg-white">
+      <section className="py-20 px-6 bg-[#f9f9f7]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <div className="text-xs text-[#2a9d72] font-bold uppercase tracking-widest mb-3">Life at Beacon</div>
-            <h2 className="text-3xl font-bold text-[#0e2118]">Joy lives here.</h2>
+            <h2 className="text-3xl font-bold text-[#214636]">Joy lives here.</h2>
             <p className="text-gray-500 mt-3 max-w-md mx-auto">Our residents grow, laugh, learn, and heal together in a community built on trust and compassion.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -189,11 +133,11 @@ export default function LandingPage() {
       </section>
 
       {/* ── How We Serve ────────────────────────────────────────────────── */}
-      <section className="bg-[#f9f9f7] py-20 px-6">
+      <section className="bg-white py-20 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-14">
             <div className="text-xs text-[#2a9d72] font-bold uppercase tracking-widest mb-3">Our Approach</div>
-            <h2 className="text-3xl font-bold text-[#0e2118]">A continuum of care</h2>
+            <h2 className="text-3xl font-bold text-[#214636]">A continuum of care</h2>
             <p className="text-gray-500 mt-3 max-w-lg mx-auto">
               Every girl who enters Beacon's care moves through three interconnected phases — each designed around her individual needs and pace.
             </p>
@@ -202,11 +146,11 @@ export default function LandingPage() {
             {PHASES.map((p) => (
               <div key={p.num} className="relative">
                 <div className="w-10 h-0.5 bg-[#2a9d72] mb-5" />
-                <div className="text-5xl font-bold text-[#0e2118]/8 absolute -top-3 left-0 leading-none select-none">
+                <div className="text-5xl font-bold text-[#214636]/8 absolute -top-3 left-0 leading-none select-none">
                   {p.num}
                 </div>
                 <div className="text-sm font-bold text-[#2a9d72] mb-2 tracking-wide">{p.num}</div>
-                <h3 className="font-bold text-[#0e2118] text-lg mb-3">{p.title}</h3>
+                <h3 className="font-bold text-[#214636] text-lg mb-3">{p.title}</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">{p.body}</p>
               </div>
             ))}
@@ -214,7 +158,7 @@ export default function LandingPage() {
           <div className="mt-12 text-center">
             <Link
               href="/impact"
-              className="inline-block border border-[#0e2118] text-[#0e2118] hover:bg-[#0e2118] hover:text-white px-8 py-3 rounded-full font-semibold text-sm transition-colors"
+              className="inline-block border border-[#214636] text-[#214636] hover:bg-[#214636] hover:text-white px-8 py-3 rounded-full font-semibold text-sm transition-colors"
             >
               See Our Full Programs
             </Link>
@@ -223,10 +167,10 @@ export default function LandingPage() {
       </section>
 
       {/* ── Testimonial / Quote ─────────────────────────────────────────── */}
-      <section className="py-20 px-6 bg-white">
+      <section className="py-20 px-6 bg-[#f9f9f7]">
         <div className="max-w-3xl mx-auto text-center">
           <div className="text-5xl text-[#2a9d72] mb-6 font-serif leading-none">"</div>
-          <blockquote className="text-xl md:text-2xl font-medium text-[#0e2118] leading-relaxed mb-6">
+          <blockquote className="text-xl md:text-2xl font-medium text-[#214636] leading-relaxed mb-6">
             When I came here I had nothing left. Beacon gave me a family, a future, and a reason to believe in myself again.
           </blockquote>
           <div className="text-sm text-gray-400 italic">— A Beacon resident, age 17</div>
