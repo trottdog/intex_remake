@@ -1,0 +1,4635 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Beacon Nonprofit Management Platform API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication
+  - name: safehouses
+    description: Safehouse management
+  - name: partners
+    description: Partner organizations
+  - name: supporters
+    description: Donor/supporter management
+  - name: donations
+    description: Donation records
+  - name: residents
+    description: Resident case management
+  - name: processRecordings
+    description: Session/process recordings
+  - name: homeVisitations
+    description: Home visitation records
+  - name: caseConferences
+    description: Case conference records
+  - name: interventionPlans
+    description: Intervention and care plans
+  - name: incidents
+    description: Incident reports
+  - name: educationRecords
+    description: Education progress records
+  - name: healthRecords
+    description: Health and wellbeing records
+  - name: socialMedia
+    description: Social media posts and analytics
+  - name: impactSnapshots
+    description: Public impact snapshots
+  - name: mlPredictions
+    description: ML prediction snapshots
+  - name: reports
+    description: Reports and analytics
+  - name: dashboard
+    description: Dashboard summaries
+  - name: users
+    description: User management (super admin)
+  - name: auditLogs
+    description: Audit and activity logs
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ─── AUTH ─────────────────────────────────────────────────────────────────
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Authenticate user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout current user
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── DASHBOARD SUMMARIES ──────────────────────────────────────────────────
+  /dashboard/admin-summary:
+    get:
+      operationId: getAdminDashboardSummary
+      tags: [dashboard]
+      summary: Admin command center summary
+      parameters:
+        - name: safehouses
+          in: query
+          schema:
+            type: string
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Admin dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDashboardSummary"
+
+  /dashboard/donor-summary:
+    get:
+      operationId: getDonorDashboardSummary
+      tags: [dashboard]
+      summary: Donor portal summary for current user
+      responses:
+        "200":
+          description: Donor dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DonorDashboardSummary"
+
+  /dashboard/executive-summary:
+    get:
+      operationId: getExecutiveDashboardSummary
+      tags: [dashboard]
+      summary: Super admin executive summary
+      parameters:
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Executive dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExecutiveDashboardSummary"
+
+  /dashboard/public-impact:
+    get:
+      operationId: getPublicImpact
+      tags: [dashboard]
+      summary: Public-facing impact metrics
+      responses:
+        "200":
+          description: Public impact summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicImpactSummary"
+
+  # ─── SAFEHOUSES ───────────────────────────────────────────────────────────
+  /safehouses:
+    get:
+      operationId: listSafehouses
+      tags: [safehouses]
+      summary: List all safehouses
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of safehouses
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SafehouseListResponse"
+    post:
+      operationId: createSafehouse
+      tags: [safehouses]
+      summary: Create safehouse
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSafehouseBody"
+      responses:
+        "201":
+          description: Created safehouse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Safehouse"
+
+  /safehouses/{id}:
+    get:
+      operationId: getSafehouse
+      tags: [safehouses]
+      summary: Get safehouse by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Safehouse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Safehouse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateSafehouse
+      tags: [safehouses]
+      summary: Update safehouse
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSafehouseBody"
+      responses:
+        "200":
+          description: Updated safehouse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Safehouse"
+    delete:
+      operationId: deleteSafehouse
+      tags: [safehouses]
+      summary: Delete safehouse
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /safehouses/{id}/metrics:
+    get:
+      operationId: getSafehouseMetrics
+      tags: [safehouses]
+      summary: Get monthly metrics for a safehouse
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: months
+          in: query
+          schema:
+            type: integer
+            default: 12
+      responses:
+        "200":
+          description: Safehouse metrics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SafehouseMonthlyMetric"
+
+  # ─── PARTNERS ─────────────────────────────────────────────────────────────
+  /partners:
+    get:
+      operationId: listPartners
+      tags: [partners]
+      summary: List partners
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: programArea
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Partner list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartnerListResponse"
+    post:
+      operationId: createPartner
+      tags: [partners]
+      summary: Create partner
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePartnerBody"
+      responses:
+        "201":
+          description: Created partner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Partner"
+
+  /partners/{id}:
+    get:
+      operationId: getPartner
+      tags: [partners]
+      summary: Get partner by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Partner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Partner"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updatePartner
+      tags: [partners]
+      summary: Update partner
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePartnerBody"
+      responses:
+        "200":
+          description: Updated partner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Partner"
+    delete:
+      operationId: deletePartner
+      tags: [partners]
+      summary: Delete partner
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /partner-assignments:
+    get:
+      operationId: listPartnerAssignments
+      tags: [partners]
+      summary: List partner assignments
+      parameters:
+        - name: partnerId
+          in: query
+          schema:
+            type: integer
+        - name: safehouseId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Partner assignments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PartnerAssignment"
+    post:
+      operationId: createPartnerAssignment
+      tags: [partners]
+      summary: Create partner assignment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePartnerAssignmentBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartnerAssignment"
+
+  /partner-assignments/{id}:
+    delete:
+      operationId: deletePartnerAssignment
+      tags: [partners]
+      summary: Remove partner assignment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── SUPPORTERS ───────────────────────────────────────────────────────────
+  /supporters:
+    get:
+      operationId: listSupporters
+      tags: [supporters]
+      summary: List supporters (donors)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: supportType
+          in: query
+          schema:
+            type: string
+        - name: segment
+          in: query
+          schema:
+            type: string
+        - name: churnRisk
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Supporter list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupporterListResponse"
+    post:
+      operationId: createSupporter
+      tags: [supporters]
+      summary: Create supporter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSupporterBody"
+      responses:
+        "201":
+          description: Created supporter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supporter"
+
+  /supporters/{id}:
+    get:
+      operationId: getSupporter
+      tags: [supporters]
+      summary: Get supporter by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Supporter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supporter"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateSupporter
+      tags: [supporters]
+      summary: Update supporter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSupporterBody"
+      responses:
+        "200":
+          description: Updated supporter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supporter"
+    delete:
+      operationId: deleteSupporter
+      tags: [supporters]
+      summary: Delete supporter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /supporters/me:
+    get:
+      operationId: getMyDonorProfile
+      tags: [supporters]
+      summary: Get current donor's profile
+      responses:
+        "200":
+          description: Donor profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supporter"
+
+  /supporters/{id}/giving-stats:
+    get:
+      operationId: getSupporterGivingStats
+      tags: [supporters]
+      summary: Get giving statistics for a supporter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Giving statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GivingStats"
+
+  /supporters/stats:
+    get:
+      operationId: getSupporterStats
+      tags: [supporters]
+      summary: Aggregate supporter statistics
+      responses:
+        "200":
+          description: Supporter stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupporterStats"
+
+  # ─── DONATIONS ─────────────────────────────────────────────────────────────
+  /donations:
+    get:
+      operationId: listDonations
+      tags: [donations]
+      summary: List donations
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: supporterId
+          in: query
+          schema:
+            type: integer
+        - name: donationType
+          in: query
+          schema:
+            type: string
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Donation list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DonationListResponse"
+    post:
+      operationId: createDonation
+      tags: [donations]
+      summary: Create donation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDonationBody"
+      responses:
+        "201":
+          description: Created donation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Donation"
+
+  /donations/{id}:
+    get:
+      operationId: getDonation
+      tags: [donations]
+      summary: Get donation by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Donation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Donation"
+    patch:
+      operationId: updateDonation
+      tags: [donations]
+      summary: Update donation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDonationBody"
+      responses:
+        "200":
+          description: Updated donation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Donation"
+    delete:
+      operationId: deleteDonation
+      tags: [donations]
+      summary: Delete donation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /donations/my-ledger:
+    get:
+      operationId: getMyDonationLedger
+      tags: [donations]
+      summary: Get current donor's donation history
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Donor's own donation ledger
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DonationListResponse"
+
+  /donations/trends:
+    get:
+      operationId: getDonationTrends
+      tags: [donations]
+      summary: Donation trends over time
+      parameters:
+        - name: months
+          in: query
+          schema:
+            type: integer
+            default: 12
+        - name: safehouseId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Monthly donation trends
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DonationTrend"
+
+  /in-kind-donation-items:
+    get:
+      operationId: listInKindDonationItems
+      tags: [donations]
+      summary: List in-kind donation items
+      parameters:
+        - name: donationId
+          in: query
+          schema:
+            type: integer
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: In-kind donation items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InKindDonationItem"
+    post:
+      operationId: createInKindDonationItem
+      tags: [donations]
+      summary: Create in-kind donation item
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInKindDonationItemBody"
+      responses:
+        "201":
+          description: Created item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InKindDonationItem"
+
+  /in-kind-donation-items/{id}:
+    get:
+      operationId: getInKindDonationItem
+      tags: [donations]
+      summary: Get in-kind donation item
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Item detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InKindDonationItem"
+    delete:
+      operationId: deleteInKindDonationItem
+      tags: [donations]
+      summary: Delete in-kind donation item
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /donation-allocations:
+    get:
+      operationId: listDonationAllocations
+      tags: [donations]
+      summary: List donation allocations
+      parameters:
+        - name: donationId
+          in: query
+          schema:
+            type: integer
+        - name: safehouseId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Allocations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DonationAllocation"
+    post:
+      operationId: createDonationAllocation
+      tags: [donations]
+      summary: Create donation allocation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDonationAllocationBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DonationAllocation"
+
+  # ─── RESIDENTS ────────────────────────────────────────────────────────────
+  /residents:
+    get:
+      operationId: listResidents
+      tags: [residents]
+      summary: List residents
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: safehouseId
+          in: query
+          schema:
+            type: integer
+        - name: caseStatus
+          in: query
+          schema:
+            type: string
+        - name: riskLevel
+          in: query
+          schema:
+            type: string
+        - name: assignedWorkerId
+          in: query
+          schema:
+            type: integer
+        - name: reintegrationStatus
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Resident list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResidentListResponse"
+    post:
+      operationId: createResident
+      tags: [residents]
+      summary: Create resident
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateResidentBody"
+      responses:
+        "201":
+          description: Created resident
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resident"
+
+  /residents/{id}:
+    get:
+      operationId: getResident
+      tags: [residents]
+      summary: Get resident by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Resident
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resident"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateResident
+      tags: [residents]
+      summary: Update resident
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateResidentBody"
+      responses:
+        "200":
+          description: Updated resident
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resident"
+    delete:
+      operationId: deleteResident
+      tags: [residents]
+      summary: Delete resident record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /residents/stats:
+    get:
+      operationId: getResidentStats
+      tags: [residents]
+      summary: Aggregate resident statistics
+      parameters:
+        - name: safehouseId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Resident stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResidentStats"
+
+  /residents/{id}/timeline:
+    get:
+      operationId: getResidentTimeline
+      tags: [residents]
+      summary: Get full timeline of case events for a resident
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Timeline events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimelineEvent"
+
+  # ─── PROCESS RECORDINGS ───────────────────────────────────────────────────
+  /process-recordings:
+    get:
+      operationId: listProcessRecordings
+      tags: [processRecordings]
+      summary: List process recordings
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: residentId
+          in: query
+          schema:
+            type: integer
+        - name: workerId
+          in: query
+          schema:
+            type: integer
+        - name: safehouseId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Process recording list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessRecordingListResponse"
+    post:
+      operationId: createProcessRecording
+      tags: [processRecordings]
+      summary: Create process recording
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProcessRecordingBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessRecording"
+
+  /process-recordings/{id}:
+    get:
+      operationId: getProcessRecording
+      tags: [processRecordings]
+      summary: Get process recording
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Process recording
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessRecording"
+    patch:
+      operationId: updateProcessRecording
+      tags: [processRecordings]
+      summary: Update process recording
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProcessRecordingBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessRecording"
+    delete:
+      operationId: deleteProcessRecording
+      tags: [processRecordings]
+      summary: Delete process recording
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── HOME VISITATIONS ─────────────────────────────────────────────────────
+  /home-visitations:
+    get:
+      operationId: listHomeVisitations
+      tags: [homeVisitations]
+      summary: List home visitations
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: residentId
+          in: query
+          schema:
+            type: integer
+        - name: outcome
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Visitation list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HomeVisitationListResponse"
+    post:
+      operationId: createHomeVisitation
+      tags: [homeVisitations]
+      summary: Create home visitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateHomeVisitationBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HomeVisitation"
+
+  /home-visitations/{id}:
+    get:
+      operationId: getHomeVisitation
+      tags: [homeVisitations]
+      summary: Get home visitation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Visitation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HomeVisitation"
+    patch:
+      operationId: updateHomeVisitation
+      tags: [homeVisitations]
+      summary: Update home visitation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateHomeVisitationBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HomeVisitation"
+    delete:
+      operationId: deleteHomeVisitation
+      tags: [homeVisitations]
+      summary: Delete home visitation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── CASE CONFERENCES ─────────────────────────────────────────────────────
+  /case-conferences:
+    get:
+      operationId: listCaseConferences
+      tags: [caseConferences]
+      summary: List case conferences
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: residentId
+          in: query
+          schema:
+            type: integer
+        - name: safehouseId
+          in: query
+          schema:
+            type: integer
+        - name: upcoming
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Case conference list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseConferenceListResponse"
+    post:
+      operationId: createCaseConference
+      tags: [caseConferences]
+      summary: Create case conference
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCaseConferenceBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseConference"
+
+  /case-conferences/{id}:
+    get:
+      operationId: getCaseConference
+      tags: [caseConferences]
+      summary: Get case conference
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Case conference
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseConference"
+    patch:
+      operationId: updateCaseConference
+      tags: [caseConferences]
+      summary: Update case conference
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCaseConferenceBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseConference"
+    delete:
+      operationId: deleteCaseConference
+      tags: [caseConferences]
+      summary: Delete case conference
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── INTERVENTION PLANS ───────────────────────────────────────────────────
+  /intervention-plans:
+    get:
+      operationId: listInterventionPlans
+      tags: [interventionPlans]
+      summary: List intervention plans
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: residentId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Intervention plan list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterventionPlanListResponse"
+    post:
+      operationId: createInterventionPlan
+      tags: [interventionPlans]
+      summary: Create intervention plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInterventionPlanBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterventionPlan"
+
+  /intervention-plans/{id}:
+    get:
+      operationId: getInterventionPlan
+      tags: [interventionPlans]
+      summary: Get intervention plan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Intervention plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterventionPlan"
+    patch:
+      operationId: updateInterventionPlan
+      tags: [interventionPlans]
+      summary: Update intervention plan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInterventionPlanBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterventionPlan"
+    delete:
+      operationId: deleteInterventionPlan
+      tags: [interventionPlans]
+      summary: Delete intervention plan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── INCIDENTS ─────────────────────────────────────────────────────────────
+  /incidents:
+    get:
+      operationId: listIncidents
+      tags: [incidents]
+      summary: List incidents
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: residentId
+          in: query
+          schema:
+            type: integer
+        - name: safehouseId
+          in: query
+          schema:
+            type: integer
+        - name: severity
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Incident list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IncidentListResponse"
+    post:
+      operationId: createIncident
+      tags: [incidents]
+      summary: Log incident
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateIncidentBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Incident"
+
+  /incidents/{id}:
+    get:
+      operationId: getIncident
+      tags: [incidents]
+      summary: Get incident
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Incident
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Incident"
+    patch:
+      operationId: updateIncident
+      tags: [incidents]
+      summary: Update incident
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateIncidentBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Incident"
+    delete:
+      operationId: deleteIncident
+      tags: [incidents]
+      summary: Delete incident
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── EDUCATION RECORDS ────────────────────────────────────────────────────
+  /education-records:
+    get:
+      operationId: listEducationRecords
+      tags: [educationRecords]
+      summary: List education records
+      parameters:
+        - name: residentId
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Education records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EducationRecordListResponse"
+    post:
+      operationId: createEducationRecord
+      tags: [educationRecords]
+      summary: Create education record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEducationRecordBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EducationRecord"
+
+  /education-records/{id}:
+    patch:
+      operationId: updateEducationRecord
+      tags: [educationRecords]
+      summary: Update education record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEducationRecordBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EducationRecord"
+    delete:
+      operationId: deleteEducationRecord
+      tags: [educationRecords]
+      summary: Delete education record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── HEALTH RECORDS ────────────────────────────────────────────────────────
+  /health-records:
+    get:
+      operationId: listHealthRecords
+      tags: [healthRecords]
+      summary: List health/wellbeing records
+      parameters:
+        - name: residentId
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Health records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthRecordListResponse"
+    post:
+      operationId: createHealthRecord
+      tags: [healthRecords]
+      summary: Create health record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateHealthRecordBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthRecord"
+
+  /health-records/{id}:
+    patch:
+      operationId: updateHealthRecord
+      tags: [healthRecords]
+      summary: Update health record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateHealthRecordBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthRecord"
+    delete:
+      operationId: deleteHealthRecord
+      tags: [healthRecords]
+      summary: Delete health record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── SOCIAL MEDIA ─────────────────────────────────────────────────────────
+  /social-media-posts:
+    get:
+      operationId: listSocialMediaPosts
+      tags: [socialMedia]
+      summary: List social media posts
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: platform
+          in: query
+          schema:
+            type: string
+        - name: postType
+          in: query
+          schema:
+            type: string
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Social media post list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SocialMediaPostListResponse"
+    post:
+      operationId: createSocialMediaPost
+      tags: [socialMedia]
+      summary: Create social media post record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSocialMediaPostBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SocialMediaPost"
+
+  /social-media-posts/{id}:
+    get:
+      operationId: getSocialMediaPost
+      tags: [socialMedia]
+      summary: Get social media post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SocialMediaPost"
+    patch:
+      operationId: updateSocialMediaPost
+      tags: [socialMedia]
+      summary: Update social media post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSocialMediaPostBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SocialMediaPost"
+    delete:
+      operationId: deleteSocialMediaPost
+      tags: [socialMedia]
+      summary: Delete social media post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /social-media-posts/analytics:
+    get:
+      operationId: getSocialMediaAnalytics
+      tags: [socialMedia]
+      summary: Social media analytics summary
+      parameters:
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+        - name: platform
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Analytics summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SocialMediaAnalytics"
+
+  # ─── IMPACT SNAPSHOTS ─────────────────────────────────────────────────────
+  /impact-snapshots:
+    get:
+      operationId: listImpactSnapshots
+      tags: [impactSnapshots]
+      summary: List impact snapshots
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: published
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Impact snapshot list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImpactSnapshotListResponse"
+    post:
+      operationId: createImpactSnapshot
+      tags: [impactSnapshots]
+      summary: Create impact snapshot (draft)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateImpactSnapshotBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImpactSnapshot"
+
+  /impact-snapshots/{id}:
+    get:
+      operationId: getImpactSnapshot
+      tags: [impactSnapshots]
+      summary: Get impact snapshot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Impact snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImpactSnapshot"
+    patch:
+      operationId: updateImpactSnapshot
+      tags: [impactSnapshots]
+      summary: Update impact snapshot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateImpactSnapshotBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImpactSnapshot"
+    delete:
+      operationId: deleteImpactSnapshot
+      tags: [impactSnapshots]
+      summary: Delete impact snapshot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /impact-snapshots/{id}/publish:
+    post:
+      operationId: publishImpactSnapshot
+      tags: [impactSnapshots]
+      summary: Publish impact snapshot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImpactSnapshot"
+
+  /impact-snapshots/{id}/unpublish:
+    post:
+      operationId: unpublishImpactSnapshot
+      tags: [impactSnapshots]
+      summary: Unpublish impact snapshot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Unpublished
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImpactSnapshot"
+
+  # ─── ML PREDICTIONS ───────────────────────────────────────────────────────
+  /ml/predictions:
+    get:
+      operationId: listMlPredictions
+      tags: [mlPredictions]
+      summary: List ML prediction snapshots
+      parameters:
+        - name: pipeline
+          in: query
+          schema:
+            type: string
+        - name: entityId
+          in: query
+          schema:
+            type: integer
+        - name: entityType
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: ML predictions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MlPredictionListResponse"
+
+  /ml/pipelines:
+    get:
+      operationId: listMlPipelines
+      tags: [mlPredictions]
+      summary: List ML pipeline statuses
+      responses:
+        "200":
+          description: Pipeline list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MlPipeline"
+
+  /ml/predictions/{entityType}/{entityId}:
+    get:
+      operationId: getEntityPredictions
+      tags: [mlPredictions]
+      summary: Get all predictions for a specific entity
+      parameters:
+        - name: entityType
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: entityId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Entity predictions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MlPrediction"
+
+  # ─── REPORTS ──────────────────────────────────────────────────────────────
+  /reports/donation-trends:
+    get:
+      operationId: getReportDonationTrends
+      tags: [reports]
+      summary: Donation trends report
+      parameters:
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Report
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReportDonationTrend"
+
+  /reports/accomplishments:
+    get:
+      operationId: getReportAccomplishments
+      tags: [reports]
+      summary: Annual accomplishments report
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Accomplishments report
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReportAccomplishment"
+
+  /reports/reintegration-stats:
+    get:
+      operationId: getReportReintegrationStats
+      tags: [reports]
+      summary: Reintegration statistics report
+      parameters:
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Reintegration stats
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReportReintegrationStat"
+
+  # ─── USERS ────────────────────────────────────────────────────────────────
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List users (super admin only)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: role
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create user (super admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserBody"
+      responses:
+        "201":
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserBody"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      summary: Delete user (super admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /users/{id}/disable:
+    post:
+      operationId: disableUser
+      tags: [users]
+      summary: Disable user account
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}/enable:
+    post:
+      operationId: enableUser
+      tags: [users]
+      summary: Enable user account
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User enabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  # ─── AUDIT LOGS ───────────────────────────────────────────────────────────
+  /audit-logs:
+    get:
+      operationId: listAuditLogs
+      tags: [auditLogs]
+      summary: List audit logs (super admin only)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: actorId
+          in: query
+          schema:
+            type: integer
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: entityType
+          in: query
+          schema:
+            type: string
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Audit log list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogListResponse"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    SuccessResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+
+    PaginationMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+      required: [total, page, limit, totalPages]
+
+    # ─── AUTH ───────────────────────────────────────────────────────────────
+    LoginBody:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required: [username, password]
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/UserProfile"
+      required: [token, user]
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        role:
+          type: string
+          enum: [public, donor, staff, admin, super_admin]
+        safehouses:
+          type: array
+          items:
+            type: integer
+        supporterId:
+          type: ["integer", "null"]
+        mfaEnabled:
+          type: boolean
+        lastLogin:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+      required: [id, username, email, role, mfaEnabled, isActive]
+
+    # ─── SAFEHOUSE ───────────────────────────────────────────────────────────
+    Safehouse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        location:
+          type: string
+        capacity:
+          type: integer
+        currentOccupancy:
+          type: integer
+        programAreas:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [active, inactive]
+        contactName:
+          type: ["string", "null"]
+        contactEmail:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, name, location, capacity, currentOccupancy, status]
+
+    CreateSafehouseBody:
+      type: object
+      properties:
+        name:
+          type: string
+        location:
+          type: string
+        capacity:
+          type: integer
+        programAreas:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [active, inactive]
+        contactName:
+          type: string
+        contactEmail:
+          type: string
+      required: [name, location, capacity]
+
+    UpdateSafehouseBody:
+      type: object
+      properties:
+        name:
+          type: string
+        location:
+          type: string
+        capacity:
+          type: integer
+        programAreas:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [active, inactive]
+        contactName:
+          type: string
+        contactEmail:
+          type: string
+
+    SafehouseListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Safehouse"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    SafehouseMonthlyMetric:
+      type: object
+      properties:
+        id:
+          type: integer
+        safehouseId:
+          type: integer
+        month:
+          type: string
+        activeResidents:
+          type: integer
+        newAdmissions:
+          type: integer
+        discharges:
+          type: integer
+        incidentCount:
+          type: integer
+        processRecordingCount:
+          type: integer
+        visitCount:
+          type: integer
+        avgHealthScore:
+          type: ["number", "null"]
+        avgEducationProgress:
+          type: ["number", "null"]
+      required: [id, safehouseId, month, activeResidents]
+
+    # ─── PARTNER ────────────────────────────────────────────────────────────
+    Partner:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        programArea:
+          type: string
+        contactName:
+          type: ["string", "null"]
+        contactEmail:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [active, inactive]
+        assignmentCount:
+          type: integer
+        createdAt:
+          type: string
+      required: [id, name, programArea, status]
+
+    CreatePartnerBody:
+      type: object
+      properties:
+        name:
+          type: string
+        programArea:
+          type: string
+        contactName:
+          type: string
+        contactEmail:
+          type: string
+        phone:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+      required: [name, programArea]
+
+    UpdatePartnerBody:
+      type: object
+      properties:
+        name:
+          type: string
+        programArea:
+          type: string
+        contactName:
+          type: string
+        contactEmail:
+          type: string
+        phone:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+
+    PartnerListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Partner"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    PartnerAssignment:
+      type: object
+      properties:
+        id:
+          type: integer
+        partnerId:
+          type: integer
+        safehouseId:
+          type: integer
+        partnerName:
+          type: string
+        safehouseName:
+          type: string
+        programArea:
+          type: string
+        startDate:
+          type: string
+        endDate:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+      required: [id, partnerId, safehouseId, startDate]
+
+    CreatePartnerAssignmentBody:
+      type: object
+      properties:
+        partnerId:
+          type: integer
+        safehouseId:
+          type: integer
+        programArea:
+          type: string
+        startDate:
+          type: string
+        endDate:
+          type: string
+        notes:
+          type: string
+      required: [partnerId, safehouseId, startDate]
+
+    # ─── SUPPORTER ──────────────────────────────────────────────────────────
+    Supporter:
+      type: object
+      properties:
+        id:
+          type: integer
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: ["string", "null"]
+        organization:
+          type: ["string", "null"]
+        supportType:
+          type: string
+          enum: [individual, corporate, foundation, government, other]
+        acquisitionChannel:
+          type: ["string", "null"]
+        segment:
+          type: ["string", "null"]
+        churnRiskScore:
+          type: ["number", "null"]
+        upgradeScore:
+          type: ["number", "null"]
+        lifetimeGiving:
+          type: number
+        lastGiftDate:
+          type: ["string", "null"]
+        lastGiftAmount:
+          type: ["number", "null"]
+        isRecurring:
+          type: boolean
+        communicationPreference:
+          type: ["string", "null"]
+        interests:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+      required: [id, firstName, lastName, email, supportType, lifetimeGiving, isRecurring]
+
+    CreateSupporterBody:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        organization:
+          type: string
+        supportType:
+          type: string
+          enum: [individual, corporate, foundation, government, other]
+        acquisitionChannel:
+          type: string
+        communicationPreference:
+          type: string
+        interests:
+          type: array
+          items:
+            type: string
+      required: [firstName, lastName, email, supportType]
+
+    UpdateSupporterBody:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        organization:
+          type: string
+        supportType:
+          type: string
+        acquisitionChannel:
+          type: string
+        communicationPreference:
+          type: string
+        interests:
+          type: array
+          items:
+            type: string
+
+    SupporterListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Supporter"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    GivingStats:
+      type: object
+      properties:
+        supporterId:
+          type: integer
+        lifetimeGiving:
+          type: number
+        givingThisYear:
+          type: number
+        lastGiftDate:
+          type: ["string", "null"]
+        lastGiftAmount:
+          type: ["number", "null"]
+        numberOfGifts:
+          type: integer
+        averageGiftSize:
+          type: number
+        largestGift:
+          type: number
+        campaignsSupported:
+          type: integer
+        isRecurring:
+          type: boolean
+        monthlyTrend:
+          type: array
+          items:
+            $ref: "#/components/schemas/DonationTrend"
+      required: [supporterId, lifetimeGiving, givingThisYear, numberOfGifts, averageGiftSize, largestGift, isRecurring]
+
+    SupporterStats:
+      type: object
+      properties:
+        totalSupporters:
+          type: integer
+        activeSupporters:
+          type: integer
+        raisedThisMonth:
+          type: number
+        recurringDonors:
+          type: integer
+        avgGiftSize:
+          type: number
+        newSupporters:
+          type: integer
+        inKindEstimatedValue:
+          type: number
+        retentionEstimate:
+          type: number
+        acquisitionByChannel:
+          type: array
+          items:
+            type: object
+            properties:
+              channel:
+                type: string
+              count:
+                type: integer
+            required: [channel, count]
+        supportTypeMix:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              count:
+                type: integer
+              percentage:
+                type: number
+            required: [type, count, percentage]
+      required: [totalSupporters, activeSupporters, raisedThisMonth, recurringDonors, avgGiftSize, newSupporters, retentionEstimate]
+
+    # ─── DONATION ────────────────────────────────────────────────────────────
+    Donation:
+      type: object
+      properties:
+        id:
+          type: integer
+        supporterId:
+          type: integer
+        supporterName:
+          type: string
+        donationType:
+          type: string
+          enum: [monetary, in_kind, stock, grant, recurring]
+        amount:
+          type: ["number", "null"]
+        currency:
+          type: string
+        campaign:
+          type: ["string", "null"]
+        safehouseId:
+          type: ["integer", "null"]
+        safehouseName:
+          type: ["string", "null"]
+        status:
+          type: ["string", "null"]
+        donationDate:
+          type: string
+        receiptUrl:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        isAnonymous:
+          type: boolean
+        createdAt:
+          type: string
+      required: [id, supporterId, donationType, donationDate, currency, isAnonymous]
+
+    CreateDonationBody:
+      type: object
+      properties:
+        supporterId:
+          type: integer
+        donationType:
+          type: string
+          enum: [monetary, in_kind, stock, grant, recurring]
+        amount:
+          type: number
+        currency:
+          type: string
+        campaign:
+          type: string
+        safehouseId:
+          type: integer
+        donationDate:
+          type: string
+        notes:
+          type: string
+        isAnonymous:
+          type: boolean
+      required: [supporterId, donationType, donationDate]
+
+    UpdateDonationBody:
+      type: object
+      properties:
+        donationType:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        campaign:
+          type: string
+        safehouseId:
+          type: integer
+        donationDate:
+          type: string
+        notes:
+          type: string
+        isAnonymous:
+          type: boolean
+
+    DonationListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Donation"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    DonationTrend:
+      type: object
+      properties:
+        month:
+          type: string
+        totalAmount:
+          type: number
+        donationCount:
+          type: integer
+        avgAmount:
+          type: number
+      required: [month, totalAmount, donationCount, avgAmount]
+
+    DonationAllocation:
+      type: object
+      properties:
+        id:
+          type: integer
+        donationId:
+          type: integer
+        safehouseId:
+          type: integer
+        safehouseName:
+          type: string
+        programArea:
+          type: string
+        amount:
+          type: number
+        percentage:
+          type: number
+      required: [id, donationId, safehouseId, programArea, amount, percentage]
+
+    CreateDonationAllocationBody:
+      type: object
+      properties:
+        donationId:
+          type: integer
+        safehouseId:
+          type: integer
+        programArea:
+          type: string
+        amount:
+          type: number
+        percentage:
+          type: number
+      required: [donationId, safehouseId, programArea, amount, percentage]
+
+    # ─── RESIDENT ────────────────────────────────────────────────────────────
+    Resident:
+      type: object
+      properties:
+        id:
+          type: integer
+        residentCode:
+          type: string
+        safehouseId:
+          type: integer
+        safehouseName:
+          type: string
+        assignedWorkerId:
+          type: ["integer", "null"]
+        assignedWorkerName:
+          type: ["string", "null"]
+        caseStatus:
+          type: string
+          enum: [active, closed, transferred, deceased]
+        caseCategory:
+          type: string
+        riskLevel:
+          type: string
+          enum: [low, medium, high, critical]
+        reintegrationStatus:
+          type: string
+          enum: [not_started, in_progress, ready, completed]
+        admissionDate:
+          type: string
+        dischargeDate:
+          type: ["string", "null"]
+        ageGroup:
+          type: ["string", "null"]
+        lastUpdated:
+          type: string
+        createdAt:
+          type: string
+      required: [id, residentCode, safehouseId, caseStatus, caseCategory, riskLevel, reintegrationStatus, admissionDate]
+
+    CreateResidentBody:
+      type: object
+      properties:
+        residentCode:
+          type: string
+        safehouseId:
+          type: integer
+        assignedWorkerId:
+          type: integer
+        caseStatus:
+          type: string
+          enum: [active, closed, transferred, deceased]
+        caseCategory:
+          type: string
+        riskLevel:
+          type: string
+          enum: [low, medium, high, critical]
+        reintegrationStatus:
+          type: string
+          enum: [not_started, in_progress, ready, completed]
+        admissionDate:
+          type: string
+        ageGroup:
+          type: string
+      required: [residentCode, safehouseId, caseStatus, caseCategory, riskLevel, reintegrationStatus, admissionDate]
+
+    UpdateResidentBody:
+      type: object
+      properties:
+        safehouseId:
+          type: integer
+        assignedWorkerId:
+          type: integer
+        caseStatus:
+          type: string
+        caseCategory:
+          type: string
+        riskLevel:
+          type: string
+        reintegrationStatus:
+          type: string
+        dischargeDate:
+          type: string
+        ageGroup:
+          type: string
+
+    ResidentListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Resident"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    ResidentStats:
+      type: object
+      properties:
+        totalActive:
+          type: integer
+        newAdmissions:
+          type: integer
+        casesNeedingUpdate:
+          type: integer
+        highRiskResidents:
+          type: integer
+        riskDistribution:
+          type: array
+          items:
+            type: object
+            properties:
+              level:
+                type: string
+              count:
+                type: integer
+            required: [level, count]
+        statusDistribution:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                type: string
+              count:
+                type: integer
+            required: [status, count]
+      required: [totalActive, newAdmissions, casesNeedingUpdate, highRiskResidents]
+
+    TimelineEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        eventType:
+          type: string
+        eventDate:
+          type: string
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        actor:
+          type: ["string", "null"]
+        severity:
+          type: ["string", "null"]
+      required: [id, eventType, eventDate, title]
+
+    # ─── PROCESS RECORDING ────────────────────────────────────────────────────
+    ProcessRecording:
+      type: object
+      properties:
+        id:
+          type: integer
+        residentId:
+          type: integer
+        residentCode:
+          type: string
+        workerId:
+          type: integer
+        workerName:
+          type: string
+        safehouseId:
+          type: integer
+        sessionDate:
+          type: string
+        duration:
+          type: ["integer", "null"]
+        emotionalStateStart:
+          type: ["string", "null"]
+        emotionalStateEnd:
+          type: ["string", "null"]
+        progressNoted:
+          type: boolean
+        concernFlag:
+          type: boolean
+        referralMade:
+          type: boolean
+        followUpRequired:
+          type: boolean
+        sessionNotes:
+          type: ["string", "null"]
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+      required: [id, residentId, workerId, safehouseId, sessionDate, progressNoted, concernFlag, referralMade, followUpRequired]
+
+    CreateProcessRecordingBody:
+      type: object
+      properties:
+        residentId:
+          type: integer
+        workerId:
+          type: integer
+        safehouseId:
+          type: integer
+        sessionDate:
+          type: string
+        duration:
+          type: integer
+        emotionalStateStart:
+          type: string
+        emotionalStateEnd:
+          type: string
+        progressNoted:
+          type: boolean
+        concernFlag:
+          type: boolean
+        referralMade:
+          type: boolean
+        followUpRequired:
+          type: boolean
+        sessionNotes:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+      required: [residentId, workerId, safehouseId, sessionDate]
+
+    UpdateProcessRecordingBody:
+      type: object
+      properties:
+        sessionDate:
+          type: string
+        duration:
+          type: integer
+        emotionalStateStart:
+          type: string
+        emotionalStateEnd:
+          type: string
+        progressNoted:
+          type: boolean
+        concernFlag:
+          type: boolean
+        referralMade:
+          type: boolean
+        followUpRequired:
+          type: boolean
+        sessionNotes:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    ProcessRecordingListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProcessRecording"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    # ─── HOME VISITATION ──────────────────────────────────────────────────────
+    HomeVisitation:
+      type: object
+      properties:
+        id:
+          type: integer
+        residentId:
+          type: integer
+        residentCode:
+          type: string
+        workerId:
+          type: integer
+        workerName:
+          type: string
+        visitDate:
+          type: string
+        outcome:
+          type: string
+          enum: [favorable, unfavorable, neutral, safety_concern]
+        cooperationLevel:
+          type: ["string", "null"]
+        safetyConcern:
+          type: boolean
+        followUpRequired:
+          type: boolean
+        followUpDue:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, residentId, workerId, visitDate, outcome, safetyConcern, followUpRequired]
+
+    CreateHomeVisitationBody:
+      type: object
+      properties:
+        residentId:
+          type: integer
+        workerId:
+          type: integer
+        visitDate:
+          type: string
+        outcome:
+          type: string
+          enum: [favorable, unfavorable, neutral, safety_concern]
+        cooperationLevel:
+          type: string
+        safetyConcern:
+          type: boolean
+        followUpRequired:
+          type: boolean
+        followUpDue:
+          type: string
+        notes:
+          type: string
+      required: [residentId, workerId, visitDate, outcome]
+
+    UpdateHomeVisitationBody:
+      type: object
+      properties:
+        visitDate:
+          type: string
+        outcome:
+          type: string
+        cooperationLevel:
+          type: string
+        safetyConcern:
+          type: boolean
+        followUpRequired:
+          type: boolean
+        followUpDue:
+          type: string
+        notes:
+          type: string
+
+    HomeVisitationListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/HomeVisitation"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    # ─── CASE CONFERENCE ──────────────────────────────────────────────────────
+    CaseConference:
+      type: object
+      properties:
+        id:
+          type: integer
+        residentId:
+          type: integer
+        residentCode:
+          type: string
+        safehouseId:
+          type: integer
+        safehouseName:
+          type: string
+        scheduledDate:
+          type: string
+        completedDate:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [scheduled, completed, cancelled, overdue]
+        attendees:
+          type: array
+          items:
+            type: string
+        decisions:
+          type: ["string", "null"]
+        nextSteps:
+          type: ["string", "null"]
+        nextConferenceDate:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, residentId, safehouseId, scheduledDate, status]
+
+    CreateCaseConferenceBody:
+      type: object
+      properties:
+        residentId:
+          type: integer
+        safehouseId:
+          type: integer
+        scheduledDate:
+          type: string
+        attendees:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+      required: [residentId, safehouseId, scheduledDate]
+
+    UpdateCaseConferenceBody:
+      type: object
+      properties:
+        scheduledDate:
+          type: string
+        completedDate:
+          type: string
+        status:
+          type: string
+        attendees:
+          type: array
+          items:
+            type: string
+        decisions:
+          type: string
+        nextSteps:
+          type: string
+        nextConferenceDate:
+          type: string
+
+    CaseConferenceListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/CaseConference"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    # ─── INTERVENTION PLAN ─────────────────────────────────────────────────
+    InterventionPlan:
+      type: object
+      properties:
+        id:
+          type: integer
+        residentId:
+          type: integer
+        residentCode:
+          type: string
+        safehouseId:
+          type: integer
+        workerId:
+          type: integer
+        workerName:
+          type: string
+        category:
+          type: string
+        title:
+          type: string
+        status:
+          type: string
+          enum: [open, in_progress, completed, overdue, cancelled]
+        targetDate:
+          type: string
+        completedDate:
+          type: ["string", "null"]
+        services:
+          type: array
+          items:
+            type: string
+        milestones:
+          type: array
+          items:
+            type: string
+        successProbability:
+          type: ["number", "null"]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, residentId, safehouseId, workerId, category, title, status, targetDate]
+
+    CreateInterventionPlanBody:
+      type: object
+      properties:
+        residentId:
+          type: integer
+        safehouseId:
+          type: integer
+        workerId:
+          type: integer
+        category:
+          type: string
+        title:
+          type: string
+        targetDate:
+          type: string
+        services:
+          type: array
+          items:
+            type: string
+        milestones:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+      required: [residentId, safehouseId, workerId, category, title, targetDate]
+
+    UpdateInterventionPlanBody:
+      type: object
+      properties:
+        category:
+          type: string
+        title:
+          type: string
+        status:
+          type: string
+        targetDate:
+          type: string
+        completedDate:
+          type: string
+        services:
+          type: array
+          items:
+            type: string
+        milestones:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+
+    InterventionPlanListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/InterventionPlan"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    # ─── INCIDENT ─────────────────────────────────────────────────────────────
+    Incident:
+      type: object
+      properties:
+        id:
+          type: integer
+        residentId:
+          type: ["integer", "null"]
+        residentCode:
+          type: ["string", "null"]
+        safehouseId:
+          type: integer
+        safehouseName:
+          type: string
+        reportedBy:
+          type: integer
+        reportedByName:
+          type: string
+        incidentDate:
+          type: string
+        incidentType:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [open, under_review, resolved, escalated]
+        description:
+          type: string
+        resolution:
+          type: ["string", "null"]
+        resolutionDate:
+          type: ["string", "null"]
+        followUpRequired:
+          type: boolean
+        createdAt:
+          type: string
+      required: [id, safehouseId, reportedBy, incidentDate, incidentType, severity, status, description, followUpRequired]
+
+    CreateIncidentBody:
+      type: object
+      properties:
+        residentId:
+          type: integer
+        safehouseId:
+          type: integer
+        reportedBy:
+          type: integer
+        incidentDate:
+          type: string
+        incidentType:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        description:
+          type: string
+        followUpRequired:
+          type: boolean
+      required: [safehouseId, reportedBy, incidentDate, incidentType, severity, description]
+
+    UpdateIncidentBody:
+      type: object
+      properties:
+        incidentType:
+          type: string
+        severity:
+          type: string
+        status:
+          type: string
+        description:
+          type: string
+        resolution:
+          type: string
+        resolutionDate:
+          type: string
+        followUpRequired:
+          type: boolean
+
+    IncidentListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Incident"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    # ─── EDUCATION RECORD ─────────────────────────────────────────────────────
+    EducationRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        residentId:
+          type: integer
+        recordDate:
+          type: string
+        educationLevel:
+          type: string
+        enrollmentStatus:
+          type: string
+        progressScore:
+          type: ["number", "null"]
+        programType:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, residentId, recordDate, educationLevel, enrollmentStatus]
+
+    CreateEducationRecordBody:
+      type: object
+      properties:
+        residentId:
+          type: integer
+        recordDate:
+          type: string
+        educationLevel:
+          type: string
+        enrollmentStatus:
+          type: string
+        progressScore:
+          type: number
+        programType:
+          type: string
+        notes:
+          type: string
+      required: [residentId, recordDate, educationLevel, enrollmentStatus]
+
+    UpdateEducationRecordBody:
+      type: object
+      properties:
+        recordDate:
+          type: string
+        educationLevel:
+          type: string
+        enrollmentStatus:
+          type: string
+        progressScore:
+          type: number
+        programType:
+          type: string
+        notes:
+          type: string
+
+    EducationRecordListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/EducationRecord"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    # ─── HEALTH RECORD ────────────────────────────────────────────────────────
+    HealthRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        residentId:
+          type: integer
+        recordDate:
+          type: string
+        healthScore:
+          type: ["number", "null"]
+        mentalHealthStatus:
+          type: ["string", "null"]
+        physicalHealthStatus:
+          type: ["string", "null"]
+        traumaProgress:
+          type: ["string", "null"]
+        medicationStatus:
+          type: ["string", "null"]
+        nextAppointment:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, residentId, recordDate]
+
+    CreateHealthRecordBody:
+      type: object
+      properties:
+        residentId:
+          type: integer
+        recordDate:
+          type: string
+        healthScore:
+          type: number
+        mentalHealthStatus:
+          type: string
+        physicalHealthStatus:
+          type: string
+        traumaProgress:
+          type: string
+        medicationStatus:
+          type: string
+        nextAppointment:
+          type: string
+        notes:
+          type: string
+      required: [residentId, recordDate]
+
+    UpdateHealthRecordBody:
+      type: object
+      properties:
+        recordDate:
+          type: string
+        healthScore:
+          type: number
+        mentalHealthStatus:
+          type: string
+        physicalHealthStatus:
+          type: string
+        traumaProgress:
+          type: string
+        medicationStatus:
+          type: string
+        nextAppointment:
+          type: string
+        notes:
+          type: string
+
+    HealthRecordListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/HealthRecord"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    # ─── SOCIAL MEDIA ────────────────────────────────────────────────────────
+    SocialMediaPost:
+      type: object
+      properties:
+        id:
+          type: integer
+        platform:
+          type: string
+          enum: [facebook, instagram, twitter, linkedin, tiktok]
+        postType:
+          type: string
+        content:
+          type: string
+        postDate:
+          type: string
+        timeWindow:
+          type: ["string", "null"]
+        likes:
+          type: integer
+        shares:
+          type: integer
+        comments:
+          type: integer
+        reach:
+          type: integer
+        engagementRate:
+          type: number
+        donationReferrals:
+          type: integer
+        donationValueFromPost:
+          type: number
+        predictedConversionScore:
+          type: ["number", "null"]
+        createdAt:
+          type: string
+      required: [id, platform, postType, content, postDate, likes, shares, comments, reach, engagementRate, donationReferrals, donationValueFromPost]
+
+    CreateSocialMediaPostBody:
+      type: object
+      properties:
+        platform:
+          type: string
+          enum: [facebook, instagram, twitter, linkedin, tiktok]
+        postType:
+          type: string
+        content:
+          type: string
+        postDate:
+          type: string
+        timeWindow:
+          type: string
+        likes:
+          type: integer
+        shares:
+          type: integer
+        comments:
+          type: integer
+        reach:
+          type: integer
+        donationReferrals:
+          type: integer
+        donationValueFromPost:
+          type: number
+      required: [platform, postType, content, postDate]
+
+    UpdateSocialMediaPostBody:
+      type: object
+      properties:
+        platform:
+          type: string
+        postType:
+          type: string
+        content:
+          type: string
+        postDate:
+          type: string
+        timeWindow:
+          type: string
+        likes:
+          type: integer
+        shares:
+          type: integer
+        comments:
+          type: integer
+        reach:
+          type: integer
+        donationReferrals:
+          type: integer
+        donationValueFromPost:
+          type: number
+
+    SocialMediaPostListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/SocialMediaPost"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    SocialMediaAnalytics:
+      type: object
+      properties:
+        postsThisMonth:
+          type: integer
+        avgEngagementRate:
+          type: number
+        donationReferrals:
+          type: integer
+        donationValueFromSocial:
+          type: number
+        bestPlatform:
+          type: string
+        bestPostType:
+          type: string
+        bestTimeWindow:
+          type: string
+        platformBreakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              platform:
+                type: string
+              posts:
+                type: integer
+              avgEngagement:
+                type: number
+              donationReferrals:
+                type: integer
+            required: [platform, posts, avgEngagement, donationReferrals]
+        engagementHeatmap:
+          type: array
+          items:
+            type: object
+            properties:
+              dayOfWeek:
+                type: integer
+              hour:
+                type: integer
+              avgEngagement:
+                type: number
+            required: [dayOfWeek, hour, avgEngagement]
+      required: [postsThisMonth, avgEngagementRate, donationReferrals, donationValueFromSocial, bestPlatform, bestPostType, bestTimeWindow]
+
+    # ─── IMPACT SNAPSHOT ─────────────────────────────────────────────────────
+    ImpactSnapshot:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        period:
+          type: string
+        isPublished:
+          type: boolean
+        publishedAt:
+          type: ["string", "null"]
+        residentsServed:
+          type: integer
+        totalDonationsAmount:
+          type: number
+        programOutcomes:
+          type: object
+          additionalProperties: true
+        safehousetsCovered:
+          type: integer
+        reintegrationCount:
+          type: integer
+        summary:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, title, period, isPublished, residentsServed, totalDonationsAmount, safehousetsCovered, reintegrationCount]
+
+    CreateImpactSnapshotBody:
+      type: object
+      properties:
+        title:
+          type: string
+        period:
+          type: string
+        residentsServed:
+          type: integer
+        totalDonationsAmount:
+          type: number
+        programOutcomes:
+          type: object
+          additionalProperties: true
+        safehousetsCovered:
+          type: integer
+        reintegrationCount:
+          type: integer
+        summary:
+          type: string
+      required: [title, period, residentsServed, totalDonationsAmount, safehousetsCovered, reintegrationCount]
+
+    UpdateImpactSnapshotBody:
+      type: object
+      properties:
+        title:
+          type: string
+        period:
+          type: string
+        residentsServed:
+          type: integer
+        totalDonationsAmount:
+          type: number
+        programOutcomes:
+          type: object
+          additionalProperties: true
+        safehousetsCovered:
+          type: integer
+        reintegrationCount:
+          type: integer
+        summary:
+          type: string
+
+    ImpactSnapshotListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImpactSnapshot"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    # ─── ML ──────────────────────────────────────────────────────────────────
+    MlPrediction:
+      type: object
+      properties:
+        id:
+          type: integer
+        pipeline:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: integer
+        predictionValue:
+          type: number
+        confidenceScore:
+          type: number
+        riskBand:
+          type: ["string", "null"]
+        topFeatures:
+          type: array
+          items:
+            type: object
+            properties:
+              feature:
+                type: string
+              importance:
+                type: number
+            required: [feature, importance]
+        recommendedAction:
+          type: ["string", "null"]
+        modelVersion:
+          type: string
+        predictedAt:
+          type: string
+      required: [id, pipeline, entityType, entityId, predictionValue, confidenceScore, modelVersion, predictedAt]
+
+    MlPredictionListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MlPrediction"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    MlPipeline:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [active, training, degraded, offline]
+        modelVersion:
+          type: string
+        lastRetrained:
+          type: string
+        predictionCount:
+          type: integer
+        avgConfidence:
+          type: number
+        driftFlags:
+          type: integer
+        overrideRate:
+          type: number
+        healthStatus:
+          type: string
+          enum: [healthy, degraded, action_required]
+        performanceTrend:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              accuracy:
+                type: number
+            required: [date, accuracy]
+      required: [id, name, description, status, modelVersion, lastRetrained, predictionCount, avgConfidence, driftFlags, overrideRate, healthStatus]
+
+    # ─── REPORTS ─────────────────────────────────────────────────────────────
+    ReportDonationTrend:
+      type: object
+      properties:
+        id:
+          type: integer
+        period:
+          type: string
+        totalAmount:
+          type: number
+        donorCount:
+          type: integer
+        newDonors:
+          type: integer
+        recurringRevenue:
+          type: number
+        avgGiftSize:
+          type: number
+        retentionRate:
+          type: number
+      required: [id, period, totalAmount, donorCount, newDonors, recurringRevenue, avgGiftSize, retentionRate]
+
+    ReportAccomplishment:
+      type: object
+      properties:
+        id:
+          type: integer
+        year:
+          type: integer
+        serviceArea:
+          type: string
+        category:
+          type: string
+        beneficiaryCount:
+          type: integer
+        sessionsDelivered:
+          type: integer
+        outcomeSummary:
+          type: string
+        notes:
+          type: ["string", "null"]
+      required: [id, year, serviceArea, category, beneficiaryCount, sessionsDelivered, outcomeSummary]
+
+    ReportReintegrationStat:
+      type: object
+      properties:
+        id:
+          type: integer
+        period:
+          type: string
+        safehouseId:
+          type: ["integer", "null"]
+        safehouseName:
+          type: ["string", "null"]
+        totalResidents:
+          type: integer
+        reintegrationCompleted:
+          type: integer
+        avgDaysToReintegration:
+          type: number
+        successRate:
+          type: number
+        avgHealthScoreAtDischarge:
+          type: ["number", "null"]
+        avgEducationProgressAtDischarge:
+          type: ["number", "null"]
+      required: [id, period, totalResidents, reintegrationCompleted, avgDaysToReintegration, successRate]
+
+    # ─── USERS ───────────────────────────────────────────────────────────────
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        role:
+          type: string
+          enum: [public, donor, staff, admin, super_admin]
+        isActive:
+          type: boolean
+        mfaEnabled:
+          type: boolean
+        lastLogin:
+          type: ["string", "null"]
+        assignedSafehouses:
+          type: array
+          items:
+            type: integer
+        supporterId:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+      required: [id, username, email, firstName, lastName, role, isActive, mfaEnabled]
+
+    CreateUserBody:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [public, donor, staff, admin, super_admin]
+        assignedSafehouses:
+          type: array
+          items:
+            type: integer
+        supporterId:
+          type: integer
+      required: [username, email, firstName, lastName, password, role]
+
+    UpdateUserBody:
+      type: object
+      properties:
+        email:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        role:
+          type: string
+        isActive:
+          type: boolean
+        mfaEnabled:
+          type: boolean
+        assignedSafehouses:
+          type: array
+          items:
+            type: integer
+        supporterId:
+          type: integer
+
+    UserListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    # ─── AUDIT LOG ────────────────────────────────────────────────────────────
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        actorId:
+          type: integer
+        actorName:
+          type: string
+        actorRole:
+          type: string
+        action:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: ["integer", "null"]
+        entityDescription:
+          type: ["string", "null"]
+        details:
+          type: object
+          additionalProperties: true
+        ipAddress:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, actorId, actorName, actorRole, action, entityType, createdAt]
+
+    AuditLogListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLog"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    # ─── DASHBOARDS ──────────────────────────────────────────────────────────
+    AdminDashboardSummary:
+      type: object
+      properties:
+        activeResidents:
+          type: integer
+        admissionsThisMonth:
+          type: integer
+        highRiskResidents:
+          type: integer
+        incidentsThisWeek:
+          type: integer
+        upcomingCaseConferences:
+          type: integer
+        overdueFollowUps:
+          type: integer
+        donationTotalThisMonth:
+          type: number
+        socialReferralsThisMonth:
+          type: integer
+        donationTrend:
+          type: array
+          items:
+            $ref: "#/components/schemas/DonationTrend"
+        residentsByRisk:
+          type: array
+          items:
+            type: object
+            properties:
+              safehouse:
+                type: string
+              low:
+                type: integer
+              medium:
+                type: integer
+              high:
+                type: integer
+              critical:
+                type: integer
+            required: [safehouse, low, medium, high, critical]
+        priorityAlerts:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              message:
+                type: string
+              entityId:
+                type: integer
+              severity:
+                type: string
+            required: [type, message, severity]
+        mlAlerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/MlPrediction"
+      required: [activeResidents, admissionsThisMonth, highRiskResidents, incidentsThisWeek, upcomingCaseConferences, overdueFollowUps, donationTotalThisMonth, socialReferralsThisMonth]
+
+    DonorDashboardSummary:
+      type: object
+      properties:
+        supporterId:
+          type: integer
+        lifetimeGiving:
+          type: number
+        givingThisYear:
+          type: number
+        lastGiftDate:
+          type: ["string", "null"]
+        isRecurring:
+          type: boolean
+        numberOfGifts:
+          type: integer
+        campaignsSupported:
+          type: integer
+        givingTrend:
+          type: array
+          items:
+            $ref: "#/components/schemas/DonationTrend"
+        allocationBreakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              programArea:
+                type: string
+              amount:
+                type: number
+              percentage:
+                type: number
+            required: [programArea, amount, percentage]
+        impactCards:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+              value:
+                type: string
+              description:
+                type: string
+            required: [title, value, description]
+        mlRecommendations:
+          type: array
+          items:
+            $ref: "#/components/schemas/MlPrediction"
+      required: [supporterId, lifetimeGiving, givingThisYear, isRecurring, numberOfGifts, campaignsSupported]
+
+    ExecutiveDashboardSummary:
+      type: object
+      properties:
+        totalDonors:
+          type: integer
+        totalActiveResidents:
+          type: integer
+        totalSafehouses:
+          type: integer
+        donationsYtd:
+          type: number
+        orgRetentionEstimate:
+          type: number
+        reintegrationSuccessRate:
+          type: number
+        avgHealthScore:
+          type: number
+        avgEducationProgress:
+          type: number
+        incidentRate:
+          type: number
+        socialDrivenDonations:
+          type: number
+        safehouseComparison:
+          type: array
+          items:
+            type: object
+            properties:
+              safehouseName:
+                type: string
+              residents:
+                type: integer
+              donations:
+                type: number
+              healthScore:
+                type: number
+              incidentCount:
+                type: integer
+            required: [safehouseName, residents, donations, healthScore, incidentCount]
+        donationTrend:
+          type: array
+          items:
+            $ref: "#/components/schemas/DonationTrend"
+      required: [totalDonors, totalActiveResidents, totalSafehouses, donationsYtd, orgRetentionEstimate, reintegrationSuccessRate, avgHealthScore, avgEducationProgress, incidentRate, socialDrivenDonations]
+
+    PublicImpactSummary:
+      type: object
+      properties:
+        residentsServedTotal:
+          type: integer
+        totalDonationsRaised:
+          type: number
+        reintegrationCount:
+          type: integer
+        safehouseCount:
+          type: integer
+        programAreasActive:
+          type: integer
+        recentSnapshots:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImpactSnapshot"
+        milestones:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+              value:
+                type: string
+              description:
+                type: string
+            required: [title, value, description]
+      required: [residentsServedTotal, totalDonationsRaised, reintegrationCount, safehouseCount, programAreasActive]
+
+    InKindDonationItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        donationId:
+          type: integer
+        itemDescription:
+          type: string
+        category:
+          type: string
+          enum: [food, clothing, medicine, equipment, educational, hygiene, other]
+        quantity:
+          type: integer
+        unit:
+          type: string
+          nullable: true
+        estimatedValuePerUnit:
+          type: number
+          nullable: true
+        totalEstimatedValue:
+          type: number
+          nullable: true
+        condition:
+          type: string
+          enum: [new, good, fair, poor]
+        receivedBy:
+          type: integer
+          nullable: true
+        receivedAt:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, donationId, itemDescription, category, quantity, condition, createdAt, updatedAt]
+
+    CreateInKindDonationItemBody:
+      type: object
+      properties:
+        donationId:
+          type: integer
+        itemDescription:
+          type: string
+        category:
+          type: string
+          enum: [food, clothing, medicine, equipment, educational, hygiene, other]
+        quantity:
+          type: integer
+        unit:
+          type: string
+        estimatedValuePerUnit:
+          type: number
+        totalEstimatedValue:
+          type: number
+        condition:
+          type: string
+          enum: [new, good, fair, poor]
+        receivedBy:
+          type: integer
+        receivedAt:
+          type: string
+          format: date-time
+        notes:
+          type: string
+      required: [donationId, itemDescription, category, quantity, condition]

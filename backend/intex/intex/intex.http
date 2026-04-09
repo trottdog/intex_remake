@@ -1,0 +1,9 @@
+@intex_HostAddress = http://localhost:5142
+
+### Scaffold baseline only.
+### Business routes are intentionally not implemented yet.
+
+GET {{intex_HostAddress}}/api/healthz
+Accept: application/json
+
+###

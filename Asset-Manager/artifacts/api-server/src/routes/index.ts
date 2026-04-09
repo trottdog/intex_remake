@@ -1,0 +1,42 @@
+import { Router, type IRouter } from "express";
+import healthRouter from "./health";
+import authRouter from "./auth";
+import dashboardRouter from "./dashboard";
+import safehousesRouter from "./safehouses";
+import partnersRouter from "./partners";
+import supportersRouter from "./supporters";
+import donationsRouter from "./donations";
+import residentsRouter from "./residents";
+import caseManagementRouter from "./caseManagement";
+import recordsRouter from "./records";
+import socialMediaRouter from "./socialMedia";
+import impactSnapshotsRouter from "./impactSnapshots";
+import mlRouter from "./ml";
+import superadminMlRouter from "./superadminMl";
+import usersRouter from "./users";
+import inKindDonationItemsRouter from "./inKindDonationItems";
+import campaignsRouter from "./campaigns";
+import programUpdatesRouter from "./programUpdates";
+
+const router: IRouter = Router();
+
+router.use(healthRouter);
+router.use(authRouter);
+router.use(dashboardRouter);
+router.use(safehousesRouter);
+router.use(partnersRouter);
+router.use(supportersRouter);
+router.use(donationsRouter);
+router.use(inKindDonationItemsRouter);
+router.use(campaignsRouter);
+router.use(residentsRouter);
+router.use(caseManagementRouter);
+router.use(recordsRouter);
+router.use(socialMediaRouter);
+router.use(impactSnapshotsRouter);
+router.use(mlRouter);
+router.use(superadminMlRouter);
+router.use(usersRouter);
+router.use(programUpdatesRouter);
+
+export default router;
