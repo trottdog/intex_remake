@@ -45,3 +45,4 @@
 /Users/natemacbook/Desktop/intex_final/backend/intex/intex/bin/Debug/net10.0/Microsoft.EntityFrameworkCore.Relational.dll
 /Users/natemacbook/Desktop/intex_final/backend/intex/intex/bin/Debug/net10.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll
 /Users/natemacbook/Desktop/intex_final/backend/intex/intex/bin/Debug/net10.0/BCrypt.Net-Next.dll
+/Users/natemacbook/Desktop/intex_final/backend/intex/intex/obj/Debug/net10.0/intex.sourcelink.json

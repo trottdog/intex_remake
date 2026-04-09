@@ -14,7 +14,10 @@ using backend.intex.Repositories.Abstractions;
 using backend.intex.Repositories.EntityFramework;
 using backend.intex.Services.Abstractions;
 using backend.intex.Services.Auth;
+using backend.intex.Services.Donations;
+using backend.intex.Services.Safehouses;
 using backend.intex.Services.Security;
+using backend.intex.Services.Supporters;
 using backend.intex.Services.Users;
 
 namespace backend.intex.Infrastructure.Extensions;
@@ -84,6 +87,9 @@ public static class ServiceCollectionExtensions
                 npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery);
             }));
         services.AddScoped<IAuthRepository, AuthRepository>();
+        services.AddScoped<IDonationRepository, DonationRepository>();
+        services.AddScoped<ISafehouseRepository, SafehouseRepository>();
+        services.AddScoped<ISupporterRepository, SupporterRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
 
         return services;
@@ -195,6 +201,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IJwtTokenReader, JwtTokenReader>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IDonationService, DonationService>();
+        services.AddScoped<ISafehouseService, SafehouseService>();
+        services.AddScoped<ISupporterService, SupporterService>();
         services.AddScoped<IUserService, UserService>();
 
         return services;
