@@ -155,14 +155,6 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
-          <div className="mt-12 text-center">
-            <Link
-              href="/impact"
-              className="inline-block border border-[#214636] text-[#214636] hover:bg-[#214636] hover:text-white px-8 py-3 rounded-full font-semibold text-sm transition-colors"
-            >
-              See Our Full Programs
-            </Link>
-          </div>
         </div>
       </section>
 
