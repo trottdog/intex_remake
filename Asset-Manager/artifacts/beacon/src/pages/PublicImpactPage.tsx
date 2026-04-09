@@ -1,4 +1,3 @@
-import { Link } from "wouter";
 import { useGetPublicImpact } from "@/services";
 import { PublicLayout } from "@/components/layouts/PublicLayout";
 import { Users, Building2, TrendingUp, Heart } from "lucide-react";
@@ -239,29 +238,6 @@ export default function PublicImpactPage() {
         </div>
       </section>
 
-      {/* ── Final CTA ────────────────────────────────────────────────── */}
-      <section className="bg-[#2a9d72] py-16 px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">Be part of the next chapter.</h2>
-          <p className="text-white/80 mb-8 max-w-xl mx-auto">
-            Every statistic on this page represents a real girl who found hope through the generosity of donors like you. Your gift writes the next success story.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link
-              href="/donate"
-              className="bg-white text-[#2a9d72] hover:bg-gray-50 px-10 py-4 rounded-full font-bold text-lg transition-colors shadow-lg"
-            >
-              Donate Now
-            </Link>
-            <Link
-              href="/about"
-              className="border-2 border-white/60 text-white hover:bg-white/10 px-8 py-4 rounded-full font-semibold transition-colors"
-            >
-              Learn About Us
-            </Link>
-          </div>
-        </div>
-      </section>
     </PublicLayout>
   );
 }

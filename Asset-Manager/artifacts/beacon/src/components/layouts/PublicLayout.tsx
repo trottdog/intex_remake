@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Facebook, Instagram, Mail, MapPin, Phone, Twitter } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import lighthouseLogo from "@assets/Minimalist_lighthouse_logo_design_1775623783267.png";
 
@@ -7,6 +8,12 @@ const NAV_LINKS = [
   { href: "/about", label: "About Us" },
   { href: "/impact", label: "Impact" },
   { href: "/socials", label: "Socials" },
+];
+
+const SOCIAL_LINKS = [
+  { label: "Facebook", Icon: Facebook },
+  { label: "Instagram", Icon: Instagram },
+  { label: "X", Icon: Twitter },
 ];
 
 function scrollToTop() {
@@ -119,66 +126,96 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
       <main className="flex-1">{children}</main>
 
       <footer className="bg-[#214636] text-white">
-        <div className="max-w-6xl mx-auto px-6 py-14">
-          <div className="grid md:grid-cols-4 gap-10">
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center overflow-hidden">
-                  <img src={lighthouseLogo} alt="Beacon logo" className="w-7 h-7 object-contain" />
+        <div className="mx-auto max-w-6xl px-6 py-10 sm:py-11">
+          <div className="grid gap-x-8 gap-y-8 md:grid-cols-2 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,0.72fr)_minmax(0,0.88fr)]">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white/10">
+                  <img src={lighthouseLogo} alt="Beacon logo" className="h-7 w-7 object-contain" />
                 </div>
-                <div>
-                  <div className="font-bold text-white">Beacon Sanctuary PH</div>
-                  <div className="text-[10px] text-[#2a9d72] uppercase tracking-widest">Safe Homes · Restored Lives</div>
+                <div className="min-w-0">
+                  <div className="text-base font-bold tracking-tight text-white">Beacon Sanctuary PH</div>
+                  <div className="text-[10px] font-medium uppercase tracking-[0.24em] text-[#2a9d72]">
+                    Safe Homes · Restored Lives
+                  </div>
                 </div>
               </div>
-              <p className="text-white/60 text-sm leading-relaxed max-w-xs">
+              <p className="max-w-[18rem] text-sm leading-6 text-white/62">
                 A Philippine-based nonprofit providing safe housing and holistic rehabilitation for survivors of abuse and trafficking.
               </p>
               <Link
                 href="/donate"
-                className="inline-block mt-5 bg-[#2a9d72] hover:bg-[#248c64] text-white px-6 py-2.5 rounded-full text-sm font-semibold transition-colors"
+                onClick={scrollToTop}
+                className="inline-flex rounded-full bg-[#2a9d72] px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-[#248c64]"
               >
                 Make a Donation
               </Link>
             </div>
-            <div>
-              <div className="text-xs text-white/40 uppercase tracking-widest font-semibold mb-4">Navigate</div>
-              <div className="space-y-2.5">
+
+            <div className="space-y-3">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/45">Navigate</div>
+              <div className="space-y-2">
                 {NAV_LINKS.map((link) => (
-                  <Link key={link.href} href={link.href} onClick={scrollToTop} className="block text-sm text-white/70 hover:text-white transition-colors">
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={scrollToTop}
+                    className="block text-[13px] text-white/72 transition-colors hover:text-white"
+                  >
                     {link.label}
                   </Link>
                 ))}
-                <Link href="/donate" onClick={scrollToTop} className="block text-sm text-[#2a9d72] hover:text-[#4db88d] transition-colors font-medium">
+                <Link
+                  href="/donate"
+                  onClick={scrollToTop}
+                  className="block text-[13px] font-medium text-[#2a9d72] transition-colors hover:text-[#4db88d]"
+                >
                   Donate
                 </Link>
               </div>
             </div>
-            <div>
-              <div className="text-xs text-white/40 uppercase tracking-widest font-semibold mb-4">Contact</div>
-              <div className="space-y-2.5 text-sm text-white/60">
-                <div>info@beaconsanctuary.ph</div>
-                <div>+63 917 800 1234</div>
-                <div>Quezon City, Philippines</div>
+
+            <div className="space-y-3">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/45">Contact</div>
+              <div className="space-y-2.5 text-[13px] text-white/62">
+                <div className="flex items-start gap-2.5">
+                  <Mail className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/45" />
+                  <span>info@beaconsanctuary.ph</span>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <Phone className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/45" />
+                  <span>+63 917 800 1234</span>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/45" />
+                  <span>Quezon City, Philippines</span>
+                </div>
               </div>
-              <div className="mt-5 flex gap-3">
-                {(["F", "I", "X"] as const).map((initial, i) => (
+              <div className="flex gap-2">
+                {SOCIAL_LINKS.map(({ label, Icon }) => (
                   <Link
-                    key={i}
+                    key={label}
                     href="/socials"
-                    className="w-8 h-8 bg-white/10 hover:bg-[#2a9d72] rounded-full flex items-center justify-center transition-colors"
+                    onClick={scrollToTop}
+                    aria-label={label}
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 transition-colors hover:border-white/20 hover:bg-[#2a9d72] hover:text-white"
                   >
-                    <span className="text-xs font-bold text-white">{initial}</span>
+                    <Icon className="h-3.5 w-3.5" />
                   </Link>
                 ))}
               </div>
             </div>
           </div>
-          <div className="mt-10 pt-6 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-white/40">
+
+          <div className="mt-7 flex flex-col gap-3 border-t border-white/10 pt-4 text-xs text-white/42 sm:flex-row sm:items-center sm:justify-between">
             <span>© {new Date().getFullYear()} Beacon Sanctuary PH. All rights reserved.</span>
-            <div className="flex gap-5">
-              <Link href="/privacy" className="hover:text-white/70 transition-colors">Privacy Policy</Link>
-              <Link href="/login" className="hover:text-white/70 transition-colors">Staff Login</Link>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:justify-end">
+              <Link href="/privacy" onClick={scrollToTop} className="transition-colors hover:text-white/72">
+                Privacy Policy
+              </Link>
+              <Link href="/login" onClick={scrollToTop} className="transition-colors hover:text-white/72">
+                Staff Login
+              </Link>
             </div>
           </div>
         </div>
