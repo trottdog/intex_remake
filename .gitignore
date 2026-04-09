@@ -28,6 +28,13 @@ pnpm-debug.log*
 .env.*
 !.env.example
 
+# Local secrets (never commit)
+appsettings.Local.json
+
+# .NET build output
+bin/
+obj/
+
 # OS / editor
 .DS_Store
 .idea/

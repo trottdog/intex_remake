@@ -8,6 +8,23 @@
 
 ---
 
+## 0. Normalization Addendum (Frontend-First Tie-Break)
+
+When this document conflicts with `DATABASE_SCHEMA.sql` and actual frontend route usage, treat the schema + frontend contract as canonical.
+
+Corrections applied for migration work:
+
+- `case_sessions` references map to the normalized case tables used by the frontend routes:
+  `process_recordings`, `home_visitations`, `case_conferences`, `intervention_plans`, `incident_reports`.
+- `resident_records` references map to `education_records` and `health_wellbeing_records`.
+- `safehouse_metrics` references map to `safehouse_monthly_metrics`.
+- `ml_prediction_snapshots` primary key is `prediction_id` (not `snapshot_id`).
+- `metric_payload_json` belongs to `public_impact_snapshots` (not `safehouse_monthly_metrics`).
+- `churn_top_drivers` / `regression_risk_drivers` are modeled on supporters/residents in the normalized schema; prediction snapshot JSON is in `context_json`.
+- Resident status field is `case_status` in `residents` (not a standalone `status` column).
+
+---
+
 ## 1. ORM & Connection Layer
 
 ### 1.1 Two `db` instances
