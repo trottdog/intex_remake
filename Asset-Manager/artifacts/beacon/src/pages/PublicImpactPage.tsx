@@ -137,7 +137,7 @@ export default function PublicImpactPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {PROGRAMS.map((p, i) => (
               <div key={p.name} className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-md transition-shadow">
-                <div className="w-8 h-8 bg-[#214636] rounded-lg flex items-center justify-center text-[#2a9d72] font-bold text-sm mb-4">
+                <div className="w-8 h-8 bg-[#214636] rounded-lg flex items-center justify-center text-[#ecfff6] font-bold text-sm mb-4">
                   {i + 1}
                 </div>
                 <h3 className="font-bold text-[#214636] mb-2">{p.name}</h3>

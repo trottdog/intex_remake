@@ -1,13 +1,14 @@
 import { Link } from "wouter";
-import { Shield, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import lighthouseLogo from "@assets/Minimalist_lighthouse_logo_design_1775623783267.png";
 
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-[#f9f9f8]">
       <nav className="bg-white border-b border-gray-100 px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-[#214636] rounded flex items-center justify-center">
-            <Shield className="w-4 h-4 text-[#2a9d72]" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-white shadow-[0_10px_22px_rgba(14,33,24,0.08)] ring-1 ring-[#dce7df]">
+            <img src={lighthouseLogo} alt="Beacon" className="h-7 w-7 object-contain shrink-0" />
           </div>
           <span className="font-bold text-[#214636]">Beacon</span>
         </div>

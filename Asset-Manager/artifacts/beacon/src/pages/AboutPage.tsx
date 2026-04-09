@@ -140,7 +140,7 @@ export default function AboutPage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <div className="text-xs text-[#2a9d72] font-bold uppercase tracking-widest mb-3">Board of Directors</div>
-            <h2 className="text-3xl font-bold text-[#214636]">The people behind Beacon</h2>
+            <h2 className="text-3xl font-bold text-[#214636]">The Leadership Behind Beacon</h2>
             <p className="text-gray-500 mt-3 max-w-md mx-auto">Dedicated leaders who have committed their time and expertise to protecting the most vulnerable.</p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
