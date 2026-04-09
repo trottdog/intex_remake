@@ -108,8 +108,8 @@ export default function SocialsPage() {
         <div className="relative max-w-2xl mx-auto">
           <div className="text-xs text-[#2a9d72] font-bold uppercase tracking-widest mb-3">Connect With Us</div>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-5">
-            Follow our story.<br />
-            <span className="text-[#2a9d72]">Share our mission.</span>
+            Follow Our Story.<br />
+            <span className="text-[#2a9d72]">Share Our Mission.</span>
           </h1>
           <p className="text-white/70 text-lg">
             Stay connected with life at Beacon — the milestones, the moments, and the girls whose lives are being transformed every day.
@@ -122,7 +122,7 @@ export default function SocialsPage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <div className="text-xs text-[#2a9d72] font-bold uppercase tracking-widest mb-3">Recent Posts</div>
-            <h2 className="text-3xl font-bold text-[#214636]">What we've been sharing</h2>
+            <h2 className="text-3xl font-bold text-[#214636]">What We’ve Been Sharing</h2>
             <p className="text-gray-500 mt-2">Real moments from real lives inside Beacon.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

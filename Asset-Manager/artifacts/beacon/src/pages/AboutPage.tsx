@@ -182,7 +182,7 @@ export default function AboutPage() {
       {/* ── CTA ──────────────────────────────────────────────────────── */}
       <section className="bg-[#2a9d72] py-16 px-6">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">Join our mission.</h2>
+          <h2 className="text-3xl font-bold text-white mb-4">Join Our Mission.</h2>
           <p className="text-white/80 mb-8">Whether you give, volunteer, or simply share our story — you become part of what makes Beacon possible.</p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/donate" className="bg-white text-[#2a9d72] hover:bg-gray-50 px-10 py-4 rounded-full font-bold text-base transition-colors shadow-lg">
