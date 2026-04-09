@@ -1,6 +1,17 @@
-# INTEX Minimum Audit Checklist
+# INTEX Comprehensive Audit Checklist
 
-Use this file as a pass/fail audit before you record videos, submit links, or present. The goal is not to ask whether the project is "good enough." The goal is to verify whether the minimum required work is actually complete, deployed, testable, and documented.
+Use this file as a strict pass/risk/fail audit before:
+- recording videos,
+- submitting links/credentials,
+- and presenting.
+
+The goal is not to ask whether the project is "good enough."
+The goal is to verify whether the required work is actually:
+- complete,
+- deployed,
+- testable,
+- documented,
+- and safe to claim.
 
 ---
 
@@ -13,102 +24,115 @@ For every item, mark one status:
 - `[ ]` Missing
 - `N/A` Intentionally not applicable
 
-For every major item, also record:
+For every major section, record:
 
 - **Owner:**
-- **Where to verify:** page, route, repo path, API route, notebook, or video timestamp
-- **Evidence captured:** screenshot, screen recording, deployed URL, inspector view, database proof, notebook output, etc.
+- **Where to verify:** page, route, repo path, API route, notebook path, screenshot path, video timestamp, deployed URL, browser devtools location, or submission form field
+- **Evidence captured:** screenshot, screen recording, deployed proof, inspector proof, DB proof, notebook output, test result, private-window link test, etc.
 - **Notes / gaps:**
+- **Safe to claim in video/submission?** Yes / No
 
 ---
 
-## Repository Verification Snapshot (2026-04-07)
+# 0. Critical Rule for This Audit
 
-Scope of this snapshot:
+Do not call anything "done" unless there is evidence.
 
-- Verified from repository artifacts only (code, docs, tests, config)
-- Not verified: deployed runtime behavior, private links, videos, or external tools unless evidence is committed
-
-Status summary from repo evidence:
-
-- `[ ]` Completed and strongly evidenced in repo: core architecture, major public/admin/donor/super-admin pages, role model, seeded admin/donor identities, authz runtime tests, donor-retention ML pipeline artifacts, and ML API endpoints
-- `[ ]` Partially evidenced / risky: deployment readiness vs actual deployment, privacy wording quality, ML UI surfacing (API exists; UI proof unclear), database persistence in live cloud, grading credentials with historical donor activity
-- `[ ]` Missing/unverified from repo: MFA-enabled account, HSTS, recorded public videos/links, final submission link verification, most IS 401 process artifacts (sprint screenshots, burndown proofs, design prompt logs)
-
-Top blockers before declaring "ready":
-
-1. No repo-proof that deployed site and deployed DB are reachable and functioning end-to-end.
-2. MFA account requirement is not implemented/verified.
-3. HSTS is not evidenced in backend middleware config.
-4. Required video/link verification artifacts are not present in repo.
-
-Primary evidence locations used for this snapshot:
-
-- `backend/intex/intex/Program.cs`
-- `backend/intex/intex/Data/IdentityDevSeeder.cs`
-- `backend/intex/intex.AuthzTests/AuthorizationRuntimeTests.cs`
-- `backend/intex/intex/Controllers/MlInsightsController.cs`
-- `frontend/src/app/routes.tsx`
-- `frontend/src/pages/`
-- `schema.sql`
-- `ml/ml-pipelines/donor-retention/`
+A feature is not complete for grading if:
+- it exists only locally,
+- it exists only in code but not in the deployed app,
+- it exists in the app but not in the required class video,
+- it exists in a notebook but is not surfaced meaningfully in the product,
+- it exists in UI only but not in API/security behavior,
+- it was intended but never verified.
 
 ---
 
-# 0. Minimum Ship Gate
+# 1. Minimum Ship Gate
 
-Do not call the project "ready" unless every item below is true.
+Do not call the project ready unless every item below is true.
 
 - [ ] Deployed website is publicly reachable
-- [ ] Database is deployed and app persists data to it
-- [ ] Login works on deployed site
-- [ ] Admin account exists and can access protected pages
-- [ ] Donor account exists and can view donor-specific history/impact
+- [ ] Deployed operational database is reachable through the app
+- [ ] App truly persists data to the deployed database
+- [ ] Login works on the deployed site
+- [ ] Admin account exists and works on the deployed site
+- [ ] Donor account exists and works on the deployed site
+- [ ] Donor account has historical donations tied correctly
 - [ ] At least one account exists with MFA enabled for testing
 - [ ] Public pages work without authentication
-- [ ] Required admin/staff pages exist and are reachable after login
-- [ ] At least one ML pipeline is complete end-to-end and integrated into the app
-- [ ] Security requirements are not only implemented, but visibly documented in the video
-- [ ] Submission URLs are correct and tested
+- [ ] Required protected staff/admin pages work after login
+- [ ] At least one ML pipeline is complete end-to-end
+- [ ] At least one ML pipeline is meaningfully integrated into the deployed app
+- [ ] Security requirements are both implemented and shown in the security video
+- [ ] All required videos exist
+- [ ] All required submission links are correct and tested
+- [ ] All required credentials are correct and tested
 - [ ] Videos are public/unlisted and playable by anyone with the link
 
 **Ship decision:** PASS / FAIL
 
 ---
 
-# 1. Project Alignment Audit
+# 2. Project Alignment Audit
 
-## 1.1 Product Direction
+## 2.1 Client Problem Coverage
 
-- [ ] The product clearly supports donor retention and donor growth
-- [ ] The product clearly supports resident/case management so girls do not fall through the cracks
-- [ ] The product clearly supports social media decision-making and performance tracking
-- [ ] The product is administratively manageable by a small staff
-- [ ] The design and data handling reflect privacy and safety concerns for minors and survivors
+- [ ] Product clearly supports donor retention
+- [ ] Product clearly supports donor growth
+- [ ] Product clearly helps staff identify donor risk / donor opportunity
+- [ ] Product clearly helps staff connect donations to impact
+- [ ] Product clearly supports resident/case management so girls do not fall through the cracks
+- [ ] Product clearly supports rehabilitation/progress tracking
+- [ ] Product clearly supports reintegration/readiness/risk workflows
+- [ ] Product clearly supports social media decision-making
+- [ ] Product clearly supports understanding what outreach actually works
+- [ ] Product is manageable by a small staff
+- [ ] Product design and data handling reflect privacy/safety concerns for minors and survivors
 
-## 1.2 Planned Scope vs Actual Build
+## 2.2 Scope Discipline
 
-- [ ] Built features match the project's must-have list
-- [ ] Out-of-scope items were not accidentally treated as required deliverables
-- [ ] Team can clearly explain what was intentionally not built and why
-- [ ] Team can clearly explain the business value of what was built
+- [ ] Team can state the product goal clearly
+- [ ] Built features match must-have scope
+- [ ] Out-of-scope items were not treated as required
+- [ ] Team can explain what was intentionally not built
+- [ ] Team can explain why omitted features were omitted
+- [ ] Team can explain business value of what was built
+- [ ] Demo tells one coherent story instead of random pages
 
 ---
 
-# 2. IS 401 Audit: Project Management and Systems Design
+# 3. Evidence Inventory
 
-## 2.1 Monday Deliverables
+Before auditing deliverables, make sure evidence is organized.
+
+- [ ] Deployed URLs list exists
+- [ ] Repo paths for major features are documented
+- [ ] Screenshot folder is organized
+- [ ] Video plan / shot list is organized
+- [ ] Credentials are stored privately and accurately
+- [ ] Notebook paths are documented
+- [ ] Test evidence is organized
+- [ ] Browser/devtools screenshots are organized
+- [ ] Lighthouse reports are saved
+- [ ] Final submission draft exists for review
+
+---
+
+# 4. IS 401 Audit: Project Management and Systems Design
+
+## 4.1 Monday Deliverables
 
 - [ ] Scrum Master identified
 - [ ] Product Owner identified
 - [ ] Two realistic personas created
 - [ ] Team can justify why those are the two most important personas
 - [ ] Journey map completed
-- [ ] Pain points identified in the current experience
+- [ ] Current pain points identified
 - [ ] Problem statement written and specific
 - [ ] MoSCoW table includes all INTEX requirements
 - [ ] MoSCoW table includes at least five nice-to-have ideas
-- [ ] One feature explicitly not being built is identified with rationale
+- [ ] One explicitly not-built feature is identified with rationale
 - [ ] Product backlog includes a clear product goal
 - [ ] Product backlog includes at least 12 backlog cards
 - [ ] Monday sprint backlog exists
@@ -119,25 +143,25 @@ Do not call the project "ready" unless every item below is true.
 - [ ] Burndown chart exists
 - [ ] Three desktop wireframes exist for the most important screens
 
-## 2.2 Tuesday Deliverables
+## 4.2 Tuesday Deliverables
 
 - [ ] Tuesday sprint backlog exists
 - [ ] Tuesday sprint backlog has at least 8 cards
 - [ ] Every Tuesday card has a point estimate
 - [ ] Every Tuesday card has exactly one assigned person
 - [ ] Screenshot of Tuesday sprint backlog exists from before work started
-- [ ] Three different AI-generated UI directions exist
-- [ ] There are 3 screenshots for each UI direction, 9 screenshots total
-- [ ] Five questions asked to AI are documented for design 1
-- [ ] Five questions asked to AI are documented for design 2
-- [ ] Five questions asked to AI are documented for design 3
+- [ ] Three distinct AI-generated UI directions exist
+- [ ] There are 3 screenshots for each direction, 9 total
+- [ ] Five AI questions are documented for design 1
+- [ ] Five AI questions are documented for design 2
+- [ ] Five AI questions are documented for design 3
 - [ ] Takeaways are summarized for each design option
-- [ ] Final chosen UI is identified
-- [ ] Short paragraph explains why that UI was chosen
-- [ ] Three changes from the original AI output are listed
-- [ ] Tech stack diagram exists with frontend, backend, and database logos
+- [ ] Chosen UI is identified
+- [ ] Chosen UI rationale paragraph exists
+- [ ] Three changes from original AI output are listed
+- [ ] Tech stack diagram exists with frontend/backend/database logos
 
-## 2.3 Wednesday Deliverables
+## 4.3 Wednesday Deliverables
 
 - [ ] Wednesday sprint backlog exists
 - [ ] Wednesday sprint backlog has at least 8 cards
@@ -148,72 +172,80 @@ Do not call the project "ready" unless every item below is true.
 - [ ] Each of those pages has both desktop and mobile screenshots
 - [ ] One working page is deployed to the cloud
 - [ ] That working page persists data to the database
+- [ ] Persistence was actually verified, not assumed
 - [ ] Real user feedback session happened
 - [ ] User chosen had meaningful insight into a target persona
-- [ ] Five specific improvement actions were captured from feedback
+- [ ] Five specific improvement actions were captured
 - [ ] Burndown chart is updated through Wednesday
 
-## 2.4 Thursday Deliverables
+## 4.4 Thursday Deliverables
 
 - [ ] Thursday sprint backlog exists
 - [ ] Thursday sprint backlog has at least 8 cards
 - [ ] Every Thursday card has a point estimate
 - [ ] Every Thursday card has exactly one assigned person
 - [ ] Screenshot of Thursday sprint backlog exists from before work started
-- [ ] One OKR metric is tracked and displayed in the app
+- [ ] One OKR metric is tracked in the app
+- [ ] OKR metric is displayed in the app
 - [ ] Team can explain why this metric matters most
-- [ ] Every page meets Lighthouse accessibility score of at least 90
-- [ ] Every page is responsive for desktop and mobile
+- [ ] Every required page meets Lighthouse accessibility score >= 90
+- [ ] Every required page is responsive for desktop and mobile
 - [ ] Individual retrospective exists for every team member
 - [ ] Each person recorded 2 things going well
 - [ ] Each person recorded 2 things that could have been better
 - [ ] Each person recorded their greatest personal contribution
 - [ ] Team reflection explains how well the solution solved the original customer problem
 
-## 2.5 IS 401 Evidence Audit
+## 4.5 IS 401 Evidence Audit
 
 - [ ] FigJam board is complete and updated across the week
-- [ ] Sprint screenshots are organized and easy to find
+- [ ] Sprint screenshots are easy to find
 - [ ] Burndown chart is legible and current
-- [ ] Wireframes and design rationale are presentable in final review
-- [ ] Feedback notes are concrete, not generic
+- [ ] Wireframes are presentable
+- [ ] Design rationale is presentable
+- [ ] User feedback notes are concrete, not generic
+- [ ] IS 401 artifacts are ready to show on demand
 
 ---
 
-# 3. IS 413 Audit: Enterprise Application Development
+# 5. IS 413 Audit: Enterprise Application Development
 
-## 3.1 Architecture and Tech Stack
+## 5.1 Architecture and Platform
 
 - [ ] Backend uses .NET 10 / C#
 - [ ] Frontend uses React / TypeScript / Vite
-- [ ] Relational database uses Azure SQL, MySQL, or PostgreSQL
+- [ ] Database uses Azure SQL, MySQL, or PostgreSQL
 - [ ] Database design follows good relational principles
 - [ ] App is deployed
 - [ ] Database is deployed
+- [ ] App and DB both work together in deployed environment
 - [ ] Data validation exists
 - [ ] Error handling exists
-- [ ] UI has consistent titles, icons, branding, and navigation
+- [ ] Titles/icons/branding/navigation are consistent
 - [ ] Performance is acceptable for demo use
 
-## 3.2 Public Pages
+## 5.2 Public Experience
 
 ### Home / Landing Page
 - [ ] Modern, professional landing page exists
 - [ ] Mission is clearly explained
 - [ ] Clear calls to action exist
+- [ ] Trust/credibility signals are present
 - [ ] Page works unauthenticated
 
 ### Impact / Donor-Facing Dashboard
 - [ ] Public impact dashboard exists
-- [ ] Data shown is aggregated and anonymized
-- [ ] Dashboard explains outcomes/progress/resource use clearly
+- [ ] Data is aggregated
+- [ ] Data is anonymized
+- [ ] Outcomes/progress/resource use are explained clearly
 - [ ] Visualizations are understandable
+- [ ] Dashboard helps build donor trust
 
 ### Login Page
 - [ ] Login page exists
 - [ ] Username/password auth works
 - [ ] Validation messages appear for invalid input
-- [ ] Error handling is visible and understandable
+- [ ] Error handling is understandable
 
 ### Privacy Policy + Cookie Consent
 - [ ] Privacy policy page exists
@@ -221,7 +253,7 @@ Do not call the project "ready" unless every item below is true.
 - [ ] Cookie consent appears on public site
 - [ ] Team knows whether cookie consent is cosmetic or functional
 
-## 3.3 Admin / Staff Portal
+## 5.3 Admin / Staff Experience
 
 ### Admin Dashboard
 - [ ] High-level overview page exists
@@ -229,6 +261,7 @@ Do not call the project "ready" unless every item below is true.
 - [ ] Recent donations metric or feed is shown
 - [ ] Upcoming case conferences are shown
 - [ ] Progress summary / trend data is shown
+- [ ] Dashboard helps staff know what to do next, not just what exists
 
 ### Donors & Contributions
 - [ ] Staff can view supporter profiles
@@ -236,14 +269,22 @@ Do not call the project "ready" unless every item below is true.
 - [ ] Staff can update supporter profiles
 - [ ] Staff can carefully delete supporter profiles if allowed
 - [ ] Supporter classification by type exists
-- [ ] Supporter status active/inactive exists
+- [ ] Supporter active/inactive status exists
 - [ ] Monetary donations can be recorded/viewed
 - [ ] In-kind donations can be recorded/viewed
 - [ ] Time contributions can be recorded/viewed
 - [ ] Skills contributions can be recorded/viewed
-- [ ] Social media contributions/advocacy can be recorded/viewed
+- [ ] Social media advocacy contributions can be recorded/viewed
 - [ ] Donation allocations across safehouses/program areas are viewable
-- [ ] Filtering/search works on donor/contribution data
+- [ ] Filtering works on donor/contribution data
+- [ ] Search works on donor/contribution data
+- [ ] Donor history is understandable
+- [ ] Donation impact is understandable
+
+### Donor Role Experience
+- [ ] Donor-role user can access donor-specific donation history if implemented
+- [ ] Donor-role user can access donor-specific impact if implemented
+- [ ] Donor cannot access admin-only data
 
 ### Caseload Inventory
 - [ ] Caseload inventory page exists
@@ -254,7 +295,7 @@ Do not call the project "ready" unless every item below is true.
 - [ ] Demographics are captured
 - [ ] Case category and subcategories are captured
 - [ ] Disability/special-needs fields are captured
-- [ ] Family socio-demographic profile fields are captured
+- [ ] Family socio-demographic fields are captured
 - [ ] Admission details are captured
 - [ ] Referral details are captured
 - [ ] Assigned social workers are captured
@@ -295,31 +336,40 @@ Do not call the project "ready" unless every item below is true.
 - [ ] Reintegration success rates are shown
 - [ ] Reports align reasonably with Annual Accomplishment Report style
 
-## 3.4 Misc / Finish Quality
+### Social Media / Outreach Support
+- [ ] Social media data is represented somewhere meaningful
+- [ ] Engagement metrics are shown
+- [ ] Social content performance is interpretable
+- [ ] Social-to-donation linkage exists or is reasonably approximated
+- [ ] Feature helps answer what content/platform/timing works
 
-- [ ] Any extra required support pages exist
-- [ ] Pagination is implemented where needed
+## 5.4 Finish Quality
+
+- [ ] Extra support pages required by the solution exist
+- [ ] Pagination exists where needed
 - [ ] Empty states exist where needed
-- [ ] Not-found and basic failure states exist where needed
-- [ ] Mobile layout remains usable on all major pages
+- [ ] Not-found state exists
+- [ ] Failure states exist where needed
+- [ ] Mobile layout remains usable on major pages
+- [ ] App feels like a product, not just an assignment
 
 ---
 
-# 4. IS 414 Audit: Security
+# 6. IS 414 Audit: Security
 
-## 4.1 Critical Rule
+## 6.1 Critical Rule
 
-- [ ] Every security feature required for points is clearly shown in the security video
-- [ ] Team does not rely on "we implemented it but forgot to show it"
+- [ ] Every claimed security feature is clearly shown in the security video
+- [ ] Team is not relying on "implemented but not shown"
 
-## 4.2 Confidentiality
+## 6.2 Confidentiality
 
 - [ ] Public site uses HTTPS/TLS
 - [ ] Certificate is valid
 - [ ] HTTP redirects to HTTPS
-- [ ] HTTPS behavior is demonstrated in the browser
+- [ ] HTTPS behavior is demonstrated in browser
 
-## 4.3 Authentication
+## 6.3 Authentication
 
 - [ ] Username/password authentication works
 - [ ] Visitors can browse public pages unauthenticated
@@ -329,7 +379,7 @@ Do not call the project "ready" unless every item below is true.
 - [ ] /login and /auth/me style endpoints are accessible as needed
 - [ ] Protected endpoints reject unauthorized users
 
-## 4.4 Role-Based Authorization
+## 6.4 RBAC Authorization
 
 - [ ] Admin role exists
 - [ ] Donor role exists
@@ -337,47 +387,50 @@ Do not call the project "ready" unless every item below is true.
 - [ ] Only admin can create data where required
 - [ ] Only admin can update data where required
 - [ ] Only admin can delete data where required
-- [ ] Donor can view donor-specific donation history/impact if implemented
+- [ ] Donor can view donor-specific history/impact if implemented
 - [ ] Endpoint-level authorization matches UI restrictions
 
-## 4.5 Integrity
+## 6.5 Integrity
 
 - [ ] Change/delete actions require authorization
 - [ ] Delete confirmation is required
-- [ ] Team can demonstrate unauthorized CUD attempts failing
+- [ ] Unauthorized CUD attempts fail
+- [ ] Team can demonstrate those failures
 
-## 4.6 Credentials
+## 6.6 Credentials
 
-- [ ] No secrets are committed to the public repository
-- [ ] Secrets are stored in .env, environment variables, or a secrets manager
+- [ ] No secrets are committed to the public repo
+- [ ] Secrets are stored in .env, env vars, or secrets manager
 - [ ] Deployment secrets are handled safely
 - [ ] Team can show where secrets are configured without exposing them
 
-## 4.7 Privacy
+## 6.7 Privacy
 
-- [ ] GDPR-style privacy policy is customized for this site
+- [ ] GDPR-style privacy policy is customized
 - [ ] Privacy policy is linked from footer
 - [ ] Cookie consent notification is implemented
-- [ ] Team can explain whether consent is fully functional or cosmetic
+- [ ] Team can explain whether consent is functional or cosmetic
+- [ ] Public/private data boundary is appropriate for sensitive minors/survivors
 
-## 4.8 Attack Mitigations
+## 6.8 Attack Mitigations
 
-- [ ] Content-Security-Policy is sent as an HTTP header, not just a meta tag
-- [ ] CSP is visible in browser dev tools
+- [ ] CSP is sent as an HTTP response header
+- [ ] CSP is not just a meta tag
+- [ ] CSP is visible in browser devtools
 - [ ] CSP is restricted to only needed sources
 - [ ] Team can explain allowed sources
 - [ ] Data sanitization or output encoding is used to reduce injection risk
 
-## 4.9 Availability
+## 6.9 Availability
 
 - [ ] Site is publicly accessible
 - [ ] Site is stable enough for TA access
 - [ ] Identity/login works in deployed environment
 - [ ] Operational database works in deployed environment
 
-## 4.10 Additional Security Features
+## 6.10 Additional Security Features
 
-Mark all additional features you actually completed and can prove.
+Mark only what was actually completed and can be proved.
 
 - [ ] Third-party authentication
 - [ ] MFA / 2FA
@@ -388,29 +441,34 @@ Mark all additional features you actually completed and can prove.
 - [ ] Dockerized deployment
 - [ ] Other: ______________________
 
-## 4.11 Required Grading Credentials
+## 6.11 Required Grading Credentials
 
 - [ ] Admin account without MFA exists
-- [ ] Donor account without MFA exists and has historical donations
-- [ ] Account with MFA enabled exists
+- [ ] Admin account without MFA works
+- [ ] Donor account without MFA exists
+- [ ] Donor account without MFA works
+- [ ] Donor account is tied to historical donations
+- [ ] MFA-enabled account exists
+- [ ] MFA-enabled account is configured correctly
 - [ ] Credentials are accurate and tested
-- [ ] Credentials are included in final submission where requested
+- [ ] Credentials are included where required in final submission
 
 ---
 
-# 5. IS 455 Audit: Machine Learning
+# 7. IS 455 Audit: Machine Learning
 
-## 5.1 Minimum ML Standard
+## 7.1 Minimum ML Standard
 
 - [ ] At least one complete ML pipeline exists
 - [ ] Pipeline solves a meaningful business problem
-- [ ] Pipeline is integrated into the deployed web app
 - [ ] Predictive model exists
 - [ ] Explanatory / causal-style analysis exists
 - [ ] Results are interpreted in business terms
 - [ ] Notebook is executable top-to-bottom
+- [ ] Pipeline is integrated into the deployed web app
+- [ ] Model outputs are visible in a meaningful way in the app
 
-## 5.2 Pipeline Quality Audit
+## 7.2 Pipeline Quality Audit
 
 ### Problem Framing
 - [ ] Business problem is clearly written
@@ -424,7 +482,7 @@ Mark all additional features you actually completed and can prove.
 - [ ] Missing values handled appropriately
 - [ ] Outliers explored/handled appropriately
 - [ ] Feature engineering is explained
-- [ ] Data prep is reproducible, not a one-off script
+- [ ] Data prep is reproducible
 - [ ] Exploration includes distributions/relationships/anomalies
 
 ### Modeling & Feature Selection
@@ -445,17 +503,15 @@ Mark all additional features you actually completed and can prove.
 ### Causal and Relationship Analysis
 - [ ] Most important features are discussed
 - [ ] Team distinguishes correlation from causation
-- [ ] Team explains what claims are defensible and what claims are not
-- [ ] Decisions/recommendations are tied to feature findings
+- [ ] Team explains what claims are defensible vs not defensible
+- [ ] Recommendations are tied to feature findings
 
 ### Deployment Notes
-- [ ] Notebook explains where deployment lives in the repo/app
+- [ ] Notebook explains where deployment lives in repo/app
 - [ ] API endpoint or dashboard integration exists
 - [ ] User can actually access model output in the app
 
-## 5.3 Multi-Pipeline Audit
-
-Use one block per pipeline.
+## 7.3 Multi-Pipeline Inventory
 
 ### Pipeline 1: ______________________
 - [ ] Distinct business problem
@@ -480,48 +536,78 @@ Use one block per pipeline.
 
 ---
 
-# 6. Data and Domain Coverage Audit
+# 8. Data and Domain Coverage Audit
 
-## 6.1 Donor / Support Domain
+## 8.1 Donor / Support Domain
 
-- [ ] Supporters table or equivalent is used appropriately
-- [ ] Donations table or equivalent is used appropriately
+- [ ] Supporters data is used appropriately
+- [ ] Donations data is used appropriately
 - [ ] Donation allocations are represented
 - [ ] Donor history can be understood by staff
 - [ ] Impact communication for donors is supported
 
-## 6.2 Case Management Domain
+## 8.2 Case Management Domain
 
 - [ ] Resident data is represented appropriately
 - [ ] Process recordings are represented appropriately
 - [ ] Home visitations are represented appropriately
-- [ ] Reintegration / progress / risk tracking is represented
+- [ ] Intervention/progress/risk tracking is represented
+- [ ] Reintegration tracking is represented
 - [ ] Case conferences are represented
 
-## 6.3 Outreach / Social Media Domain
+## 8.3 Outreach / Social Media Domain
 
 - [ ] Social media post data is represented
 - [ ] Engagement metrics are represented
 - [ ] Social data informs decisions, not just vanity metrics
-- [ ] Social media to donation linkage exists or is reasonably approximated
+- [ ] Social-to-donation linkage exists or is reasonably approximated
 
 ---
 
-# 7. Testing and QA Audit
+# 9. Deployed Runtime Verification
 
-## 7.1 Functional Testing
+This section exists because many teams verify only from repo code.
+
+## 9.1 Deployed URL Smoke Test
+- [ ] Home page opens
+- [ ] Footer opens privacy policy
+- [ ] Cookie consent appears
+- [ ] Login page opens
+- [ ] Invalid login behaves correctly
+- [ ] Valid admin login behaves correctly
+- [ ] Valid donor login behaves correctly
+- [ ] Logout behaves correctly
+
+## 9.2 Persistence Smoke Test
+- [ ] Create test record in deployed app
+- [ ] Refresh page and confirm persistence
+- [ ] Re-open from another session if possible
+- [ ] Update test record and verify persistence
+- [ ] Delete test record and verify persistence/change
+
+## 9.3 Protected Access Smoke Test
+- [ ] Anonymous user blocked from protected admin pages
+- [ ] Donor blocked from admin-only pages
+- [ ] Admin can access required protected pages
+- [ ] Unauthorized API calls fail
+
+---
+
+# 10. Testing and QA Audit
+
+## 10.1 Functional Testing
 
 - [ ] Public navigation tested
 - [ ] Login/logout tested
 - [ ] Role-based route protection tested
-- [ ] CRUD tested for donors/supporters
+- [ ] CRUD tested for supporters/donors
 - [ ] CRUD tested for residents
 - [ ] CRUD tested for process recordings
 - [ ] CRUD tested for home visitations/case conferences
 - [ ] Reports pages tested
 - [ ] ML feature tested
 
-## 7.2 Failure / Edge Cases
+## 10.2 Failure / Edge Cases
 
 - [ ] Invalid login tested
 - [ ] Empty form submission tested
@@ -529,19 +615,21 @@ Use one block per pipeline.
 - [ ] Unauthorized access tested
 - [ ] Delete confirmation tested
 - [ ] Empty data states tested
+- [ ] Graceful error state tested somewhere meaningful
 
-## 7.3 UI Quality
+## 10.3 UI Quality
 
 - [ ] Desktop views checked
 - [ ] Mobile views checked
 - [ ] Lighthouse accessibility reports saved
 - [ ] Visual polish is sufficient for judging
+- [ ] Important actions show visible feedback/status
 
 ---
 
-# 8. Video Audit
+# 11. Video Audit
 
-## 8.1 General Video Rules
+## 11.1 General Video Rules
 
 - [ ] Each class has its own video if required
 - [ ] Videos are concise
@@ -549,17 +637,19 @@ Use one block per pipeline.
 - [ ] Correct screen was recorded
 - [ ] Links are public or unlisted, not private
 - [ ] Every required feature is actually shown, not merely described
+- [ ] Video claims match what is actually visible
+- [ ] Team does not rely on another class video to prove a missing item
 
-## 8.2 IS 413 Video Coverage
+## 11.2 IS 413 Video Coverage
 
 - [ ] Public pages shown
-- [ ] Admin pages shown
+- [ ] Protected/admin pages shown
 - [ ] End-to-end working page shown
 - [ ] Database persistence shown
 - [ ] Responsiveness shown
 - [ ] Quality/polish shown
 
-## 8.3 IS 414 Video Coverage
+## 11.3 IS 414 Video Coverage
 
 - [ ] HTTPS shown
 - [ ] HTTP to HTTPS redirect shown
@@ -569,23 +659,23 @@ Use one block per pipeline.
 - [ ] Delete confirmation shown
 - [ ] Privacy policy shown
 - [ ] Cookie consent shown
-- [ ] CSP header shown in dev tools
+- [ ] CSP header shown in devtools
 - [ ] Secrets handling approach explained
-- [ ] Additional security features shown if claiming points
+- [ ] Additional security features shown if claimed
 
-## 8.4 IS 455 Video Coverage
+## 11.4 IS 455 Video Coverage
 
 - [ ] Business problem explained
-- [ ] Pipeline notebook(s) shown
+- [ ] Notebook(s) shown
 - [ ] Results shown
 - [ ] Model deployment shown in app
 - [ ] Business value explained
 
 ---
 
-# 9. Final Submission Audit
+# 12. Final Submission Audit
 
-## 9.1 Required Submission Data
+## 12.1 Required Submission Data
 
 - [ ] Group number is correct
 - [ ] Group members are correct
@@ -597,7 +687,7 @@ Use one block per pipeline.
 - [ ] Video links are correct
 - [ ] Credentials are correct
 
-## 9.2 Link Verification
+## 12.2 Link Verification
 
 Open every link from a logged-out browser/private window.
 
@@ -608,18 +698,31 @@ Open every link from a logged-out browser/private window.
 - [ ] IS 414 video opens
 - [ ] IS 455 video opens
 
-## 9.3 Presentation Readiness
+## 12.3 Credential Verification
+
+- [ ] Admin credential works
+- [ ] Donor credential works
+- [ ] MFA account exists as claimed
+- [ ] Credentials are copied accurately into submission
+- [ ] Credentials are not exposed publicly elsewhere
+
+---
+
+# 13. Presentation Readiness Audit
 
 - [ ] Team can demo within 20 minutes
 - [ ] Demo path is intentional and rehearsed
 - [ ] Most important business problems are addressed early
 - [ ] Tech demo is prioritized over background explanation
+- [ ] Security/privacy touchpoints are included
+- [ ] ML is shown in context, not in isolation
+- [ ] Team can answer likely judge questions
 - [ ] No handouts planned
 - [ ] Backup plan exists if live demo fails
 
 ---
 
-# 10. Common Failure Points
+# 14. Common Failure Points
 
 Mark each as cleared before submission.
 
@@ -628,46 +731,52 @@ Mark each as cleared before submission.
 - [ ] "Database works locally but not in cloud"
 - [ ] "Login works for one person only"
 - [ ] "Role restrictions only exist in UI, not API"
-- [ ] "Cookie consent is present but team cannot explain if it is functional"
+- [ ] "Cookie consent exists but team cannot explain if it is functional"
 - [ ] "CSP is in a meta tag instead of response header"
 - [ ] "Notebook runs only on one machine"
 - [ ] "ML result exists in notebook but not in app"
 - [ ] "Credentials are wrong or missing"
 - [ ] "Submission links point to wrong repo/branch/video"
 - [ ] "Mobile views were not actually tested"
-- [ ] "Accessibility score was checked on only one page"
+- [ ] "Accessibility was checked on only one page"
 - [ ] "One working page does not truly persist to DB"
+- [ ] "Deployed app is stale compared with local code"
+- [ ] "Feature is shown in UI but not protected correctly"
+- [ ] "Donor role can see too much"
+- [ ] "Sensitive resident data is overexposed publicly or too broadly internally"
 
 ---
 
-# 11. Final Go / No-Go Review
+# 15. Final Go / No-Go Review
 
 ## Critical Blockers
 
 List anything that would directly cost points if unresolved.
 
-1. 
-2. 
-3. 
-4. 
-5. 
+1.
+2.
+3.
+4.
+5.
 
 ## Highest-Risk Claims
 
 List anything the team plans to claim that must be demonstrated carefully.
 
-1. 
-2. 
-3. 
-4. 
-5. 
+1.
+2.
+3.
+4.
+5.
 
 ## Final Status by Area
 
+- Project alignment: PASS / RISK / FAIL
 - IS 401: PASS / RISK / FAIL
 - IS 413: PASS / RISK / FAIL
 - IS 414: PASS / RISK / FAIL
 - IS 455: PASS / RISK / FAIL
+- Deployed runtime verification: PASS / RISK / FAIL
 - Final submission package: PASS / RISK / FAIL
 - Presentation readiness: PASS / RISK / FAIL
 
@@ -677,17 +786,3 @@ List anything the team plans to claim that must be demonstrated carefully.
 - [ ] Ready to submit
 - [ ] Ready to present
 - [ ] Not ready, blockers remain
-
----
-
-# 12. Notes for Your Team
-
-This checklist is intentionally stricter than a normal task list. It combines:
-
-- the case goals,
-- class-specific minimum requirements,
-- your own Project Beacon must-haves,
-- and the previously audited backlog adjustments.
-
-If you clear this file honestly, you should have strong minimum coverage and far fewer grading surprises.
-
