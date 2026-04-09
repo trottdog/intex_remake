@@ -63,8 +63,8 @@ export default function PublicImpactPage() {
         <div className="relative max-w-4xl mx-auto text-center">
           <div className="text-xs text-[#2a9d72] font-bold uppercase tracking-widest mb-3">Our Impact</div>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-5">
-            Real numbers.<br />
-            <span className="text-[#2a9d72]">Real lives changed.</span>
+            Real Numbers.<br />
+            <span className="text-[#2a9d72]">Real Lives Changed.</span>
           </h1>
           <p className="text-white/70 text-lg max-w-2xl mx-auto">
             Beacon Sanctuary is committed to transparency. Here is what your support has accomplished — in data, in stories, and in lives.

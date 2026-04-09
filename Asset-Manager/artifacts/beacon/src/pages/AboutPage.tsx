@@ -80,7 +80,7 @@ export default function AboutPage() {
               In 2012, our founder opened the doors of a small home in Quezon City to three girls who had nowhere to go. Word spread quietly — through social workers, barangay officials, and a network of volunteers who cared. Within a year, that small home sheltered twelve girls.
             </p>
             <p className="text-gray-600 leading-relaxed mb-4">
-              Today, Beacon Sanctuary operates three fully-staffed safe homes across Luzon, serving girls between the ages of 8 and 21 who have been rescued from situations of sexual exploitation and trafficking.
+              Today, Beacon Sanctuary operates nine fully-staffed safe homes across the Philippines, serving girls between the ages of 8 and 21 who have been rescued from situations of sexual exploitation and trafficking.
             </p>
             <p className="text-gray-600 leading-relaxed">
               We are inspired by organizations like Lighthouse Sanctuary, which has demonstrated that faith-driven, data-informed, and community-rooted care can radically transform outcomes for vulnerable children. We carry that same mission forward in the Philippines.
@@ -178,6 +178,21 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* ── CTA ──────────────────────────────────────────────────────── */}
+      <section className="bg-[#2a9d72] py-16 px-6">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">Join Our Mission.</h2>
+          <p className="text-white/80 mb-8">Whether you give, volunteer, or simply share our story — you become part of what makes Beacon possible.</p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <a href="/donate" className="bg-white text-[#2a9d72] hover:bg-gray-50 px-10 py-4 rounded-full font-bold text-base transition-colors shadow-lg">
+              Donate Now
+            </a>
+            <a href="/socials" className="border-2 border-white/60 text-white hover:bg-white/10 px-8 py-4 rounded-full font-semibold transition-colors">
+              Follow Us
+            </a>
+          </div>
+        </div>
+      </section>
     </PublicLayout>
   );
 }
