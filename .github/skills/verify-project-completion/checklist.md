@@ -121,80 +121,82 @@ Before auditing deliverables, make sure evidence is organized.
 
 # 4. IS 401 Audit: Project Management and Systems Design
 
+Audit note (2026-04-09): Team confirmed Monday through Thursday IS401 deliverables are complete.
+
 ## 4.1 Monday Deliverables
 
-- [ ] Scrum Master identified
-- [ ] Product Owner identified
-- [ ] Two realistic personas created
-- [ ] Team can justify why those are the two most important personas
-- [ ] Journey map completed
-- [ ] Current pain points identified
-- [ ] Problem statement written and specific
-- [ ] MoSCoW table includes all INTEX requirements
-- [ ] MoSCoW table includes at least five nice-to-have ideas
-- [ ] One explicitly not-built feature is identified with rationale
-- [ ] Product backlog includes a clear product goal
-- [ ] Product backlog includes at least 12 backlog cards
-- [ ] Monday sprint backlog exists
-- [ ] Monday sprint backlog has at least 8 cards
-- [ ] Every Monday card has a point estimate
-- [ ] Every Monday card has exactly one assigned person
-- [ ] Screenshot of Monday sprint backlog exists from before work started
-- [ ] Burndown chart exists
-- [ ] Three desktop wireframes exist for the most important screens
+- [x] Scrum Master identified
+- [x] Product Owner identified
+- [x] Two realistic personas created
+- [x] Team can justify why those are the two most important personas
+- [x] Journey map completed
+- [x] Current pain points identified
+- [x] Problem statement written and specific
+- [x] MoSCoW table includes all INTEX requirements
+- [x] MoSCoW table includes at least five nice-to-have ideas
+- [x] One explicitly not-built feature is identified with rationale
+- [x] Product backlog includes a clear product goal
+- [x] Product backlog includes at least 12 backlog cards
+- [x] Monday sprint backlog exists
+- [x] Monday sprint backlog has at least 8 cards
+- [x] Every Monday card has a point estimate
+- [x] Every Monday card has exactly one assigned person
+- [x] Screenshot of Monday sprint backlog exists from before work started
+- [x] Burndown chart exists
+- [x] Three desktop wireframes exist for the most important screens
 
 ## 4.2 Tuesday Deliverables
 
-- [ ] Tuesday sprint backlog exists
-- [ ] Tuesday sprint backlog has at least 8 cards
-- [ ] Every Tuesday card has a point estimate
-- [ ] Every Tuesday card has exactly one assigned person
-- [ ] Screenshot of Tuesday sprint backlog exists from before work started
-- [ ] Three distinct AI-generated UI directions exist
-- [ ] There are 3 screenshots for each direction, 9 total
-- [ ] Five AI questions are documented for design 1
-- [ ] Five AI questions are documented for design 2
-- [ ] Five AI questions are documented for design 3
-- [ ] Takeaways are summarized for each design option
-- [ ] Chosen UI is identified
-- [ ] Chosen UI rationale paragraph exists
-- [ ] Three changes from original AI output are listed
-- [ ] Tech stack diagram exists with frontend/backend/database logos
+- [x] Tuesday sprint backlog exists
+- [x] Tuesday sprint backlog has at least 8 cards
+- [x] Every Tuesday card has a point estimate
+- [x] Every Tuesday card has exactly one assigned person
+- [x] Screenshot of Tuesday sprint backlog exists from before work started
+- [x] Three distinct AI-generated UI directions exist
+- [x] There are 3 screenshots for each direction, 9 total
+- [x] Five AI questions are documented for design 1
+- [x] Five AI questions are documented for design 2
+- [x] Five AI questions are documented for design 3
+- [x] Takeaways are summarized for each design option
+- [x] Chosen UI is identified
+- [x] Chosen UI rationale paragraph exists
+- [x] Three changes from original AI output are listed
+- [x] Tech stack diagram exists with frontend/backend/database logos
 
 ## 4.3 Wednesday Deliverables
 
-- [ ] Wednesday sprint backlog exists
-- [ ] Wednesday sprint backlog has at least 8 cards
-- [ ] Every Wednesday card has a point estimate
-- [ ] Every Wednesday card has exactly one assigned person
-- [ ] Screenshot of Wednesday sprint backlog exists from before work started
-- [ ] At least 5 page screenshots exist
-- [ ] Each of those pages has both desktop and mobile screenshots
-- [ ] One working page is deployed to the cloud
-- [ ] That working page persists data to the database
-- [ ] Persistence was actually verified, not assumed
-- [ ] Real user feedback session happened
-- [ ] User chosen had meaningful insight into a target persona
-- [ ] Five specific improvement actions were captured
-- [ ] Burndown chart is updated through Wednesday
+- [x] Wednesday sprint backlog exists
+- [x] Wednesday sprint backlog has at least 8 cards
+- [x] Every Wednesday card has a point estimate
+- [x] Every Wednesday card has exactly one assigned person
+- [x] Screenshot of Wednesday sprint backlog exists from before work started
+- [x] At least 5 page screenshots exist
+- [x] Each of those pages has both desktop and mobile screenshots
+- [x] One working page is deployed to the cloud
+- [x] That working page persists data to the database
+- [x] Persistence was actually verified, not assumed
+- [x] Real user feedback session happened
+- [x] User chosen had meaningful insight into a target persona
+- [x] Five specific improvement actions were captured
+- [x] Burndown chart is updated through Wednesday
 
 ## 4.4 Thursday Deliverables
 
-- [ ] Thursday sprint backlog exists
-- [ ] Thursday sprint backlog has at least 8 cards
-- [ ] Every Thursday card has a point estimate
-- [ ] Every Thursday card has exactly one assigned person
-- [ ] Screenshot of Thursday sprint backlog exists from before work started
-- [ ] One OKR metric is tracked in the app
-- [ ] OKR metric is displayed in the app
-- [ ] Team can explain why this metric matters most
-- [ ] Every required page meets Lighthouse accessibility score >= 90
-- [ ] Every required page is responsive for desktop and mobile
-- [ ] Individual retrospective exists for every team member
-- [ ] Each person recorded 2 things going well
-- [ ] Each person recorded 2 things that could have been better
-- [ ] Each person recorded their greatest personal contribution
-- [ ] Team reflection explains how well the solution solved the original customer problem
+- [x] Thursday sprint backlog exists
+- [x] Thursday sprint backlog has at least 8 cards
+- [x] Every Thursday card has a point estimate
+- [x] Every Thursday card has exactly one assigned person
+- [x] Screenshot of Thursday sprint backlog exists from before work started
+- [x] One OKR metric is tracked in the app
+- [x] OKR metric is displayed in the app
+- [x] Team can explain why this metric matters most
+- [x] Every required page meets Lighthouse accessibility score >= 90
+- [x] Every required page is responsive for desktop and mobile
+- [x] Individual retrospective exists for every team member
+- [x] Each person recorded 2 things going well
+- [x] Each person recorded 2 things that could have been better
+- [x] Each person recorded their greatest personal contribution
+- [x] Team reflection explains how well the solution solved the original customer problem
 
 ## 4.5 IS 401 Evidence Audit
 
@@ -212,46 +214,46 @@ Before auditing deliverables, make sure evidence is organized.
 
 ## 5.1 Architecture and Platform
 
-- [ ] Backend uses .NET 10 / C#
-- [ ] Frontend uses React / TypeScript / Vite
-- [ ] Database uses Azure SQL, MySQL, or PostgreSQL
-- [ ] Database design follows good relational principles
+- [x] Backend uses .NET 10 / C#
+- [x] Frontend uses React / TypeScript / Vite
+- [x] Database uses Azure SQL, MySQL, or PostgreSQL
+- [x] Database design follows good relational principles
 - [ ] App is deployed
 - [ ] Database is deployed
 - [ ] App and DB both work together in deployed environment
-- [ ] Data validation exists
-- [ ] Error handling exists
+- [x] Data validation exists
+- [x] Error handling exists
 - [ ] Titles/icons/branding/navigation are consistent
 - [ ] Performance is acceptable for demo use
 
 ## 5.2 Public Experience
 
 ### Home / Landing Page
-- [ ] Modern, professional landing page exists
-- [ ] Mission is clearly explained
-- [ ] Clear calls to action exist
-- [ ] Trust/credibility signals are present
+- [x] Modern, professional landing page exists
+- [x] Mission is clearly explained
+- [x] Clear calls to action exist
+- [x] Trust/credibility signals are present
 - [ ] Page works unauthenticated
 
 ### Impact / Donor-Facing Dashboard
-- [ ] Public impact dashboard exists
-- [ ] Data is aggregated
-- [ ] Data is anonymized
-- [ ] Outcomes/progress/resource use are explained clearly
-- [ ] Visualizations are understandable
-- [ ] Dashboard helps build donor trust
+- [x] Public impact dashboard exists
+- [x] Data is aggregated
+- [x] Data is anonymized
+- [x] Outcomes/progress/resource use are explained clearly
+- [x] Visualizations are understandable
+- [x] Dashboard helps build donor trust
 
 ### Login Page
-- [ ] Login page exists
-- [ ] Username/password auth works
-- [ ] Validation messages appear for invalid input
-- [ ] Error handling is understandable
+- [x] Login page exists
+- [x] Username/password auth works
+- [x] Validation messages appear for invalid input
+- [x] Error handling is understandable
 
 ### Privacy Policy + Cookie Consent
-- [ ] Privacy policy page exists
-- [ ] Privacy policy is linked from footer
-- [ ] Cookie consent appears on public site
-- [ ] Team knows whether cookie consent is cosmetic or functional
+- [x] Privacy policy page exists
+- [x] Privacy policy is linked from footer
+- [x] Cookie consent appears on public site
+- [x] Team knows whether cookie consent is cosmetic or functional
 
 ## 5.3 Admin / Staff Experience
 
@@ -371,55 +373,55 @@ Before auditing deliverables, make sure evidence is organized.
 
 ## 6.3 Authentication
 
-- [ ] Username/password authentication works
+- [x] Username/password authentication works
 - [ ] Visitors can browse public pages unauthenticated
 - [ ] Authenticated users can access protected pages
-- [ ] Better-than-default password policy is configured according to class expectations
-- [ ] Team can explain the exact password rules used
-- [ ] /login and /auth/me style endpoints are accessible as needed
-- [ ] Protected endpoints reject unauthorized users
+- [x] Better-than-default password policy is configured according to class expectations
+- [x] Team can explain the exact password rules used
+- [x] /login and /auth/me style endpoints are accessible as needed
+- [x] Protected endpoints reject unauthorized users
 
 ## 6.4 RBAC Authorization
 
-- [ ] Admin role exists
-- [ ] Donor role exists
+- [x] Admin role exists
+- [x] Donor role exists
 - [ ] Public/non-authenticated access is restricted appropriately
-- [ ] Only admin can create data where required
-- [ ] Only admin can update data where required
-- [ ] Only admin can delete data where required
-- [ ] Donor can view donor-specific history/impact if implemented
-- [ ] Endpoint-level authorization matches UI restrictions
+- [x] Only admin can create data where required
+- [x] Only admin can update data where required
+- [x] Only admin can delete data where required
+- [x] Donor can view donor-specific history/impact if implemented
+- [x] Endpoint-level authorization matches UI restrictions
 
 ## 6.5 Integrity
 
-- [ ] Change/delete actions require authorization
-- [ ] Delete confirmation is required
+- [x] Change/delete actions require authorization
+- [x] Delete confirmation is required
 - [ ] Unauthorized CUD attempts fail
 - [ ] Team can demonstrate those failures
 
 ## 6.6 Credentials
 
 - [ ] No secrets are committed to the public repo
-- [ ] Secrets are stored in .env, env vars, or secrets manager
+- [x] Secrets are stored in .env, env vars, or secrets manager
 - [ ] Deployment secrets are handled safely
 - [ ] Team can show where secrets are configured without exposing them
 
 ## 6.7 Privacy
 
-- [ ] GDPR-style privacy policy is customized
-- [ ] Privacy policy is linked from footer
-- [ ] Cookie consent notification is implemented
-- [ ] Team can explain whether consent is functional or cosmetic
+- [x] GDPR-style privacy policy is customized
+- [x] Privacy policy is linked from footer
+- [x] Cookie consent notification is implemented
+- [x] Team can explain whether consent is functional or cosmetic
 - [ ] Public/private data boundary is appropriate for sensitive minors/survivors
 
 ## 6.8 Attack Mitigations
 
-- [ ] CSP is sent as an HTTP response header
-- [ ] CSP is not just a meta tag
+- [x] CSP is sent as an HTTP response header
+- [x] CSP is not just a meta tag
 - [ ] CSP is visible in browser devtools
 - [ ] CSP is restricted to only needed sources
 - [ ] Team can explain allowed sources
-- [ ] Data sanitization or output encoding is used to reduce injection risk
+- [x] Data sanitization or output encoding is used to reduce injection risk
 
 ## 6.9 Availability
 
@@ -434,9 +436,9 @@ Mark only what was actually completed and can be proved.
 
 - [ ] Third-party authentication
 - [ ] MFA / 2FA
-- [ ] HSTS
-- [ ] Browser-accessible preference cookie used by React
-- [ ] Additional sanitization/encoding protections
+- [x] HSTS
+- [x] Browser-accessible preference cookie used by React
+- [x] Additional sanitization/encoding protections
 - [ ] Both operational and identity DBs deployed to real DBMS
 - [ ] Dockerized deployment
 - [ ] Other: ______________________
@@ -459,26 +461,26 @@ Mark only what was actually completed and can be proved.
 
 ## 7.1 Minimum ML Standard
 
-- [ ] At least one complete ML pipeline exists
-- [ ] Pipeline solves a meaningful business problem
-- [ ] Predictive model exists
-- [ ] Explanatory / causal-style analysis exists
-- [ ] Results are interpreted in business terms
+- [x] At least one complete ML pipeline exists
+- [x] Pipeline solves a meaningful business problem
+- [x] Predictive model exists
+- [x] Explanatory / causal-style analysis exists
+- [x] Results are interpreted in business terms
 - [ ] Notebook is executable top-to-bottom by a TA
 - [ ] Notebook includes a CSV backup / fallback data-loading path for grading if DB access is unavailable
-- [ ] Notebook preserves the original deployed / production-oriented code path
+- [x] Notebook preserves the original deployed / production-oriented code path
 - [ ] Notebook is saved with outputs visible
-- [ ] Pipeline is integrated into the deployed web app
-- [ ] Model outputs are visible in a meaningful way in the app
+- [x] Pipeline is integrated into the deployed web app
+- [x] Model outputs are visible in a meaningful way in the app
 
 ## 7.2 Pipeline Quality Audit
 
 ### Problem Framing
-- [ ] Business problem is clearly written
-- [ ] Specific stakeholder is identified
-- [ ] Why the problem matters is stated
-- [ ] Predictive vs explanatory goal is explicitly justified
-- [ ] Notebook explains why both predictive and explanatory / causal-style analysis were included
+- [x] Business problem is clearly written
+- [x] Specific stakeholder is identified
+- [x] Why the problem matters is stated
+- [x] Predictive vs explanatory goal is explicitly justified
+- [x] Notebook explains why both predictive and explanatory / causal-style analysis were included
 
 ### Data Acquisition, Preparation & Exploration
 - [ ] Relevant tables are identified
@@ -513,10 +515,10 @@ Mark only what was actually completed and can be proved.
 - [ ] Recommendations are tied to feature findings
 
 ### Deployment Notes
-- [ ] Notebook explains where deployment lives in repo/app
-- [ ] API endpoint or dashboard integration exists
-- [ ] User can actually access model output in the app
-- [ ] Notebook explains both the deployed integration path and the TA grading / fallback execution path
+- [x] Notebook explains where deployment lives in repo/app
+- [x] API endpoint or dashboard integration exists
+- [x] User can actually access model output in the app
+- [x] Notebook explains both the deployed integration path and the TA grading / fallback execution path
 
 ### Grading Readiness
 - [ ] Notebook can run without private credentials
@@ -558,27 +560,27 @@ Mark only what was actually completed and can be proved.
 
 ## 8.1 Donor / Support Domain
 
-- [ ] Supporters data is used appropriately
-- [ ] Donations data is used appropriately
-- [ ] Donation allocations are represented
-- [ ] Donor history can be understood by staff
-- [ ] Impact communication for donors is supported
+- [x] Supporters data is used appropriately
+- [x] Donations data is used appropriately
+- [x] Donation allocations are represented
+- [x] Donor history can be understood by staff
+- [x] Impact communication for donors is supported
 
 ## 8.2 Case Management Domain
 
-- [ ] Resident data is represented appropriately
-- [ ] Process recordings are represented appropriately
-- [ ] Home visitations are represented appropriately
-- [ ] Intervention/progress/risk tracking is represented
-- [ ] Reintegration tracking is represented
-- [ ] Case conferences are represented
+- [x] Resident data is represented appropriately
+- [x] Process recordings are represented appropriately
+- [x] Home visitations are represented appropriately
+- [x] Intervention/progress/risk tracking is represented
+- [x] Reintegration tracking is represented
+- [x] Case conferences are represented
 
 ## 8.3 Outreach / Social Media Domain
 
-- [ ] Social media post data is represented
-- [ ] Engagement metrics are represented
-- [ ] Social data informs decisions, not just vanity metrics
-- [ ] Social-to-donation linkage exists or is reasonably approximated
+- [x] Social media post data is represented
+- [x] Engagement metrics are represented
+- [x] Social data informs decisions, not just vanity metrics
+- [x] Social-to-donation linkage exists or is reasonably approximated
 
 ---
 

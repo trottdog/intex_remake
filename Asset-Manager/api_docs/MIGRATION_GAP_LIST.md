@@ -84,9 +84,9 @@
 |---|---|
 | **Affected area** | API Contract |
 | **Files / Endpoints** | All list endpoints (residents, donors, donations, campaigns, supporters, users, case management, records, social media, impact snapshots, ML predictions — ~40 endpoints) |
-| **Why risky** | Every frontend list view destructures the response as `{ data, total, pagination: { total, page, limit, totalPages } }`. If the .NET backend returns a different shape (e.g., `{ items, count, pages }` or the ASP.NET Core default `{ value, count }`) every list view crashes. |
-| **What must be preserved** | Exact envelope: `{ "data": [...], "total": number, "pagination": { "total": number, "page": number, "limit": number, "totalPages": number } }`. Note: Express `paginate()` in `lib/paginate.ts` returns `{ total, page, limit, totalPages }` (NOT `pageSize`). |
-| **Suggested mitigation** | Create a `PagedResult<T>` generic class in .NET with exactly these property names (camelCase in JSON output). Use `System.Text.Json` with `JsonNamingPolicy.CamelCase`. |
+| **Why risky** | Frontend list views destructure standard lists as `{ data, total, pagination }`. If the .NET backend returns a different shape (e.g., `{ items, count, pages }` or ASP.NET defaults), list pages crash. |
+| **What must be preserved** | Standard list envelope: `{ "data": [...], "total": number, "pagination": { "page": number, "pageSize": number, "totalPages": number, "hasNext": boolean, "hasPrev": boolean } }`. |
+| **Suggested mitigation** | Use a shared paged response model with those exact fields and camelCase JSON output. Accept both `pageSize` and `limit` query aliases where frontend/legacy routes use either. |
 | **Frontend breakage** | **Yes — all list views break** |
 | **Security breakage** | No |
 | **Data integrity breakage** | No |
@@ -851,8 +851,8 @@ A .NET Web API backend hosted on **Azure App Service** that serves a **React + T
 **1. JWT must be HS256, signed with the same secret as Express, 8-hour expiry.**
 All existing users have active tokens. If the secret or algorithm changes, everyone is logged out on cutover. Store the secret in Azure Key Vault and inject as an app setting. Use `Bcrypt.Net-Next` for password hashing (not ASP.NET Core Identity's PBKDF2).
 
-**2. The JSON response envelope for list endpoints must be exactly `{ "data": [...], "total": N, "pagination": { "total": N, "page": N, "limit": N, "totalPages": N } }`.**
-Every frontend list view depends on this shape. Any deviation breaks all list views simultaneously. Create a `PagedResult<T>` class with these exact property names and camelCase JSON output.
+**2. The JSON response envelope for standard list endpoints must be exactly `{ "data": [...], "total": N, "pagination": { "page": N, "pageSize": N, "totalPages": N, "hasNext": bool, "hasPrev": bool } }`.**
+Every frontend list view depends on this shape. Any deviation breaks list views simultaneously.
 
 **3. CORS must be configured to allow the Vercel frontend domain before the first route goes live.**
 Without this, 100% of browser API calls fail with a CORS error. Set `CORS_ALLOWED_ORIGINS` to the Vercel production URL in Azure App Service Application Settings.

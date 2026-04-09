@@ -13,7 +13,6 @@ Use this skill to audit IS 414 completion.
 
 A security feature is not complete for grading unless:
 1. implementation evidence exists, and
-2. video proof exists or is clearly prepared to be shown
 
 ## Verify these areas
 
@@ -38,7 +37,6 @@ A security feature is not complete for grading unless:
 For each security item:
 - Status: PASS / RISK / FAIL
 - Repo/runtime evidence
-- Video proof evidence
 - Missing proof
 - Exact blocker
 

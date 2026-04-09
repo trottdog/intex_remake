@@ -35,10 +35,9 @@ public sealed class DonationAllocationsController(IDonationService donationServi
 
     [HttpDelete("{id:long}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType<ErrorResponse>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteAllocation(long id, CancellationToken cancellationToken)
     {
-        var deleted = await donationService.DeleteDonationAllocationAsync(id, User.GetRole(), await userScopeService.GetAssignedSafehousesAsync(User, cancellationToken), cancellationToken);
-        return deleted ? NoContent() : NotFound(new ErrorResponse("Not found"));
+        _ = await donationService.DeleteDonationAllocationAsync(id, User.GetRole(), await userScopeService.GetAssignedSafehousesAsync(User, cancellationToken), cancellationToken);
+        return NoContent();
     }
 }

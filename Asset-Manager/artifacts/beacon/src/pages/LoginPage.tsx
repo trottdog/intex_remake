@@ -102,14 +102,6 @@ export default function LoginPage() {
               Back to site
             </a>
           </div>
-          <a
-            href="/"
-            className="hidden lg:flex items-center gap-1.5 text-gray-400 hover:text-[#214636] text-sm transition-colors mb-6"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back to site
-          </a>
-
           <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900">Sign in to your account</h2>

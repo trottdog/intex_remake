@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import lighthouseLogo from "@assets/Minimalist_lighthouse_logo_design_1775623783267.png";
 
@@ -10,12 +10,17 @@ const NAV_LINKS = [
 ];
 
 function scrollToTop() {
-  window.scrollTo({ top: 0, behavior: "instant" });
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 }
 
 export function PublicLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    scrollToTop();
+    setMenuOpen(false);
+  }, [location]);
 
   return (
     <div className="min-h-screen flex flex-col bg-white">

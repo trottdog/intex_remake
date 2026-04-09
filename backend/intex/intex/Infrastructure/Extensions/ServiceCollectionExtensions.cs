@@ -15,7 +15,9 @@ using backend.intex.Repositories.EntityFramework;
 using backend.intex.Services.Abstractions;
 using backend.intex.Services.Auth;
 using backend.intex.Services.Campaigns;
+using backend.intex.Services.CaseManagement;
 using backend.intex.Services.Donations;
+using backend.intex.Services.Records;
 using backend.intex.Services.Residents;
 using backend.intex.Services.Safehouses;
 using backend.intex.Services.Security;
@@ -87,11 +89,15 @@ public static class ServiceCollectionExtensions
             options.UseNpgsql(connectionString, npgsql =>
             {
                 npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery);
+                npgsql.CommandTimeout(60);
+                npgsql.EnableRetryOnFailure(maxRetryCount: 3, maxRetryDelay: TimeSpan.FromSeconds(5), errorCodesToAdd: null);
             }));
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<ICampaignRepository, CampaignRepository>();
+        services.AddScoped<ICaseManagementRepository, CaseManagementRepository>();
         services.AddScoped<IDonationRepository, DonationRepository>();
         services.AddScoped<IResidentRepository, ResidentRepository>();
+        services.AddScoped<IResidentRecordRepository, ResidentRecordRepository>();
         services.AddScoped<ISafehouseRepository, SafehouseRepository>();
         services.AddScoped<ISupporterRepository, SupporterRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
@@ -115,6 +121,7 @@ public static class ServiceCollectionExtensions
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
+                options.MapInboundClaims = false;
                 options.RequireHttpsMetadata = !environment.IsDevelopment();
                 options.Events = new JwtBearerEvents
                 {
@@ -205,10 +212,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IJwtTokenReader, JwtTokenReader>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<ICaseManagementService, CaseManagementService>();
         services.AddScoped<IUserScopeService, UserScopeService>();
         services.AddScoped<ICampaignService, CampaignService>();
         services.AddScoped<IDonationService, DonationService>();
         services.AddScoped<IResidentService, ResidentService>();
+        services.AddScoped<IResidentRecordService, ResidentRecordService>();
         services.AddScoped<ISafehouseService, SafehouseService>();
         services.AddScoped<ISupporterService, SupporterService>();
         services.AddScoped<IUserService, UserService>();
@@ -221,17 +230,18 @@ public static class ServiceCollectionExtensions
         var sectionOrigins = configuration.GetSection(FrontendCorsOptions.SectionName)
             .Get<FrontendCorsOptions>()?.AllowedOrigins ?? [];
 
-        var envOrigins = configuration["CORS_ALLOWED_ORIGINS"];
-        if (string.IsNullOrWhiteSpace(envOrigins))
+        var envOrigins = new[]
         {
-            return sectionOrigins
-                .Where(static origin => !string.IsNullOrWhiteSpace(origin))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToArray();
-        }
+            configuration["CORS_ALLOWED_ORIGINS"],
+            configuration["VERCEL_FRONTEND_ORIGIN"],
+            configuration["FRONTEND_ORIGIN"]
+        };
 
-        return envOrigins
-            .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+        var parsedEnvOrigins = envOrigins
+            .Where(static value => !string.IsNullOrWhiteSpace(value))
+            .SelectMany(value => value!.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
+
+        return parsedEnvOrigins
             .Concat(sectionOrigins)
             .Where(static origin => !string.IsNullOrWhiteSpace(origin))
             .Distinct(StringComparer.OrdinalIgnoreCase)
