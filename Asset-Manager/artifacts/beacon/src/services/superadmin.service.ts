@@ -143,6 +143,16 @@ export interface User {
   assignedSafehouses?: number[];
 }
 
+export type CreateUserPayload = Pick<User, "username" | "email" | "firstName" | "lastName"> & {
+  password: string;
+  role: User["role"];
+  assignedSafehouses?: number[];
+};
+
+export type UpdateUserPayload = Partial<Pick<User, "email" | "firstName" | "lastName" | "role">> & {
+  assignedSafehouses?: number[];
+};
+
 export function useGetExecutiveDashboardSummary(params?: { safehouseId?: number | null; months?: number }) {
   const qs = new URLSearchParams();
   if (params?.safehouseId) qs.set("safehouseId", String(params.safehouseId));
@@ -220,11 +230,11 @@ export function useListUsers(params?: { page?: number; pageSize?: number; role?:
   });
 }
 
-export async function createUser(data: Partial<User> & { password?: string; assignedSafehouses?: number[] }) {
+export async function createUser(data: CreateUserPayload) {
   return apiPost("/api/users", data);
 }
 
-export async function updateUser(id: number, data: Partial<User> & { assignedSafehouses?: number[] }) {
+export async function updateUser(id: number, data: UpdateUserPayload) {
   return apiPatch(`/api/users/${id}`, data);
 }
 

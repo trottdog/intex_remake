@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell,
@@ -15,6 +15,7 @@ import {
   FilterSelect, SideDrawer, Pagination, ActionButton,
   fmtPeso, fmtDate, fmtRelativeDate, ACCENT, DARK, MINT,
 } from "./ml/Shared";
+import { PipelineCoveragePanel, PipelineInterpretationNotice } from "./ml/PipelineCoveragePanel";
 
 type Tab = "campaigns" | "social";
 
@@ -291,6 +292,12 @@ function SocialPlannerTab() {
 
   return (
     <div className="space-y-4">
+      <PipelineInterpretationNotice
+        title="Planning signal, not final proof"
+        body="Best-posting-time and social-conversion outputs are routed here and are useful for planning, but notebook execution proof is still missing, so treat them as operational guidance rather than finalized evidence."
+        tone="caution"
+      />
+
       <div className="flex items-center gap-2 flex-wrap">
         <DateRangeSelector value={dateRange} onChange={v => { setDateRange(v); setPage(1); }} />
         <FilterSelect value={platform} onChange={v => { setPlatform(v); setPage(1); }} options={PLATFORM_OPTS} placeholder="All platforms" />
@@ -521,18 +528,46 @@ function SocialPlannerTab() {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function MLCampaignsPage() {
-  const [tab, setTab] = useState<Tab>("campaigns");
+  const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+  const defaultTab = (params.get("tab") as Tab) || "campaigns";
+  const [tab, setTab] = useState<Tab>(["campaigns", "social"].includes(defaultTab) ? defaultTab : "campaigns");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", tab);
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  }, [tab]);
+
+  const coverageByTab: Record<Tab, { title: string; subtitle: string; pipelines: string[] }> = {
+    campaigns: {
+      title: "Campaign Coverage",
+      subtitle: "Campaign effectiveness is an operational analysis surface; the reviewed predictive pipeline coverage on this page is primarily social.",
+      pipelines: ["social_media_conversion", "best_posting_time"],
+    },
+    social: {
+      title: "Social Planner Coverage",
+      subtitle: "This route is the direct UI surface for both social conversion scoring and best-posting-time guidance.",
+      pipelines: ["social_media_conversion", "best_posting_time"],
+    },
+  };
 
   return (
     <div className="space-y-6 pb-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Campaign Intelligence</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          ML-powered campaign effectiveness analysis and social media conversion planning
+          Direct routed views for social conversion and best-posting-time planning, alongside campaign-level fundraising analysis
         </p>
       </div>
 
       <TabBar tabs={TABS} active={tab} onChange={setTab} />
+
+      <PipelineCoveragePanel
+        title={coverageByTab[tab].title}
+        subtitle={coverageByTab[tab].subtitle}
+        pipelineNames={coverageByTab[tab].pipelines}
+      />
 
       {tab === "campaigns" && <CampaignEffectivenessTab />}
       {tab === "social" && <SocialPlannerTab />}

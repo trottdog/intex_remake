@@ -17,12 +17,12 @@
     "positive_count": 221.0,
     "positive_rate": 0.4556701030927835,
     "accuracy": 0.5154639175257731,
-    "balanced_accuracy": 0.5118092691622103,
-    "precision": 0.46846846846846846,
-    "recall": 0.47058823529411764,
-    "f1": 0.46952595936794583,
-    "roc_auc": 0.5193164678458797,
-    "average_precision": 0.503712720069139
+    "balanced_accuracy": 0.5110722610722611,
+    "precision": 0.46788990825688076,
+    "recall": 0.46153846153846156,
+    "f1": 0.4646924829157175,
+    "roc_auc": 0.5184252022487317,
+    "average_precision": 0.5024179125798504
   },
   "prediction_contract": {
     "prediction_field": "prediction",
@@ -36,19 +36,19 @@
       "resident_id": 50,
       "safehouse_id": 4,
       "prediction": 0,
-      "prediction_score": 0.315
+      "prediction_score": 0.31
     },
     {
       "resident_id": 50,
       "safehouse_id": 4,
       "prediction": 1,
-      "prediction_score": 0.875
+      "prediction_score": 0.88
     },
     {
       "resident_id": 13,
       "safehouse_id": 2,
       "prediction": 1,
-      "prediction_score": 0.92
+      "prediction_score": 0.925
     }
   ]
 }
