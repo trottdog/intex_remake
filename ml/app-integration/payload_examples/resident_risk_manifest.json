@@ -78,12 +78,7 @@
     "future_window_complete_30d",
     "future_window_complete_60d",
     "future_window_complete_90d",
-    "future_window_complete_120d",
-    "label_case_prioritization_next_60d",
-    "label_counseling_progress_next_90d",
-    "label_education_improvement_next_120d",
-    "label_wellbeing_deterioration_next_90d",
-    "label_supportive_home_visit_next_120d"
+    "future_window_complete_120d"
   ],
   "model_input_columns": [
     "case_status",
@@ -140,12 +135,7 @@
     "future_window_complete_30d",
     "future_window_complete_60d",
     "future_window_complete_90d",
-    "future_window_complete_120d",
-    "label_case_prioritization_next_60d",
-    "label_counseling_progress_next_90d",
-    "label_education_improvement_next_120d",
-    "label_wellbeing_deterioration_next_90d",
-    "label_supportive_home_visit_next_120d"
+    "future_window_complete_120d"
   ],
   "recommended_widgets": [
     "risk_badge_widget",
@@ -180,12 +170,12 @@
     "sample_count": 777.0,
     "positive_count": 36.0,
     "positive_rate": 0.04633204633204633,
-    "accuracy": 0.8918918918918919,
-    "balanced_accuracy": 0.692251461988304,
-    "precision": 0.2073170731707317,
-    "recall": 0.4722222222222222,
-    "f1": 0.288135593220339,
-    "roc_auc": 0.905982905982906,
-    "average_precision": 0.22958721784818312
+    "accuracy": 0.8571428571428571,
+    "balanced_accuracy": 0.5683198380566802,
+    "precision": 0.0967741935483871,
+    "recall": 0.25,
+    "f1": 0.13953488372093023,
+    "roc_auc": 0.7676938071674914,
+    "average_precision": 0.12593601684817418
   }
 }

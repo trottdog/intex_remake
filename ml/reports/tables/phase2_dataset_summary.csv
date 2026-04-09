@@ -1,7 +1,9 @@
 dataset,row_count,column_count
 campaign_features,21,27
 post_features,812,51
-resident_features,60,101
-resident_monthly_features,1533,46
+public_impact_features,50,63
+resident_features,60,102
+resident_monthly_features,1533,66
 safehouse_features,9,28
+safehouse_monthly_features,450,97
 supporter_features,60,42

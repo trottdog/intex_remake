@@ -16,13 +16,13 @@
     "sample_count": 777.0,
     "positive_count": 36.0,
     "positive_rate": 0.04633204633204633,
-    "accuracy": 0.8918918918918919,
-    "balanced_accuracy": 0.692251461988304,
-    "precision": 0.2073170731707317,
-    "recall": 0.4722222222222222,
-    "f1": 0.288135593220339,
-    "roc_auc": 0.905982905982906,
-    "average_precision": 0.22958721784818312
+    "accuracy": 0.8571428571428571,
+    "balanced_accuracy": 0.5683198380566802,
+    "precision": 0.0967741935483871,
+    "recall": 0.25,
+    "f1": 0.13953488372093023,
+    "roc_auc": 0.7676938071674914,
+    "average_precision": 0.12593601684817418
   },
   "prediction_contract": {
     "prediction_field": "prediction",
@@ -36,19 +36,19 @@
       "resident_id": 50,
       "safehouse_id": 4,
       "prediction": 0,
-      "prediction_score": 0.002290064058637562
+      "prediction_score": 0.24526283783860606
     },
     {
       "resident_id": 45,
       "safehouse_id": 3,
       "prediction": 0,
-      "prediction_score": 0.0035364431743366066
+      "prediction_score": 0.11797490408870379
     },
     {
       "resident_id": 23,
       "safehouse_id": 5,
       "prediction": 1,
-      "prediction_score": 0.6228796260446962
+      "prediction_score": 0.5202768308172239
     }
   ]
 }

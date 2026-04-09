@@ -3,6 +3,7 @@ import pandas as pd
 from ml.scripts.refresh_supabase_ml import build_prediction_rows, current_scoring_frame
 from ml.src.data.loaders import load_raw_tables
 from ml.src.inference.predict import predict_dataframe
+from ml.src.inference.predict import load_model_bundle
 from ml.src.inference.serializers import build_pipeline_manifest
 from ml.src.pipelines.phase_f_packaging_integration import write_phase_f_outputs
 from ml.src.pipelines.registry import build_predictive_dataset, list_predictive_pipelines, run_predictive_pipeline
@@ -92,3 +93,16 @@ def test_phase_f_outputs_write_contract_matrix_and_payload_examples() -> None:
         assert (payload_dir / f"{pipeline_name}_manifest.json").exists()
         assert (payload_dir / f"{pipeline_name}_request.json").exists()
         assert (payload_dir / f"{pipeline_name}_response.json").exists()
+
+
+def test_phase_f_excludes_adjacent_future_labels_from_manifests_and_models() -> None:
+    for pipeline_name in ("resident_risk", "reintegration_readiness", "donor_upgrade"):
+        manifest = build_pipeline_manifest(pipeline_name)
+        assert all(
+            not str(column).startswith("label_")
+            for column in manifest["model_input_columns"]
+        )
+
+        run_predictive_pipeline(pipeline_name)
+        bundle = load_model_bundle(pipeline_name)
+        assert all("label_" not in str(feature_name) for feature_name in bundle["feature_names"])

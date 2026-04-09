@@ -77,6 +77,69 @@ post_features,subscriber_count_at_post,float64,numeric_feature,social_media_post
 post_features,video_views,float64,numeric_feature,social_media_posts,Video views
 post_features,watch_time_seconds,float64,numeric_feature,social_media_posts,Watch time seconds
 post_features,post_month,datetime64[us],time_index,social_media_posts,Post month
+public_impact_features,published_at,datetime64[us],categorical_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Published at
+public_impact_features,future_window_complete_1m,bool,flag,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Future window complete 1m
+public_impact_features,is_published,bool,flag,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Is published
+public_impact_features,label_next_public_avg_education_progress,float64,label,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Label next public average education progress
+public_impact_features,label_next_public_avg_health_score,float64,label,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Label next public average health score
+public_impact_features,label_next_public_donations_total_for_month,float64,label,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Label next public donations total for month
+public_impact_features,allocation_count,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Allocation count
+public_impact_features,avg_education_progress,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Average education progress
+public_impact_features,avg_education_progress_lag1,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Average education progress lag1
+public_impact_features,avg_education_progress_lag2,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Average education progress lag2
+public_impact_features,avg_education_progress_lag3,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Average education progress lag3
+public_impact_features,avg_education_progress_ops,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Average education progress ops
+public_impact_features,avg_education_progress_ops_lag1,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Average education progress ops lag1
+public_impact_features,avg_education_progress_ops_lag2,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Average education progress ops lag2
+public_impact_features,avg_education_progress_ops_lag3,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Average education progress ops lag3
+public_impact_features,avg_health_score,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Average health score
+public_impact_features,avg_health_score_lag1,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Average health score lag1
+public_impact_features,avg_health_score_lag2,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Average health score lag2
+public_impact_features,avg_health_score_lag3,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Average health score lag3
+public_impact_features,avg_health_score_ops,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Average health score ops
+public_impact_features,avg_health_score_ops_lag1,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Average health score ops lag1
+public_impact_features,avg_health_score_ops_lag2,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Average health score ops lag2
+public_impact_features,avg_health_score_ops_lag3,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Average health score ops lag3
+public_impact_features,donation_count,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Donation count
+public_impact_features,donation_count_lag1,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Donation count lag1
+public_impact_features,donation_count_lag2,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Donation count lag2
+public_impact_features,donation_count_lag3,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Donation count lag3
+public_impact_features,monetary_donation_count,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Monetary donation count
+public_impact_features,recurring_donation_share,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Recurring donation share
+public_impact_features,snapshot_quarter,int32,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Snapshot quarter
+public_impact_features,snapshot_year,int32,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Snapshot year
+public_impact_features,total_active_residents,int64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total active residents
+public_impact_features,total_active_residents_lag1,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total active residents lag1
+public_impact_features,total_active_residents_lag2,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total active residents lag2
+public_impact_features,total_active_residents_lag3,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total active residents lag3
+public_impact_features,total_allocated_amount,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total allocated amount
+public_impact_features,total_allocated_amount_lag1,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total allocated amount lag1
+public_impact_features,total_allocated_amount_lag2,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total allocated amount lag2
+public_impact_features,total_allocated_amount_lag3,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total allocated amount lag3
+public_impact_features,total_home_visitations,int64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total home visitations
+public_impact_features,total_home_visitations_lag1,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total home visitations lag1
+public_impact_features,total_home_visitations_lag2,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total home visitations lag2
+public_impact_features,total_home_visitations_lag3,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total home visitations lag3
+public_impact_features,total_incidents,int64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total incidents
+public_impact_features,total_incidents_lag1,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total incidents lag1
+public_impact_features,total_incidents_lag2,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total incidents lag2
+public_impact_features,total_incidents_lag3,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total incidents lag3
+public_impact_features,total_process_recordings,int64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total process recordings
+public_impact_features,total_process_recordings_lag1,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total process recordings lag1
+public_impact_features,total_process_recordings_lag2,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total process recordings lag2
+public_impact_features,total_process_recordings_lag3,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total process recordings lag3
+public_impact_features,total_residents,int64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total residents
+public_impact_features,total_resolved_value,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total resolved value
+public_impact_features,total_resolved_value_lag1,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total resolved value lag1
+public_impact_features,total_resolved_value_lag2,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total resolved value lag2
+public_impact_features,total_resolved_value_lag3,float64,numeric_feature,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Total resolved value lag3
+public_impact_features,donations_total_for_month,float64,time_index,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Donations total for month
+public_impact_features,donations_total_for_month_lag1,float64,time_index,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Donations total for month lag1
+public_impact_features,donations_total_for_month_lag2,float64,time_index,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Donations total for month lag2
+public_impact_features,donations_total_for_month_lag3,float64,time_index,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Donations total for month lag3
+public_impact_features,month,str,time_index,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Month
+public_impact_features,snapshot_date,datetime64[us],time_index,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Snapshot date
+public_impact_features,snapshot_month_number,int32,time_index,"public_impact_snapshots, safehouse_monthly_metrics, donation_allocations, donations",Snapshot month numberber
 resident_features,age_upon_admission,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Age upon admission
 resident_features,assigned_social_worker,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Assigned social worker
 resident_features,birth_status,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Birth status
@@ -167,6 +230,7 @@ resident_features,progress_noted_count,int64,numeric_feature,"residents, safehou
 resident_features,referral_made_count,int64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Referral made count
 resident_features,safety_plan_count,int64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Safety plan count
 resident_features,subcategory_flag_count,int64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Subcategory flag count
+resident_features,supportive_visit_count,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Supportive visit count
 resident_features,unfavorable_visit_count,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Unfavorable visit count
 resident_features,unresolved_incident_count,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Unresolved incident count
 resident_features,visit_follow_up_needed_count,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Visit follow up needed count
@@ -181,22 +245,39 @@ resident_features,date_of_birth,datetime64[us],time_index,"residents, safehouses
 resident_monthly_features,case_category,str,categorical_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Case category
 resident_monthly_features,case_status,str,categorical_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Case status
 resident_monthly_features,initial_risk_level,str,categorical_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Initial risk level
+resident_monthly_features,latest_completion_status,str,categorical_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Latest completion status
+resident_monthly_features,latest_enrollment_status,str,categorical_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Latest enrollment status
 resident_monthly_features,sex,str,categorical_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Sex
 resident_monthly_features,case_closed_as_of_snapshot,bool,flag,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Case closed as of snapshot
+resident_monthly_features,future_window_complete_120d,bool,flag,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Future window complete 120d
+resident_monthly_features,future_window_complete_30d,bool,flag,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Future window complete 30d
+resident_monthly_features,future_window_complete_60d,bool,flag,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Future window complete 60d
+resident_monthly_features,future_window_complete_90d,bool,flag,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Future window complete 90d
 resident_monthly_features,resident_id,int64,key,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Resident id
 resident_monthly_features,safehouse_id,int64,key,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Safehouse id
 resident_monthly_features,snapshot_month,datetime64[us],key,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Snapshot month
+resident_monthly_features,label_case_prioritization_next_60d,bool,label,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Label case prioritization next 60d
+resident_monthly_features,label_counseling_progress_next_90d,bool,label,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Label counseling progress next 90d
+resident_monthly_features,label_education_improvement_next_120d,bool,label,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Label education improvement next 120d
 resident_monthly_features,label_incident_next_30d,bool,label,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Label incident next 30d
 resident_monthly_features,label_reintegration_complete_next_90d,bool,label,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Label reintegration complete next 90d
+resident_monthly_features,label_supportive_home_visit_next_120d,bool,label,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Label supportive home visit next 120d
+resident_monthly_features,label_wellbeing_deterioration_next_90d,bool,label,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Label wellbeing deterioration next 90d
 resident_monthly_features,age_years_at_snapshot,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Age years at snapshot
 resident_monthly_features,avg_attendance_rate_90d,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Average attendance rate 90d
+resident_monthly_features,avg_energy_level_score_90d,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Average energy level score 90d
 resident_monthly_features,avg_general_health_score_90d,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Average general health score 90d
 resident_monthly_features,avg_nutrition_score_90d,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Average nutrition score 90d
 resident_monthly_features,avg_progress_percent_90d,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Average progress percent 90d
+resident_monthly_features,avg_sleep_quality_score_90d,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Average sleep quality score 90d
 resident_monthly_features,education_plans_cumulative,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Education plans cumulative
 resident_monthly_features,family_vulnerability_flag_count,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Family vulnerability flag count
 resident_monthly_features,high_severity_incidents_90d,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",High severity incidents 90d
+resident_monthly_features,home_visit_follow_up_share_90d,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Home visit follow up share 90d
 resident_monthly_features,home_visit_recent_90d_count,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Home visit recent 90d count
+resident_monthly_features,home_visit_recent_90d_supportive_count,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Home visit recent 90d supportive count
+resident_monthly_features,home_visit_recent_90d_unfavorable_count,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Home visit recent 90d unfavorable count
+resident_monthly_features,home_visit_supportive_share_90d,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Home visit supportive share 90d
 resident_monthly_features,incident_recent_30d_count,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Incident recent 30d count
 resident_monthly_features,incident_recent_90d_count,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Incident recent 90d count
 resident_monthly_features,latest_attendance_rate,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Latest attendance rate
@@ -211,9 +292,12 @@ resident_monthly_features,plans_created_90d_count,int64,numeric_feature,"residen
 resident_monthly_features,plans_total_cumulative,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Plans total cumulative
 resident_monthly_features,process_avg_session_duration_90d,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Process average session duration 90d
 resident_monthly_features,process_concerns_flags_90d,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Process concerns flags 90d
+resident_monthly_features,process_concerns_share_90d,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Process concerns share 90d
 resident_monthly_features,process_distress_observed_90d,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Process distress observed 90d
 resident_monthly_features,process_positive_end_state_90d,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Process positive end state 90d
+resident_monthly_features,process_positive_end_state_share_90d,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Process positive end state share 90d
 resident_monthly_features,process_progress_flags_90d,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Process progress flags 90d
+resident_monthly_features,process_progress_share_90d,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Process progress share 90d
 resident_monthly_features,process_recent_30d_count,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Process recent 30d count
 resident_monthly_features,process_recent_90d_count,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Process recent 90d count
 resident_monthly_features,process_referrals_90d,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Process referrals 90d
@@ -252,6 +336,103 @@ safehouse_features,open_date,datetime64[us],time_index,"safehouses, residents, d
 safehouse_features,total_home_visitations_monthly,int64,time_index,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Total home visitations monthly
 safehouse_features,total_incidents_monthly,int64,time_index,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Total incidents monthly
 safehouse_features,total_process_recordings_monthly,int64,time_index,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Total process recordings monthly
+safehouse_monthly_features,city,str,categorical_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",City
+safehouse_monthly_features,region,str,categorical_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Region
+safehouse_monthly_features,safehouse_code,str,categorical_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Safehouse code
+safehouse_monthly_features,safehouse_name,str,categorical_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Safehouse name
+safehouse_monthly_features,status,str,categorical_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Status
+safehouse_monthly_features,future_window_complete_1m,bool,flag,"safehouses, safehouse_monthly_metrics, donation_allocations",Future window complete 1m
+safehouse_monthly_features,safehouse_id,int64,key,"safehouses, safehouse_monthly_metrics, donation_allocations",Safehouse id
+safehouse_monthly_features,label_capacity_pressure_next_month,bool,label,"safehouses, safehouse_monthly_metrics, donation_allocations",Label capacity pressure next month
+safehouse_monthly_features,label_next_active_residents,float64,label,"safehouses, safehouse_monthly_metrics, donation_allocations",Label next active residents
+safehouse_monthly_features,active_residents,int64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Active residents
+safehouse_monthly_features,active_residents_lag1,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Active residents lag1
+safehouse_monthly_features,active_residents_lag2,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Active residents lag2
+safehouse_monthly_features,active_residents_lag3,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Active residents lag3
+safehouse_monthly_features,active_residents_rolling_mean_3,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Active residents rolling mean 3
+safehouse_monthly_features,active_residents_rolling_mean_6,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Active residents rolling mean 6
+safehouse_monthly_features,avg_education_progress,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Average education progress
+safehouse_monthly_features,avg_education_progress_lag1,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Average education progress lag1
+safehouse_monthly_features,avg_education_progress_lag2,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Average education progress lag2
+safehouse_monthly_features,avg_education_progress_lag3,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Average education progress lag3
+safehouse_monthly_features,avg_health_score,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Average health score
+safehouse_monthly_features,avg_health_score_lag1,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Average health score lag1
+safehouse_monthly_features,avg_health_score_lag2,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Average health score lag2
+safehouse_monthly_features,avg_health_score_lag3,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Average health score lag3
+safehouse_monthly_features,capacity_gap,int64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Capacity gap
+safehouse_monthly_features,capacity_girls,int64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Capacity girls
+safehouse_monthly_features,capacity_staff,int64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Capacity staff
+safehouse_monthly_features,capacity_utilization_ratio,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Capacity utilization ratio
+safehouse_monthly_features,capacity_utilization_ratio_lag1,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Capacity utilization ratio lag1
+safehouse_monthly_features,capacity_utilization_ratio_lag2,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Capacity utilization ratio lag2
+safehouse_monthly_features,capacity_utilization_ratio_lag3,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Capacity utilization ratio lag3
+safehouse_monthly_features,capacity_utilization_ratio_rolling_mean_3,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Capacity utilization ratio rolling mean 3
+safehouse_monthly_features,capacity_utilization_ratio_rolling_mean_6,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Capacity utilization ratio rolling mean 6
+safehouse_monthly_features,home_visitation_count,int64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Home visitation count
+safehouse_monthly_features,home_visitation_count_lag1,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Home visitation count lag1
+safehouse_monthly_features,home_visitation_count_lag2,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Home visitation count lag2
+safehouse_monthly_features,home_visitation_count_lag3,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Home visitation count lag3
+safehouse_monthly_features,home_visitation_count_rolling_mean_3,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Home visitation count rolling mean 3
+safehouse_monthly_features,home_visitation_count_rolling_mean_6,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Home visitation count rolling mean 6
+safehouse_monthly_features,incident_count,int64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Incident count
+safehouse_monthly_features,incident_count_lag1,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Incident count lag1
+safehouse_monthly_features,incident_count_lag2,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Incident count lag2
+safehouse_monthly_features,incident_count_lag3,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Incident count lag3
+safehouse_monthly_features,incident_count_rolling_mean_3,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Incident count rolling mean 3
+safehouse_monthly_features,incident_count_rolling_mean_6,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Incident count rolling mean 6
+safehouse_monthly_features,next_active_residents,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Next active residents
+safehouse_monthly_features,next_capacity_utilization_ratio,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Next capacity utilization ratio
+safehouse_monthly_features,next_home_visitation_count,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Next home visitation count
+safehouse_monthly_features,next_incident_count,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Next incident count
+safehouse_monthly_features,next_process_recording_count,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Next process recording count
+safehouse_monthly_features,process_recording_count,int64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Process recording count
+safehouse_monthly_features,process_recording_count_lag1,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Process recording count lag1
+safehouse_monthly_features,process_recording_count_lag2,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Process recording count lag2
+safehouse_monthly_features,process_recording_count_lag3,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Process recording count lag3
+safehouse_monthly_features,process_recording_count_rolling_mean_3,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Process recording count rolling mean 3
+safehouse_monthly_features,process_recording_count_rolling_mean_6,float64,numeric_feature,"safehouses, safehouse_monthly_metrics, donation_allocations",Process recording count rolling mean 6
+safehouse_monthly_features,allocated_amount_education_month,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount education month
+safehouse_monthly_features,allocated_amount_education_month_lag1,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount education month lag1
+safehouse_monthly_features,allocated_amount_education_month_lag2,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount education month lag2
+safehouse_monthly_features,allocated_amount_education_month_lag3,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount education month lag3
+safehouse_monthly_features,allocated_amount_maintenance_month,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount maintenance month
+safehouse_monthly_features,allocated_amount_maintenance_month_lag1,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount maintenance month lag1
+safehouse_monthly_features,allocated_amount_maintenance_month_lag2,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount maintenance month lag2
+safehouse_monthly_features,allocated_amount_maintenance_month_lag3,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount maintenance month lag3
+safehouse_monthly_features,allocated_amount_month,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount month
+safehouse_monthly_features,allocated_amount_month_lag1,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount month lag1
+safehouse_monthly_features,allocated_amount_month_lag2,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount month lag2
+safehouse_monthly_features,allocated_amount_month_lag3,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount month lag3
+safehouse_monthly_features,allocated_amount_month_rolling_mean_3,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount month rolling mean 3
+safehouse_monthly_features,allocated_amount_month_rolling_mean_6,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount month rolling mean 6
+safehouse_monthly_features,allocated_amount_operations_month,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount operations month
+safehouse_monthly_features,allocated_amount_operations_month_lag1,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount operations month lag1
+safehouse_monthly_features,allocated_amount_operations_month_lag2,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount operations month lag2
+safehouse_monthly_features,allocated_amount_operations_month_lag3,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount operations month lag3
+safehouse_monthly_features,allocated_amount_outreach_month,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount outreach month
+safehouse_monthly_features,allocated_amount_outreach_month_lag1,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount outreach month lag1
+safehouse_monthly_features,allocated_amount_outreach_month_lag2,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount outreach month lag2
+safehouse_monthly_features,allocated_amount_outreach_month_lag3,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount outreach month lag3
+safehouse_monthly_features,allocated_amount_transport_month,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount transport month
+safehouse_monthly_features,allocated_amount_transport_month_lag1,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount transport month lag1
+safehouse_monthly_features,allocated_amount_transport_month_lag2,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount transport month lag2
+safehouse_monthly_features,allocated_amount_transport_month_lag3,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount transport month lag3
+safehouse_monthly_features,allocated_amount_wellbeing_month,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount wellbeing month
+safehouse_monthly_features,allocated_amount_wellbeing_month_lag1,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount wellbeing month lag1
+safehouse_monthly_features,allocated_amount_wellbeing_month_lag2,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount wellbeing month lag2
+safehouse_monthly_features,allocated_amount_wellbeing_month_lag3,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocated amount wellbeing month lag3
+safehouse_monthly_features,allocation_count_month,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocation count month
+safehouse_monthly_features,allocation_count_month_lag1,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocation count month lag1
+safehouse_monthly_features,allocation_count_month_lag2,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocation count month lag2
+safehouse_monthly_features,allocation_count_month_lag3,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocation count month lag3
+safehouse_monthly_features,allocation_program_diversity_month,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocation program diversity month
+safehouse_monthly_features,allocation_program_diversity_month_lag1,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocation program diversity month lag1
+safehouse_monthly_features,allocation_program_diversity_month_lag2,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocation program diversity month lag2
+safehouse_monthly_features,allocation_program_diversity_month_lag3,float64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Allocation program diversity month lag3
+safehouse_monthly_features,month_end,datetime64[us],time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Month end
+safehouse_monthly_features,month_start,datetime64[us],time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Month start
+safehouse_monthly_features,open_date,datetime64[us],time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Open date
+safehouse_monthly_features,safehouse_age_months,int64,time_index,"safehouses, safehouse_monthly_metrics, donation_allocations",Safehouse age months
 supporter_features,acquisition_channel,str,categorical_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Acquisition channel
 supporter_features,country,str,categorical_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Country
 supporter_features,created_at,datetime64[us],categorical_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Created at

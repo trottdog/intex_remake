@@ -35,17 +35,17 @@
     {
       "supporter_id": 1,
       "prediction": 0,
-      "prediction_score": 0.0051661077302331
+      "prediction_score": 0.006644797971274495
     },
     {
       "supporter_id": 2,
       "prediction": 1,
-      "prediction_score": 0.8106153662005532
+      "prediction_score": 0.8457650333130654
     },
     {
       "supporter_id": 3,
       "prediction": 0,
-      "prediction_score": 7.918833617089062e-07
+      "prediction_score": 6.453118011206788e-07
     }
   ]
 }

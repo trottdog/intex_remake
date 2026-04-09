@@ -43,6 +43,28 @@ def load_pipeline_config(config_path: Path) -> dict[str, Any]:
         return yaml.safe_load(handle)
 
 
+def resolve_drop_columns(
+    dataset: pd.DataFrame,
+    *,
+    target_col: str,
+    configured_drop_cols: list[str],
+) -> list[str]:
+    """Expand pipeline drop columns with any non-target label fields.
+
+    Shared datasets carry multiple future-label columns. Those adjacent labels are
+    always leakage for the current target and should never be left to per-pipeline
+    YAML files to manage manually.
+    """
+
+    resolved = list(configured_drop_cols)
+    resolved.extend(
+        column
+        for column in dataset.columns
+        if column.startswith("label_") and column != target_col
+    )
+    return list(dict.fromkeys(resolved))
+
+
 def train_classification_pipeline(
     dataset: pd.DataFrame,
     *,
@@ -56,6 +78,11 @@ def train_classification_pipeline(
 ) -> PipelineTrainingResult:
     """Train baseline classifiers and select the best one."""
 
+    resolved_drop_cols = resolve_drop_columns(
+        dataset,
+        target_col=target_col,
+        configured_drop_cols=drop_cols,
+    )
     train_df, test_df = time_split_data(
         dataset,
         date_col=split_col,
@@ -76,7 +103,7 @@ def train_classification_pipeline(
     encoded = encode_features(
         train_df,
         test_df,
-        drop_columns=[target_col, split_col, *drop_cols],
+        drop_columns=[target_col, split_col, *resolved_drop_cols],
     )
 
     models = make_baseline_models(task_type="classification")
@@ -116,7 +143,7 @@ def train_classification_pipeline(
         "feature_names": encoded.feature_names,
         "target_col": target_col,
         "split_col": split_col,
-        "drop_cols": drop_cols,
+        "drop_cols": resolved_drop_cols,
         "selection_metric": selection_metric,
         "best_model_name": best_model_name,
         "cutoff_date": None if cutoff_date is None else str(cutoff_date),
@@ -148,6 +175,11 @@ def train_regression_pipeline(
 ) -> PipelineTrainingResult:
     """Train baseline regressors and select the best one."""
 
+    resolved_drop_cols = resolve_drop_columns(
+        dataset,
+        target_col=target_col,
+        configured_drop_cols=drop_cols,
+    )
     train_df, test_df = time_split_data(
         dataset,
         date_col=split_col,
@@ -160,7 +192,7 @@ def train_regression_pipeline(
     encoded = encode_features(
         train_df,
         test_df,
-        drop_columns=[target_col, split_col, *drop_cols],
+        drop_columns=[target_col, split_col, *resolved_drop_cols],
     )
 
     models = make_baseline_models(task_type="regression")
@@ -200,7 +232,7 @@ def train_regression_pipeline(
         "feature_names": encoded.feature_names,
         "target_col": target_col,
         "split_col": split_col,
-        "drop_cols": drop_cols,
+        "drop_cols": resolved_drop_cols,
         "selection_metric": selection_metric,
         "best_model_name": best_model_name,
         "cutoff_date": None if cutoff_date is None else str(cutoff_date),

@@ -6,6 +6,7 @@
   "split_col": "snapshot_month",
   "selection_metric": "average_precision",
   "cutoff_date": "2025-04-01",
+  "task_type": "classification",
   "sample_count": 777.0,
   "positive_count": 9.0,
   "positive_rate": 0.011583011583011582,
@@ -14,6 +15,6 @@
   "precision": 0.0,
   "recall": 0.0,
   "f1": 0.0,
-  "roc_auc": 0.7996961805555556,
-  "average_precision": 0.030480568525577022
+  "roc_auc": 0.7641059027777778,
+  "average_precision": 0.07122706866539884
 }

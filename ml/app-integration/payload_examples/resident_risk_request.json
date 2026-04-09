@@ -58,12 +58,7 @@
       "future_window_complete_30d": true,
       "future_window_complete_60d": true,
       "future_window_complete_90d": true,
-      "future_window_complete_120d": true,
-      "label_case_prioritization_next_60d": false,
-      "label_counseling_progress_next_90d": false,
-      "label_education_improvement_next_120d": true,
-      "label_wellbeing_deterioration_next_90d": false,
-      "label_supportive_home_visit_next_120d": false
+      "future_window_complete_120d": true
     },
     {
       "resident_id": 45,
@@ -122,12 +117,7 @@
       "future_window_complete_30d": true,
       "future_window_complete_60d": true,
       "future_window_complete_90d": true,
-      "future_window_complete_120d": true,
-      "label_case_prioritization_next_60d": false,
-      "label_counseling_progress_next_90d": false,
-      "label_education_improvement_next_120d": true,
-      "label_wellbeing_deterioration_next_90d": false,
-      "label_supportive_home_visit_next_120d": true
+      "future_window_complete_120d": true
     },
     {
       "resident_id": 23,
@@ -186,12 +176,7 @@
       "future_window_complete_30d": true,
       "future_window_complete_60d": true,
       "future_window_complete_90d": true,
-      "future_window_complete_120d": true,
-      "label_case_prioritization_next_60d": true,
-      "label_counseling_progress_next_90d": true,
-      "label_education_improvement_next_120d": true,
-      "label_wellbeing_deterioration_next_90d": false,
-      "label_supportive_home_visit_next_120d": false
+      "future_window_complete_120d": true
     }
   ]
 }

@@ -464,9 +464,13 @@ Mark only what was actually completed and can be proved.
 - [ ] Predictive model exists
 - [ ] Explanatory / causal-style analysis exists
 - [ ] Results are interpreted in business terms
-- [ ] Notebook is executable top-to-bottom
+- [ ] Notebook is executable top-to-bottom by a TA
+- [ ] Notebook includes a CSV backup / fallback data-loading path for grading if DB access is unavailable
+- [ ] Notebook preserves the original deployed / production-oriented code path
+- [ ] Notebook is saved with outputs visible
 - [ ] Pipeline is integrated into the deployed web app
 - [ ] Model outputs are visible in a meaningful way in the app
+- [ ] Pipeline is clearly demonstrated in the IS 455 video
 
 ## 7.2 Pipeline Quality Audit
 
@@ -475,6 +479,7 @@ Mark only what was actually completed and can be proved.
 - [ ] Specific stakeholder is identified
 - [ ] Why the problem matters is stated
 - [ ] Predictive vs explanatory goal is explicitly justified
+- [ ] Notebook explains why both predictive and explanatory / causal-style analysis were included
 
 ### Data Acquisition, Preparation & Exploration
 - [ ] Relevant tables are identified
@@ -484,6 +489,8 @@ Mark only what was actually completed and can be proved.
 - [ ] Feature engineering is explained
 - [ ] Data prep is reproducible
 - [ ] Exploration includes distributions/relationships/anomalies
+- [ ] Data paths work relative to the repository structure
+- [ ] CSV fallback data is documented clearly enough for TAs to run locally
 
 ### Modeling & Feature Selection
 - [ ] Model choice fits the problem
@@ -510,6 +517,14 @@ Mark only what was actually completed and can be proved.
 - [ ] Notebook explains where deployment lives in repo/app
 - [ ] API endpoint or dashboard integration exists
 - [ ] User can actually access model output in the app
+- [ ] Notebook explains both the deployed integration path and the TA grading / fallback execution path
+
+### Grading Readiness
+- [ ] Notebook can run without private credentials
+- [ ] Notebook does not require grader IP whitelisting
+- [ ] Notebook has rendered outputs visible before submission
+- [ ] Video shows the deployed ML pipeline working in the product
+- [ ] Video and notebook tell the same pipeline story
 
 ## 7.3 Multi-Pipeline Inventory
 
@@ -517,21 +532,30 @@ Mark only what was actually completed and can be proved.
 - [ ] Distinct business problem
 - [ ] Notebook file named clearly
 - [ ] Executable top-to-bottom
+- [ ] CSV fallback path included
+- [ ] Outputs saved in notebook
 - [ ] Integrated into app
+- [ ] Demonstrated in video
 - [ ] Included in final submission URLs
 
 ### Pipeline 2: ______________________
 - [ ] Distinct business problem
 - [ ] Notebook file named clearly
 - [ ] Executable top-to-bottom
+- [ ] CSV fallback path included
+- [ ] Outputs saved in notebook
 - [ ] Integrated into app
+- [ ] Demonstrated in video
 - [ ] Included in final submission URLs
 
 ### Pipeline 3: ______________________
 - [ ] Distinct business problem
 - [ ] Notebook file named clearly
 - [ ] Executable top-to-bottom
+- [ ] CSV fallback path included
+- [ ] Outputs saved in notebook
 - [ ] Integrated into app
+- [ ] Demonstrated in video
 - [ ] Included in final submission URLs
 
 ---

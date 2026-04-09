@@ -16,13 +16,13 @@
     "sample_count": 163.0,
     "positive_count": 104.0,
     "positive_rate": 0.6380368098159509,
-    "accuracy": 0.6748466257668712,
-    "balanced_accuracy": 0.6645208604954367,
-    "precision": 0.7684210526315789,
-    "recall": 0.7019230769230769,
-    "f1": 0.7336683417085427,
-    "roc_auc": 0.735006518904824,
-    "average_precision": 0.8265668060372122
+    "accuracy": 0.6687116564417178,
+    "balanced_accuracy": 0.6633800521512385,
+    "precision": 0.7717391304347826,
+    "recall": 0.6826923076923077,
+    "f1": 0.7244897959183674,
+    "roc_auc": 0.7337027379400259,
+    "average_precision": 0.8252179075318259
   },
   "prediction_contract": {
     "prediction_field": "prediction",
@@ -35,17 +35,17 @@
     {
       "post_id": 318,
       "prediction": 1,
-      "prediction_score": 0.9692314526480366
+      "prediction_score": 0.9731237183231009
     },
     {
       "post_id": 529,
       "prediction": 0,
-      "prediction_score": 0.259417322094086
+      "prediction_score": 0.24311176559881184
     },
     {
       "post_id": 86,
       "prediction": 0,
-      "prediction_score": 0.1238105129839901
+      "prediction_score": 0.10402118054223437
     }
   ]
 }

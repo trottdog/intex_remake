@@ -17,6 +17,7 @@ from ml.src.pipelines.registry import (
     get_predictive_pipeline_spec,
     load_predictive_pipeline_config,
 )
+from ml.src.pipelines.common import resolve_drop_columns
 
 ML_CONTRACT_VERSION = "2026-04-phase-f"
 
@@ -136,6 +137,11 @@ def build_request_frame(
     spec = get_predictive_pipeline_spec(pipeline_name)
     config = load_predictive_pipeline_config(pipeline_name)
     source = dataset if dataset is not None else build_predictive_dataset(pipeline_name, save_output=False)
+    resolved_drop_cols = resolve_drop_columns(
+        source,
+        target_col=str(config["target"]),
+        configured_drop_cols=[str(value) for value in config["drop_cols"]],
+    )
 
     model_columns = [
         column
@@ -144,7 +150,7 @@ def build_request_frame(
         not in {
             str(config["target"]),
             str(config["split_col"]),
-            *[str(value) for value in config["drop_cols"]],
+            *resolved_drop_cols,
         }
     ]
     request_columns = list(dict.fromkeys([*spec["id_columns"], *model_columns]))
