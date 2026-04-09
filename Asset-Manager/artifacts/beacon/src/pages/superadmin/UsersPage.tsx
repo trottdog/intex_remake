@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useListUsers, useListSafehouses, createUser, updateUser, disableUser, enableUser, type User, type CreateUserPayload, type UpdateUserPayload } from "@/services/superadmin.service";
+import { useListUsers, useListSafehouses, createUser, updateUser, deleteUser, disableUser, enableUser, type User, type CreateUserPayload, type UpdateUserPayload } from "@/services/superadmin.service";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQueryPagination } from "@/hooks/useQueryPagination";
-import { Plus, Search, Shield, UserCheck, UserX, Loader2, Edit2, Power, X, AlertCircle, Eye, EyeOff, Check } from "lucide-react";
+import { Plus, Search, Shield, UserCheck, UserX, Loader2, Edit2, Power, Trash2, X, AlertCircle, Eye, EyeOff, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 
 const ROLE_BADGE: Record<string, string> = {
   super_admin: "bg-purple-100 text-purple-700",
@@ -71,7 +72,7 @@ function passwordStrength(pw: string): { score: number; rules: { label: string; 
 }
 
 export default function UsersPage() {
-  const { token } = useAuth();
+  const { token, user: currentUser } = useAuth();
   const queryClient = useQueryClient();
   const { page, setPage } = useQueryPagination();
   const [search, setSearch] = useState("");
@@ -81,6 +82,9 @@ export default function UsersPage() {
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
 
   const [createForm, setCreateForm] = useState<CreateUserPayload>(EMPTY_CREATE);
   const [editForm, setEditForm] = useState<UpdateUserPayload>({});
@@ -135,7 +139,7 @@ export default function UsersPage() {
         ...createForm,
         assignedSafehouses: createSafehouseId ? [createSafehouseId] : [],
       };
-      await createUser(payload, token);
+      await createUser(payload);
       await invalidate();
       setModalMode(null);
     } catch (e: unknown) {
@@ -147,7 +151,7 @@ export default function UsersPage() {
     if (!token || !selected) return;
     setSaving(true); setFormError(null);
     try {
-      await updateUser(selected.id, { ...editForm, assignedSafehouses: editSafehouseId ? [editSafehouseId] : [] }, token);
+      await updateUser(selected.id, { ...editForm, assignedSafehouses: editSafehouseId ? [editSafehouseId] : [] });
       await invalidate();
       setModalMode(null);
     } catch (e: unknown) {
@@ -158,17 +162,47 @@ export default function UsersPage() {
   const handleToggleActive = async (u: User) => {
     if (!token) return;
     try {
-      if (u.isActive) await disableUser(u.id, token);
-      else await enableUser(u.id, token);
+      if (u.isActive) await disableUser(u.id);
+      else await enableUser(u.id);
       await invalidate();
     } catch { /* no-op */ }
     setConfirmToggle(null);
+  };
+
+  const handleDeleteUser = async () => {
+    if (!token || !deleteTarget) return;
+
+    setDeleteError(null);
+    setDeletingUserId(deleteTarget.id);
+
+    try {
+      await deleteUser(deleteTarget.id);
+      await invalidate();
+      setDeleteTarget(null);
+    } catch (e: unknown) {
+      setDeleteError(e instanceof Error ? e.message : "Failed to delete user");
+    } finally {
+      setDeletingUserId(null);
+    }
   };
 
   const pwdInfo = passwordStrength(createForm.password);
 
   return (
     <div className="space-y-6">
+      <DeleteConfirmModal
+        open={!!deleteTarget}
+        title={`Delete ${deleteTarget?.firstName ?? ""} ${deleteTarget?.lastName ?? ""}?`.trim()}
+        description={deleteError ?? "This permanently removes the account. Existing audit records will still reflect actions already taken by this user."}
+        itemName={deleteTarget?.username}
+        isPending={deletingUserId === deleteTarget?.id}
+        onConfirm={handleDeleteUser}
+        onCancel={() => {
+          if (deletingUserId) return;
+          setDeleteError(null);
+          setDeleteTarget(null);
+        }}
+      />
       {/* ── Confirm Toggle Modal ───────────────────────────────────────── */}
       {confirmToggle && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -295,6 +329,16 @@ export default function UsersPage() {
                       className={u.isActive ? "text-red-500 hover:text-red-700 hover:bg-red-50" : "text-green-600 hover:text-green-700 hover:bg-green-50"}
                     >
                       <Power className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => { setDeleteError(null); setDeleteTarget(u); }}
+                      title={u.id === currentUser?.id ? "You cannot delete your own account" : "Delete user"}
+                      disabled={u.id === currentUser?.id}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50 disabled:text-gray-300 disabled:hover:bg-transparent"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   </div>
                 </td>

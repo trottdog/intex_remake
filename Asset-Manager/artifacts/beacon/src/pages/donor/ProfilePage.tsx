@@ -72,7 +72,7 @@ export default function ProfilePage() {
     setSaving(true);
     setSaveError(null);
     try {
-      await updateMyDonorProfile(form, token);
+      await updateMyDonorProfile(form);
       await queryClient.invalidateQueries({ queryKey: ["GetMyDonorProfile"] });
       setSaveSuccess(true);
       setEditing(false);
@@ -309,12 +309,12 @@ export default function ProfilePage() {
           Privacy &amp; Consent Preferences
         </h3>
         <p className="text-sm text-gray-500 mb-4">
-          Control how Beacon uses cookies and collects analytics data. Essential cookies are always active to keep the platform functional.
+          Control how Beacon stores on-device preferences. Essential preferences keep your theme, sidebar, and consent choices consistent. Optional consent is reserved for analytics or personalization if those features are enabled.
         </p>
         <div className="space-y-3 mb-4">
           {([
-            { id: "essential", label: "Essential Only", desc: "Only functional cookies required for login and security. No analytics or tracking.", locked: true },
-            { id: "all", label: "Accept All", desc: "Includes analytics and personalization cookies to improve your experience." },
+            { id: "essential", label: "Essential Only", desc: "Stores only Beacon preference cookies such as theme, consent, and sidebar state. No analytics or cross-site tracking.", locked: true },
+            { id: "all", label: "Accept All", desc: "Allows optional analytics or personalization features if Beacon enables them in the future." },
           ] as const).map((opt) => (
             <label key={opt.id} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${consentLevel === opt.id ? "border-[#2a9d72] bg-[#f0faf6]" : "border-gray-100 hover:border-gray-200"}`}>
               <input
@@ -336,7 +336,7 @@ export default function ProfilePage() {
           <p className="text-xs text-[#2a9d72] font-medium">Consent preferences saved.</p>
         )}
         <p className="text-xs text-gray-400 mt-2">
-          See our <a href="/privacy" className="underline hover:text-gray-600">Privacy Policy</a> for details on how your data is handled.
+          Beacon does not use cookies for authentication. See our <a href="/privacy" className="underline hover:text-gray-600">Privacy Policy</a> for full details.
         </p>
       </div>
 

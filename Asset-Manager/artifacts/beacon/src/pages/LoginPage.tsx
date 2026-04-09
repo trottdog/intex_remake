@@ -71,11 +71,12 @@ export default function LoginPage() {
             A unified management platform for safehouse networks supporting survivors of abuse and trafficking.
           </p>
         </div>
-        <div className="relative z-10 grid grid-cols-3 gap-4">
+        <div className="relative z-10 grid grid-cols-2 gap-4">
           {[
-            { label: "Residents Served", value: "500+" },
-            { label: "Active Safehouses", value: "3" },
-            { label: "Reintegrations", value: "87" },
+            { label: "Residents Served", value: "60+" },
+            { label: "Safe Homes", value: "9" },
+            { label: "Donations Raised", value: "₱30,000+" },
+            { label: "Donations", value: "420+" },
           ].map((stat) => (
             <div key={stat.label} className="bg-white/5 border border-white/10 rounded-xl p-4">
               <div className="text-2xl font-bold text-[#2a9d72]">{stat.value}</div>

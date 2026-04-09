@@ -18,33 +18,37 @@ export default function PrivacyPage() {
       </nav>
       <div className="max-w-3xl mx-auto px-6 py-12 prose prose-gray">
         <h1 className="text-3xl font-bold text-[#214636] mb-2">Privacy Policy</h1>
-        <p className="text-gray-500 text-sm mb-8">Last updated: January 2026</p>
+        <p className="text-gray-500 text-sm mb-8">Last updated: April 9, 2026</p>
 
         <h2>1. Information We Collect</h2>
-        <p>Beacon collects information necessary to provide nonprofit management services, including resident case data, donor information, and staff account details. All data is handled with the highest confidentiality standards appropriate for sensitive populations.</p>
+        <p>Beacon collects information necessary to operate nonprofit services, including resident case data, donor information, staff account details, and system audit records. We only request data needed to provide the platform and protect sensitive populations.</p>
 
         <h2>2. How We Use Information</h2>
-        <p>Information is used solely to support safehouse operations, case management, donor stewardship, and program reporting. Data is never sold or shared with third parties without explicit consent.</p>
+        <p>We use information to support safehouse operations, case management, donor stewardship, program reporting, access control, and platform security. We do not sell personal data.</p>
 
         <h2>3. Data Security</h2>
-        <p>Beacon implements enterprise-grade security including encrypted connections (HSTS), Content Security Policy headers, role-based access control, rate limiting, and comprehensive audit logging. All access is authenticated and logged.</p>
+        <p>Beacon is designed to use encrypted connections, role-based access controls, security headers, and audit logging to protect sensitive records. Access to protected areas requires authentication and is limited by account role.</p>
 
         <h2>4. Cookies</h2>
-        <p>Beacon uses minimal cookies for session management (<code>beacon_session</code>), theme preference (<code>beacon_theme</code>), and consent tracking (<code>beacon_consent</code>). These cookies do not track users across sites.</p>
+        <p>Beacon uses a small set of first-party preference cookies only. These currently include <code>beacon_theme</code> for display preference, <code>beacon_consent</code> for your privacy choice, and <code>sidebar_state</code> for dashboard layout preference. These cookies are limited to Beacon and are not used for cross-site tracking.</p>
+        <p>Beacon authentication does not depend on cookies. Login uses a bearer token held in application memory rather than a persistent browser cookie.</p>
 
-        <h2>5. Resident Data Protection</h2>
+        <h2>5. Essential vs Optional Consent</h2>
+        <p>The consent banner lets you choose between essential preferences only and optional analytics or personalization. Essential preferences keep the application usable and remember interface choices. Optional consent is only used for non-essential features when those features are enabled.</p>
+
+        <h2>6. Resident Data Protection</h2>
         <p>Resident information is stored with the highest level of protection. Identifiable information is accessible only to authorized staff. Resident codes (not names) are used in reports to protect identities.</p>
 
-        <h2>6. Donor Privacy</h2>
-        <p>Donor information is used only for gift processing, stewardship communications, and internal analytics to improve fundraising. Anonymous donations are supported.</p>
+        <h2>7. Donor Privacy</h2>
+        <p>Donor information is used for gift processing, stewardship communications, tax documentation, and internal fundraising analysis. Anonymous donations are supported where operationally feasible.</p>
 
-        <h2>7. Data Retention</h2>
+        <h2>8. Data Retention</h2>
         <p>Case data is retained according to Philippine data protection laws and social welfare regulations. Donors may request their information be deleted at any time.</p>
 
-        <h2>8. Your Rights</h2>
+        <h2>9. Your Rights</h2>
         <p>Under applicable data protection laws, you have the right to access, correct, or delete your personal information. Contact your organization's administrator or data protection officer to exercise these rights.</p>
 
-        <h2>9. Contact</h2>
+        <h2>10. Contact</h2>
         <p>For privacy-related inquiries, contact your organization's designated data protection officer or system administrator.</p>
       </div>
       <footer className="border-t border-gray-100 py-6 px-6 mt-8">

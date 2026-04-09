@@ -13,7 +13,7 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from ml.src.config.settings import DEFAULT_RANDOM_STATE
 from ml.src.modeling.metrics import evaluate_classifier, evaluate_regressor
@@ -105,7 +105,12 @@ def encode_features(
             ),
             (
                 "numeric",
-                Pipeline(steps=[("imputer", SimpleImputer(strategy="median"))]),
+                Pipeline(
+                    steps=[
+                        ("imputer", SimpleImputer(strategy="median")),
+                        ("scaler", StandardScaler()),
+                    ]
+                ),
                 numeric_columns,
             ),
         ],
