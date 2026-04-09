@@ -87,7 +87,7 @@ export default function DonatePage() {
   return (
     <PublicLayout>
       {/* ── Hero ── */}
-      <section className="relative bg-[#214636] py-24 px-6 overflow-hidden">
+      <section className="relative bg-[#214636] py-20 px-6 overflow-hidden">
         <img src={`${import.meta.env.BASE_URL}donate-building.jpg`} alt="" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-black/45" />
         <div className="relative max-w-3xl mx-auto text-center">
@@ -283,20 +283,6 @@ export default function DonatePage() {
           <div className="md:col-span-2 space-y-6">
             <div className="rounded-2xl overflow-hidden h-48">
               <img src={handsImg} alt="Community" className="w-full h-full object-cover" />
-            </div>
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-              <h3 className="font-bold text-[#214636] mb-4 text-sm uppercase tracking-wide">What your gift does</h3>
-              <div className="space-y-3">
-                {Object.values(IMPACT_MAP).map((item) => (
-                  <div key={item.label} className="flex gap-3">
-                    <div className="w-1.5 h-1.5 bg-[#2a9d72] rounded-full mt-1.5 shrink-0" />
-                    <div>
-                      <span className="text-sm font-bold text-[#214636]">{item.label} — </span>
-                      <span className="text-sm text-gray-500">{item.desc}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
             <div className="bg-[#214636] rounded-2xl p-6 text-white">
               <div className="text-2xl font-bold text-[#2a9d72] mb-1">100%</div>
