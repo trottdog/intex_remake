@@ -9,26 +9,26 @@ namespace backend.intex.Controllers;
 
 [Authorize(Policy = PolicyNames.StaffOrAbove)]
 [Route("safehouses")]
-public sealed class SafehousesController(ISafehouseService safehouseService) : ApiControllerBase
+public sealed class SafehousesController(ISafehouseService safehouseService, IUserScopeService userScopeService) : ApiControllerBase
 {
     [HttpGet]
     [ProducesResponseType<StandardPagedResponse<SafehouseResponseDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<StandardPagedResponse<SafehouseResponseDto>>> ListSafehouses([FromQuery] ListSafehousesQuery query, CancellationToken cancellationToken)
-        => Ok(await safehouseService.ListSafehousesAsync(query, cancellationToken));
+        => Ok(await safehouseService.ListSafehousesAsync(query, User.GetRole(), await userScopeService.GetAssignedSafehousesAsync(User, cancellationToken), cancellationToken));
 
     [HttpGet("{id:long}")]
     [ProducesResponseType<SafehouseResponseDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ErrorResponse>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SafehouseResponseDto>> GetSafehouse(long id, CancellationToken cancellationToken)
     {
-        var safehouse = await safehouseService.GetSafehouseAsync(id, cancellationToken);
+        var safehouse = await safehouseService.GetSafehouseAsync(id, User.GetRole(), await userScopeService.GetAssignedSafehousesAsync(User, cancellationToken), cancellationToken);
         return safehouse is null ? NotFound(new ErrorResponse("Not found")) : Ok(safehouse);
     }
 
     [HttpGet("{id:long}/metrics")]
     [ProducesResponseType<IReadOnlyList<SafehouseMetricDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<SafehouseMetricDto>>> GetMetrics(long id, [FromQuery] SafehouseMetricsQuery query, CancellationToken cancellationToken)
-        => Ok(await safehouseService.GetSafehouseMetricsAsync(id, query.Months, cancellationToken));
+        => Ok(await safehouseService.GetSafehouseMetricsAsync(id, query.Months, User.GetRole(), await userScopeService.GetAssignedSafehousesAsync(User, cancellationToken), cancellationToken));
 
     [Authorize(Policy = PolicyNames.AdminOrAbove)]
     [HttpPost]

@@ -1,6 +1,7 @@
 using backend.intex.DTOs.Common;
 using backend.intex.DTOs.Safehouses;
 using backend.intex.Entities.Database;
+using backend.intex.Infrastructure.Auth;
 using backend.intex.Repositories.Abstractions;
 using backend.intex.Services.Abstractions;
 
@@ -19,11 +20,12 @@ public sealed class SafehouseService(ISafehouseRepository safehouseRepository) :
             .ToList());
     }
 
-    public async Task<StandardPagedResponse<SafehouseResponseDto>> ListSafehousesAsync(ListSafehousesQuery query, CancellationToken cancellationToken = default)
+    public async Task<StandardPagedResponse<SafehouseResponseDto>> ListSafehousesAsync(ListSafehousesQuery query, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default)
     {
         var page = query.Page <= 0 ? 1 : query.Page;
         var pageSize = ResolvePageSize(query.PageSize, query.Limit);
-        var (safehouses, total) = await safehouseRepository.ListSafehousesAsync(page, pageSize, cancellationToken);
+        var enforceScope = role is BeaconRoles.Staff or BeaconRoles.Admin;
+        var (safehouses, total) = await safehouseRepository.ListSafehousesAsync(page, pageSize, assignedSafehouses, enforceScope, cancellationToken);
         var totalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)pageSize);
 
         return new StandardPagedResponse<SafehouseResponseDto>(
@@ -32,9 +34,10 @@ public sealed class SafehouseService(ISafehouseRepository safehouseRepository) :
             new StandardPaginationMeta(page, pageSize, totalPages, page < totalPages, page > 1));
     }
 
-    public async Task<SafehouseResponseDto?> GetSafehouseAsync(long safehouseId, CancellationToken cancellationToken = default)
+    public async Task<SafehouseResponseDto?> GetSafehouseAsync(long safehouseId, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default)
     {
-        var safehouse = await safehouseRepository.GetSafehouseByIdAsync(safehouseId, cancellationToken);
+        var enforceScope = role is BeaconRoles.Staff or BeaconRoles.Admin;
+        var safehouse = await safehouseRepository.GetSafehouseByIdAsync(safehouseId, assignedSafehouses, enforceScope, cancellationToken);
         return safehouse is null ? null : Map(safehouse);
     }
 
@@ -69,10 +72,11 @@ public sealed class SafehouseService(ISafehouseRepository safehouseRepository) :
     public Task DeleteSafehouseAsync(long safehouseId, CancellationToken cancellationToken = default) =>
         safehouseRepository.DeleteSafehouseIfExistsAsync(safehouseId, cancellationToken);
 
-    public async Task<IReadOnlyList<SafehouseMetricDto>> GetSafehouseMetricsAsync(long safehouseId, int months, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<SafehouseMetricDto>> GetSafehouseMetricsAsync(long safehouseId, int months, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default)
     {
         var resolvedMonths = Math.Clamp(months <= 0 ? 12 : months, 1, 24);
-        var metrics = await safehouseRepository.ListMetricsAsync(safehouseId, resolvedMonths, cancellationToken);
+        var enforceScope = role is BeaconRoles.Staff or BeaconRoles.Admin;
+        var metrics = await safehouseRepository.ListMetricsAsync(safehouseId, resolvedMonths, assignedSafehouses, enforceScope, cancellationToken);
 
         return metrics
             .OrderBy(metric => metric.MonthStart)

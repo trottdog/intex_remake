@@ -9,12 +9,12 @@ namespace backend.intex.Controllers;
 
 [Authorize(Policy = PolicyNames.StaffOrAbove)]
 [Route("donation-allocations")]
-public sealed class DonationAllocationsController(IDonationService donationService) : ApiControllerBase
+public sealed class DonationAllocationsController(IDonationService donationService, IUserScopeService userScopeService) : ApiControllerBase
 {
     [HttpGet]
     [ProducesResponseType<DonationAllocationsResponse>(StatusCodes.Status200OK)]
     public async Task<ActionResult<DonationAllocationsResponse>> ListAllocations([FromQuery] ListDonationAllocationsQuery query, CancellationToken cancellationToken)
-        => Ok(await donationService.ListDonationAllocationsAsync(query, User.GetRole(), User.GetAssignedSafehouseIds(), cancellationToken));
+        => Ok(await donationService.ListDonationAllocationsAsync(query, User.GetRole(), await userScopeService.GetAssignedSafehousesAsync(User, cancellationToken), cancellationToken));
 
     [HttpPost]
     [ProducesResponseType<DonationAllocationResponseDto>(StatusCodes.Status201Created)]
@@ -22,7 +22,7 @@ public sealed class DonationAllocationsController(IDonationService donationServi
     [ProducesResponseType<ErrorResponse>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<DonationAllocationResponseDto>> CreateAllocation([FromBody] CreateDonationAllocationRequest request, CancellationToken cancellationToken)
     {
-        var result = await donationService.CreateDonationAllocationAsync(request, User.GetRole(), User.GetAssignedSafehouseIds(), cancellationToken);
+        var result = await donationService.CreateDonationAllocationAsync(request, User.GetRole(), await userScopeService.GetAssignedSafehousesAsync(User, cancellationToken), cancellationToken);
         if (result.Response is null && result.ErrorMessage == "Not found")
         {
             return NotFound(new ErrorResponse("Not found"));
@@ -38,7 +38,7 @@ public sealed class DonationAllocationsController(IDonationService donationServi
     [ProducesResponseType<ErrorResponse>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteAllocation(long id, CancellationToken cancellationToken)
     {
-        var deleted = await donationService.DeleteDonationAllocationAsync(id, User.GetRole(), User.GetAssignedSafehouseIds(), cancellationToken);
+        var deleted = await donationService.DeleteDonationAllocationAsync(id, User.GetRole(), await userScopeService.GetAssignedSafehousesAsync(User, cancellationToken), cancellationToken);
         return deleted ? NoContent() : NotFound(new ErrorResponse("Not found"));
     }
 }

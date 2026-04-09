@@ -1,3 +1,4 @@
+using System.Globalization;
 using backend.intex.DTOs.Common;
 using backend.intex.DTOs.Donations;
 using backend.intex.Entities.Database;
@@ -169,7 +170,7 @@ public sealed class DonationService(IDonationRepository donationRepository) : ID
             response.TotalAllocated,
             response.Unallocated,
             response.IsGeneralFund,
-            $"Thank you! Your {(request.IsRecurring ?? false ? "recurring " : string.Empty)}donation of ₱{amount.ToString("N0")} has been recorded. {destination}"), null);
+            $"Thank you! Your {(request.IsRecurring ?? false ? "recurring " : string.Empty)}donation of ₱{amount.ToString("#,0.##", CultureInfo.InvariantCulture)} has been recorded. {destination}"), null);
     }
 
     public async Task<(PublicDonationResponse? Response, string? ErrorMessage)> CreatePublicDonationAsync(PublicDonationRequest request, CancellationToken cancellationToken = default)

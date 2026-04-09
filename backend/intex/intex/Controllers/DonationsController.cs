@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace backend.intex.Controllers;
 
 [Route("donations")]
-public sealed class DonationsController(IDonationService donationService) : ApiControllerBase
+public sealed class DonationsController(IDonationService donationService, IUserScopeService userScopeService) : ApiControllerBase
 {
     [Authorize(Policy = PolicyNames.DonorOnly)]
     [HttpGet("my-ledger")]
@@ -26,7 +26,7 @@ public sealed class DonationsController(IDonationService donationService) : ApiC
     [HttpGet]
     [ProducesResponseType<StandardPagedResponse<DonationResponseDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<StandardPagedResponse<DonationResponseDto>>> ListDonations([FromQuery] ListDonationsQuery query, CancellationToken cancellationToken)
-        => Ok(await donationService.ListDonationsAsync(query, User.GetRole(), User.GetAssignedSafehouseIds(), cancellationToken));
+        => Ok(await donationService.ListDonationsAsync(query, User.GetRole(), await userScopeService.GetAssignedSafehousesAsync(User, cancellationToken), cancellationToken));
 
     [Authorize(Policy = PolicyNames.StaffOrAbove)]
     [HttpPost]
@@ -43,7 +43,7 @@ public sealed class DonationsController(IDonationService donationService) : ApiC
     [ProducesResponseType<ErrorResponse>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<DonationResponseDto>> GetDonation(long id, CancellationToken cancellationToken)
     {
-        var donation = await donationService.GetDonationAsync(id, User.GetRole(), User.GetAssignedSafehouseIds(), cancellationToken);
+        var donation = await donationService.GetDonationAsync(id, User.GetRole(), await userScopeService.GetAssignedSafehousesAsync(User, cancellationToken), cancellationToken);
         return donation is null ? NotFound(new ErrorResponse("Not found")) : Ok(donation);
     }
 

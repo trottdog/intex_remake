@@ -15,9 +15,9 @@ public sealed class SafehouseRepository(BeaconDbContext dbContext) : ISafehouseR
             .ThenBy(safehouse => safehouse.SafehouseId)
             .ToListAsync(cancellationToken);
 
-    public async Task<(IReadOnlyList<Safehouse> Safehouses, int Total)> ListSafehousesAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<Safehouse> Safehouses, int Total)> ListSafehousesAsync(int page, int pageSize, IReadOnlyList<long> allowedSafehouses, bool enforceSafehouseScope, CancellationToken cancellationToken = default)
     {
-        var query = dbContext.Safehouses.AsNoTracking();
+        var query = ApplySafehouseScope(dbContext.Safehouses.AsNoTracking(), allowedSafehouses, enforceSafehouseScope);
         var total = await query.CountAsync(cancellationToken);
         var safehouses = await query
             .OrderBy(safehouse => safehouse.Name)
@@ -29,8 +29,8 @@ public sealed class SafehouseRepository(BeaconDbContext dbContext) : ISafehouseR
         return (safehouses, total);
     }
 
-    public Task<Safehouse?> GetSafehouseByIdAsync(long safehouseId, CancellationToken cancellationToken = default) =>
-        dbContext.Safehouses
+    public Task<Safehouse?> GetSafehouseByIdAsync(long safehouseId, IReadOnlyList<long> allowedSafehouses, bool enforceSafehouseScope, CancellationToken cancellationToken = default) =>
+        ApplySafehouseScope(dbContext.Safehouses, allowedSafehouses, enforceSafehouseScope)
             .AsNoTracking()
             .FirstOrDefaultAsync(safehouse => safehouse.SafehouseId == safehouseId, cancellationToken);
 
@@ -135,14 +135,25 @@ public sealed class SafehouseRepository(BeaconDbContext dbContext) : ISafehouseR
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<SafehouseMonthlyMetric>> ListMetricsAsync(long safehouseId, int months, CancellationToken cancellationToken = default) =>
+    public async Task<IReadOnlyList<SafehouseMonthlyMetric>> ListMetricsAsync(long safehouseId, int months, IReadOnlyList<long> allowedSafehouses, bool enforceSafehouseScope, CancellationToken cancellationToken = default) =>
         await dbContext.SafehouseMonthlyMetrics
             .AsNoTracking()
+            .Where(metric => !enforceSafehouseScope || allowedSafehouses.Count == 0 || (metric.SafehouseId.HasValue && allowedSafehouses.Contains(metric.SafehouseId.Value)))
             .Where(metric => metric.SafehouseId == safehouseId)
             .OrderByDescending(metric => metric.MonthStart)
             .ThenByDescending(metric => metric.MetricId)
             .Take(months)
             .ToListAsync(cancellationToken);
+
+    private static IQueryable<Safehouse> ApplySafehouseScope(IQueryable<Safehouse> query, IReadOnlyList<long> allowedSafehouses, bool enforceSafehouseScope)
+    {
+        if (!enforceSafehouseScope || allowedSafehouses.Count == 0)
+        {
+            return query;
+        }
+
+        return query.Where(safehouse => allowedSafehouses.Contains(safehouse.SafehouseId));
+    }
 
     private static string? ReadNullableString(JsonElement value) =>
         value.ValueKind == JsonValueKind.Null ? null : value.GetString();
