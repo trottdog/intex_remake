@@ -80,7 +80,7 @@ export default function AboutPage() {
               In 2012, our founder opened the doors of a small home in Quezon City to three girls who had nowhere to go. Word spread quietly — through social workers, barangay officials, and a network of volunteers who cared. Within a year, that small home sheltered twelve girls.
             </p>
             <p className="text-gray-600 leading-relaxed mb-4">
-              Today, Beacon Sanctuary operates three fully-staffed safe homes across Luzon, serving girls between the ages of 8 and 21 who have been rescued from situations of sexual exploitation and trafficking.
+              Today, Beacon Sanctuary operates nine fully-staffed safe homes across the Philippines, serving girls between the ages of 8 and 21 who have been rescued from situations of sexual exploitation and trafficking.
             </p>
             <p className="text-gray-600 leading-relaxed">
               We are inspired by organizations like Lighthouse Sanctuary, which has demonstrated that faith-driven, data-informed, and community-rooted care can radically transform outcomes for vulnerable children. We carry that same mission forward in the Philippines.
