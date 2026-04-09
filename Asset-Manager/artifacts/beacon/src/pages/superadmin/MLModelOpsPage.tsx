@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell,
 } from "recharts";
 import {
   CheckCircle, AlertTriangle, Clock, Activity, RefreshCw,
-  Database, TrendingUp, Cpu,
+  Database, TrendingUp, Cpu, ExternalLink, Info,
 } from "lucide-react";
 import {
   useGetMlPipelines, useGetScoreDistribution,
@@ -16,6 +16,12 @@ import {
   BandBadge, LoadingState, ErrorState, EmptyState,
   SectionHeader, Card, FilterSelect, fmtRelativeDate, ACCENT, DARK, MINT,
 } from "./ml/Shared";
+import {
+  PIPELINE_REVIEW_CATALOG,
+  getPipelineCatalogEntry,
+  type PipelineCaveatLevel,
+  type PipelineEvidenceLevel,
+} from "./ml/pipelineCatalog";
 
 const PIPELINE_DISPLAY: Record<string, string> = {
   donor_churn_risk: "Donor Churn Risk",
@@ -48,6 +54,18 @@ const SCORE_COLORS = [
 ];
 
 const BAND_CHART_COLORS = [ACCENT, "#f59e0b", "#ef4444", "#94a3b8", "#7bc5a6", "#457b9d", "#e9c46a"];
+
+const EVIDENCE_CONFIG: Record<PipelineEvidenceLevel, { label: string; className: string }> = {
+  direct: { label: "Direct route", className: "bg-green-100 text-green-700" },
+  adjacent: { label: "Adjacent route", className: "bg-amber-100 text-amber-700" },
+  model_ops: { label: "Model ops only", className: "bg-slate-100 text-slate-700" },
+};
+
+const CAVEAT_CONFIG: Record<PipelineCaveatLevel, { label: string; className: string }> = {
+  normal: { label: "Standard", className: "bg-slate-100 text-slate-700" },
+  caution: { label: "Needs caveat", className: "bg-amber-100 text-amber-700" },
+  high: { label: "High caveat", className: "bg-red-100 text-red-700" },
+};
 
 // ── Pipeline Status Table ─────────────────────────────────────────────────────
 
@@ -321,9 +339,147 @@ function FeatureImportancePanel({ runId }: { runId: number | null }) {
   );
 }
 
+function ReviewedCoverageMatrix({ selectedPipelineName }: { selectedPipelineName: string | null }) {
+  return (
+    <Card>
+      <SectionHeader
+        title="Reviewed Pipeline Coverage"
+        sub="Where each reviewed pipeline is actually visible in the routed app today, and which ones still depend on model-ops context."
+      />
+      <div className="overflow-x-auto -mx-5 px-5">
+        <table className="w-full min-w-[860px] text-sm">
+          <thead>
+            <tr className="border-b border-gray-100">
+              {["Pipeline", "Family", "Coverage", "Where to Demo", "Current Caveat"].map(header => (
+                <th key={header} className="pb-2 pr-4 text-left text-[10px] font-bold uppercase tracking-wider text-gray-400 whitespace-nowrap">
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {PIPELINE_REVIEW_CATALOG.map(entry => {
+              const isSelected = [entry.internalName, entry.publicName, ...(entry.aliases ?? [])].includes(selectedPipelineName ?? "");
+              const evidence = EVIDENCE_CONFIG[entry.evidence];
+              const caveat = CAVEAT_CONFIG[entry.caveat];
+
+              return (
+                <tr key={entry.internalName} className={`border-b border-gray-50 ${isSelected ? "bg-teal-50/50" : ""}`}>
+                  <td className="py-3 pr-4 align-top">
+                    <div className="font-medium text-gray-900 text-xs">{entry.displayName}</div>
+                    <div className="mt-0.5 text-[10px] text-gray-400 font-mono">
+                      {entry.internalName}
+                      {entry.publicName !== entry.internalName ? ` -> ${entry.publicName}` : ""}
+                    </div>
+                  </td>
+                  <td className="py-3 pr-4 align-top text-xs text-gray-600">
+                    <div>{entry.family}</div>
+                    <div className="mt-0.5 text-[10px] uppercase tracking-wide text-gray-400">{entry.taskType}</div>
+                  </td>
+                  <td className="py-3 pr-4 align-top">
+                    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${evidence.className}`}>
+                      {evidence.label}
+                    </span>
+                    <div className="mt-2 max-w-[220px] text-xs leading-relaxed text-gray-500">{entry.summary}</div>
+                  </td>
+                  <td className="py-3 pr-4 align-top">
+                    <div className="flex max-w-[240px] flex-wrap gap-1.5">
+                      {entry.links.map(link => (
+                        <a
+                          key={`${entry.internalName}-${link.href}`}
+                          href={link.href}
+                          className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 transition-colors hover:border-gray-300 hover:text-gray-900"
+                        >
+                          {link.label}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="py-3 align-top">
+                    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${caveat.className}`}>
+                      {caveat.label}
+                    </span>
+                    <div className="mt-2 max-w-[260px] text-xs leading-relaxed text-gray-500">{entry.limitation}</div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+}
+
+function SelectedPipelineContext({ pipeline }: { pipeline: MlPipelineStatus | null }) {
+  if (!pipeline) {
+    return <EmptyState label="Click a pipeline in the table above to inspect scores and route coverage" />;
+  }
+
+  const catalogEntry = getPipelineCatalogEntry(pipeline.pipelineName);
+  const evidence = catalogEntry ? EVIDENCE_CONFIG[catalogEntry.evidence] : null;
+  const caveat = catalogEntry ? CAVEAT_CONFIG[catalogEntry.caveat] : null;
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <div className="text-sm font-semibold text-gray-900">
+          {pipeline.displayName ?? PIPELINE_DISPLAY[pipeline.pipelineName] ?? pipeline.pipelineName}
+        </div>
+        <div className="mt-0.5 text-[10px] font-mono text-gray-400">{pipeline.pipelineName}</div>
+      </div>
+
+      {catalogEntry ? (
+        <>
+          <div className="flex flex-wrap gap-2">
+            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${evidence?.className ?? "bg-slate-100 text-slate-700"}`}>
+              {evidence?.label ?? "Mapped"}
+            </span>
+            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${caveat?.className ?? "bg-slate-100 text-slate-700"}`}>
+              {caveat?.label ?? "Standard"}
+            </span>
+          </div>
+
+          <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs leading-relaxed text-blue-900">
+            <div className="mb-1 flex items-center gap-2 font-semibold">
+              <Info className="h-3.5 w-3.5 shrink-0" />
+              Route context
+            </div>
+            <div>{catalogEntry.summary}</div>
+            <div className="mt-2 text-blue-800/90">{catalogEntry.limitation}</div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Recommended Demo Paths</div>
+            <div className="flex flex-col gap-2">
+              {catalogEntry.links.map(link => (
+                <a
+                  key={`${catalogEntry.internalName}-${link.href}`}
+                  href={link.href}
+                  className="inline-flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition-colors hover:border-gray-300 hover:text-gray-900"
+                >
+                  <span>{link.label}</span>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              ))}
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs leading-relaxed text-gray-600">
+          This pipeline is present in run-level model ops data, but it is not part of the reviewed routed coverage matrix yet.
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function MLModelOpsPage() {
+  const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+  const requestedPipeline = params.get("pipeline");
   const [filterFreshness, setFilterFreshness] = useState("");
   const [selectedPipeline, setSelectedPipeline] = useState<MlPipelineStatus | null>(null);
 
@@ -334,6 +490,31 @@ export default function MLModelOpsPage() {
   const pipelines = data?.data ?? [];
   const selectedName = selectedPipeline?.pipelineName ?? null;
   const selectedRunId = selectedPipeline?.latestRunId ?? null;
+
+  useEffect(() => {
+    if (!requestedPipeline || pipelines.length === 0) return;
+    const matched = pipelines.find(p => {
+      if (p.pipelineName === requestedPipeline) return true;
+      const entry = getPipelineCatalogEntry(p.pipelineName);
+      return entry
+        ? [entry.internalName, entry.publicName, ...(entry.aliases ?? [])].includes(requestedPipeline)
+        : false;
+    });
+    if (matched && matched.pipelineName !== selectedPipeline?.pipelineName) {
+      setSelectedPipeline(matched);
+    }
+  }, [pipelines, requestedPipeline, selectedPipeline?.pipelineName]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (selectedPipeline?.pipelineName) {
+      url.searchParams.set("pipeline", selectedPipeline.pipelineName);
+    } else {
+      url.searchParams.delete("pipeline");
+    }
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  }, [selectedPipeline?.pipelineName]);
 
   return (
     <div className="space-y-6 pb-8">
@@ -418,6 +599,8 @@ export default function MLModelOpsPage() {
             selectedPipeline={selectedPipeline}
           />
 
+          <ReviewedCoverageMatrix selectedPipelineName={selectedName} />
+
           <div className="grid lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2">
               <FreshnessMonitor pipelines={pipelines} />
@@ -429,11 +612,9 @@ export default function MLModelOpsPage() {
                   {selectedPipeline ? (selectedPipeline.displayName ?? selectedPipeline.pipelineName.replace(/_/g, " ")) : "Select a Pipeline"}
                 </span>
               </div>
-              {!selectedPipeline && (
-                <div className="bg-white border border-gray-100 rounded-xl p-5">
-                  <EmptyState label="Click a pipeline in the table above to inspect scores" />
-                </div>
-              )}
+              <Card>
+                <SelectedPipelineContext pipeline={selectedPipeline} />
+              </Card>
             </div>
           </div>
 

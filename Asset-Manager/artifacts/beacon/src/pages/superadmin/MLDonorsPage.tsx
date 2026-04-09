@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useLocation } from "wouter";
+import { useEffect, useState } from "react";
 import { ArrowUpDown, ExternalLink, Download } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -17,6 +16,7 @@ import {
   FilterSelect, SideDrawer, Pagination, ActionButton,
   fmtPeso, fmtDate, fmtRelativeDate, fmtScore, ACCENT,
 } from "./ml/Shared";
+import { PipelineCoveragePanel, PipelineInterpretationNotice } from "./ml/PipelineCoveragePanel";
 
 type Tab = "churn" | "upgrade" | "attribution";
 
@@ -337,6 +337,12 @@ function UpgradeTab() {
 
   return (
     <div className="space-y-4">
+      <PipelineInterpretationNotice
+        title="Directional ask guidance"
+        body="Recommended ask bands are useful for prioritization, but any adjacent next-donation forecasting context should still be treated as directional until regression validation and leakage checks are stronger."
+        tone="critical"
+      />
+
       <Card>
         <SectionHeader
           title="Upgrade Potential Board"
@@ -595,19 +601,51 @@ function AttributionTab() {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function MLDonorsPage() {
-  const [, navigate] = useLocation();
-  const [tab, setTab] = useState<Tab>("churn");
+  const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+  const defaultTab = (params.get("tab") as Tab) || "churn";
+  const [tab, setTab] = useState<Tab>(["churn", "upgrade", "attribution"].includes(defaultTab) ? defaultTab : "churn");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", tab);
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  }, [tab]);
+
+  const coverageByTab: Record<Tab, { title: string; subtitle: string; pipelines: string[] }> = {
+    churn: {
+      title: "Churn Coverage",
+      subtitle: "This route is the direct UI surface for donor retention scoring.",
+      pipelines: ["donor_retention"],
+    },
+    upgrade: {
+      title: "Upgrade Coverage",
+      subtitle: "This route is the direct UI surface for donor upgrade, with next-donation forecasting used as adjacent context.",
+      pipelines: ["donor_upgrade", "next_donation_amount"],
+    },
+    attribution: {
+      title: "Attribution Context",
+      subtitle: "This tab supports fundraising interpretation, but the reviewed predictive pipeline coverage still lives on the churn and upgrade tabs.",
+      pipelines: ["donor_retention", "donor_upgrade", "next_donation_amount"],
+    },
+  };
 
   return (
     <div className="space-y-6 pb-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Supporter Intelligence</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          AI-powered donor churn prediction, upgrade potential, and impact attribution
+          Direct routed views for donor retention and donor upgrade, with attribution context and adjacent forecast support
         </p>
       </div>
 
       <TabBar tabs={TABS} active={tab} onChange={setTab} />
+
+      <PipelineCoveragePanel
+        title={coverageByTab[tab].title}
+        subtitle={coverageByTab[tab].subtitle}
+        pipelineNames={coverageByTab[tab].pipelines}
+      />
 
       {tab === "churn" && <ChurnTab />}
       {tab === "upgrade" && <UpgradeTab />}

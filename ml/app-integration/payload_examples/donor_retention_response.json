@@ -16,13 +16,13 @@
     "sample_count": 12.0,
     "positive_count": 6.0,
     "positive_rate": 0.5,
-    "accuracy": 0.8333333333333334,
-    "balanced_accuracy": 0.8333333333333333,
-    "precision": 1.0,
+    "accuracy": 0.75,
+    "balanced_accuracy": 0.75,
+    "precision": 0.8,
     "recall": 0.6666666666666666,
-    "f1": 0.8,
-    "roc_auc": 0.8055555555555556,
-    "average_precision": 0.8888888888888888
+    "f1": 0.7272727272727273,
+    "roc_auc": 0.8333333333333333,
+    "average_precision": 0.8634920634920633
   },
   "prediction_contract": {
     "prediction_field": "prediction",
@@ -35,17 +35,17 @@
     {
       "supporter_id": 1,
       "prediction": 0,
-      "prediction_score": 0.006644797971274495
+      "prediction_score": 0.03005118591371139
     },
     {
       "supporter_id": 2,
       "prediction": 1,
-      "prediction_score": 0.8457650333130654
+      "prediction_score": 0.5912013975497602
     },
     {
       "supporter_id": 3,
       "prediction": 0,
-      "prediction_score": 6.453118011206788e-07
+      "prediction_score": 0.06606038328567733
     }
   ]
 }

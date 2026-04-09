@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell, LineChart, Line,
@@ -19,6 +19,7 @@ import {
   FilterSelect, SideDrawer, Pagination, ActionButton,
   fmtDate, fmtRelativeDate, ACCENT, DARK,
 } from "./ml/Shared";
+import { PipelineCoveragePanel, PipelineInterpretationNotice } from "./ml/PipelineCoveragePanel";
 
 type Tab = "regression" | "reintegration" | "interventions" | "safehouses";
 
@@ -289,6 +290,12 @@ function ReintegrationTab() {
 
   return (
     <div className="space-y-4">
+      <PipelineInterpretationNotice
+        title="Adjacent resident signals"
+        body="This readiness route is direct, but case prioritization and home-visitation-outcome evidence is still adjacent to the workflow rather than exposed as separate routed scoreboards."
+        tone="caution"
+      />
+
       {tableMeta && <PrivacyBanner count={tableMeta.totalRestricted} />}
 
       <div className="grid lg:grid-cols-2 gap-4">
@@ -517,6 +524,12 @@ function InterventionTab() {
 
   return (
     <div className="space-y-4">
+      <PipelineInterpretationNotice
+        title="Interpret as supporting context"
+        body="Counseling-progress and education-improvement remain adjacent ML signals in this tab. Use them to support intervention review, not as if they were fully separate, validated row-level products."
+        tone="caution"
+      />
+
       <Card>
         <SectionHeader
           title="Intervention Effectiveness Matrix"
@@ -654,6 +667,12 @@ function SafehousesTab() {
 
   return (
     <div className="space-y-4">
+      <PipelineInterpretationNotice
+        title="Model-ops-only caveat"
+        body="Capacity-pressure and resource-demand should still be demonstrated through the ML control center rather than treated as direct safehouse workflows here. Resource-demand carries the strongest caveat because of the perfect-metric leakage risk noted in review."
+        tone="critical"
+      />
+
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-500">
           {compareMode
@@ -845,12 +864,42 @@ export default function MLResidentsPage() {
   const defaultTab = (params.get("tab") as Tab) || "regression";
   const [tab, setTab] = useState<Tab>(["regression", "reintegration", "interventions", "safehouses"].includes(defaultTab) ? defaultTab : "regression");
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", tab);
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  }, [tab]);
+
+  const coverageByTab: Record<Tab, { title: string; subtitle: string; pipelines: string[] }> = {
+    regression: {
+      title: "Regression Coverage",
+      subtitle: "This route is the direct UI surface for resident risk scoring.",
+      pipelines: ["resident_risk"],
+    },
+    reintegration: {
+      title: "Reintegration Coverage",
+      subtitle: "This route is the direct UI surface for reintegration readiness, with adjacent resident workflows around prioritization and visitation outcomes.",
+      pipelines: ["reintegration_readiness", "case_prioritization", "home_visitation_outcome"],
+    },
+    interventions: {
+      title: "Intervention Coverage",
+      subtitle: "This tab supports intervention review, while counseling and education pipelines remain adjacent rather than standalone routed scoreboards.",
+      pipelines: ["counseling_progress", "education_improvement"],
+    },
+    safehouses: {
+      title: "Safehouse Coverage",
+      subtitle: "Safehouse health is visible here as adjacent operational context, while capacity and resource pipelines should still be demonstrated through model ops with caveats.",
+      pipelines: ["capacity_pressure", "resource_demand"],
+    },
+  };
+
   return (
     <div className="space-y-6 pb-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Resident Intelligence</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          AI-powered regression risk, reintegration readiness, intervention effectiveness, and safehouse health
+          Direct routed views for resident risk and reintegration readiness, with adjacent intervention and safehouse context
         </p>
       </div>
 
@@ -862,6 +911,12 @@ export default function MLResidentsPage() {
       </div>
 
       <TabBar tabs={TABS} active={tab} onChange={setTab} />
+
+      <PipelineCoveragePanel
+        title={coverageByTab[tab].title}
+        subtitle={coverageByTab[tab].subtitle}
+        pipelineNames={coverageByTab[tab].pipelines}
+      />
 
       {tab === "regression" && <RegressionTab />}
       {tab === "reintegration" && <ReintegrationTab />}

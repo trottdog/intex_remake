@@ -69,17 +69,21 @@ public sealed class DashboardController(BeaconDbContext dbContext, IUserScopeSer
         var donationCount = await donations.CountAsync(cancellationToken);
         var lastDonation = await donations.OrderByDescending(item => item.DonationDate).FirstOrDefaultAsync(cancellationToken);
 
-        var givingTrend = await donations
+        var donorDonations = await donations
             .Where(item => item.DonationDate.HasValue)
-            .GroupBy(item => new { Year = item.DonationDate!.Value.Year, Month = item.DonationDate!.Value.Month })
+            .Select(item => new { item.DonationDate, item.Amount })
+            .ToListAsync(cancellationToken);
+
+        var givingTrend = donorDonations
+            .GroupBy(item => new { item.DonationDate!.Value.Year, item.DonationDate!.Value.Month })
+            .OrderBy(group => group.Key.Year).ThenBy(group => group.Key.Month)
             .Select(group => new
             {
                 month = $"{group.Key.Year:D4}-{group.Key.Month:D2}",
                 year = group.Key.Year,
                 amount = decimal.Round(group.Sum(item => item.Amount ?? 0m), 2)
             })
-            .OrderBy(item => item.month)
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         return Ok(new
         {
