@@ -470,7 +470,6 @@ Mark only what was actually completed and can be proved.
 - [ ] Notebook is saved with outputs visible
 - [ ] Pipeline is integrated into the deployed web app
 - [ ] Model outputs are visible in a meaningful way in the app
-- [ ] Pipeline is clearly demonstrated in the IS 455 video
 
 ## 7.2 Pipeline Quality Audit
 
@@ -523,8 +522,6 @@ Mark only what was actually completed and can be proved.
 - [ ] Notebook can run without private credentials
 - [ ] Notebook does not require grader IP whitelisting
 - [ ] Notebook has rendered outputs visible before submission
-- [ ] Video shows the deployed ML pipeline working in the product
-- [ ] Video and notebook tell the same pipeline story
 
 ## 7.3 Multi-Pipeline Inventory
 
@@ -535,7 +532,6 @@ Mark only what was actually completed and can be proved.
 - [ ] CSV fallback path included
 - [ ] Outputs saved in notebook
 - [ ] Integrated into app
-- [ ] Demonstrated in video
 - [ ] Included in final submission URLs
 
 ### Pipeline 2: ______________________
@@ -545,7 +541,6 @@ Mark only what was actually completed and can be proved.
 - [ ] CSV fallback path included
 - [ ] Outputs saved in notebook
 - [ ] Integrated into app
-- [ ] Demonstrated in video
 - [ ] Included in final submission URLs
 
 ### Pipeline 3: ______________________
@@ -555,7 +550,6 @@ Mark only what was actually completed and can be proved.
 - [ ] CSV fallback path included
 - [ ] Outputs saved in notebook
 - [ ] Integrated into app
-- [ ] Demonstrated in video
 - [ ] Included in final submission URLs
 
 ---
@@ -655,7 +649,7 @@ This section exists because many teams verify only from repo code.
 
 ## 11.1 General Video Rules
 
-- [ ] Each class has its own video if required
+- [ ] Videos exist for 413 and 414
 - [ ] Videos are concise
 - [ ] Videos are high enough resolution to read the UI
 - [ ] Correct screen was recorded
@@ -687,14 +681,6 @@ This section exists because many teams verify only from repo code.
 - [ ] Secrets handling approach explained
 - [ ] Additional security features shown if claimed
 
-## 11.4 IS 455 Video Coverage
-
-- [ ] Business problem explained
-- [ ] Notebook(s) shown
-- [ ] Results shown
-- [ ] Model deployment shown in app
-- [ ] Business value explained
-
 ---
 
 # 12. Final Submission Audit
@@ -720,7 +706,6 @@ Open every link from a logged-out browser/private window.
 - [ ] Notebook links open
 - [ ] IS 413 video opens
 - [ ] IS 414 video opens
-- [ ] IS 455 video opens
 
 ## 12.3 Credential Verification
 

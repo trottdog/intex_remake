@@ -136,6 +136,7 @@
     "split_col": "created_at",
     "selection_metric": "average_precision",
     "cutoff_date": null,
+    "task_type": "classification",
     "sample_count": 163.0,
     "positive_count": 104.0,
     "positive_rate": 0.6380368098159509,
