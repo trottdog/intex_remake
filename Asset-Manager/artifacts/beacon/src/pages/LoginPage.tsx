@@ -78,9 +78,12 @@ export default function LoginPage() {
             { label: "Donations Raised", value: "₱30,000+" },
             { label: "Donations", value: "420+" },
           ].map((stat) => (
-            <div key={stat.label} className="bg-white/5 border border-white/10 rounded-xl p-4">
-              <div className="text-2xl font-bold text-[#2a9d72]">{stat.value}</div>
-              <div className="text-xs text-white/60 uppercase tracking-wider mt-1">{stat.label}</div>
+            <div
+              key={stat.label}
+              className="rounded-2xl border border-white/55 bg-white/92 p-4 shadow-[0_18px_40px_rgba(8,20,15,0.22)] backdrop-blur-sm"
+            >
+              <div className="text-2xl font-bold text-[#1f5c45]">{stat.value}</div>
+              <div className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#355848]">{stat.label}</div>
             </div>
           ))}
         </div>
