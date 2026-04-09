@@ -118,6 +118,18 @@ RESIDENT_PIPELINES = {
     "education_improvement",
     "home_visitation_outcome",
 }
+
+
+def utc_now() -> pd.Timestamp:
+    """Return a timezone-aware UTC timestamp."""
+
+    return pd.Timestamp.now(tz="UTC")
+
+
+def utc_now_py() -> Any:
+    """Return a Python datetime in UTC for psycopg writes."""
+
+    return utc_now().to_pydatetime()
 POST_PIPELINES = {
     "best_posting_time",
     "social_media_conversion",
@@ -863,7 +875,7 @@ def build_donor_churn_artifact(
                 "churn_band": band,
                 "churn_top_drivers": drivers,
                 "churn_recommended_action": action_code,
-                "churn_score_updated_at": pd.Timestamp.utcnow().to_pydatetime(),
+                "churn_score_updated_at": utc_now_py(),
             }
         )
 
@@ -1021,7 +1033,7 @@ def build_donor_upgrade_artifact(
                 "upgrade_band": band,
                 "upgrade_top_drivers": drivers[:3],
                 "upgrade_recommended_ask_band": ask_band,
-                "upgrade_score_updated_at": pd.Timestamp.utcnow().to_pydatetime(),
+                "upgrade_score_updated_at": utc_now_py(),
             }
         )
 
@@ -1142,7 +1154,7 @@ def build_resident_regression_artifact(
                 "regression_risk_band": band,
                 "regression_risk_drivers": drivers,
                 "regression_recommended_action": action_code,
-                "regression_score_updated_at": pd.Timestamp.utcnow().to_pydatetime(),
+                "regression_score_updated_at": utc_now_py(),
             }
         )
 
@@ -1282,7 +1294,7 @@ def build_reintegration_artifact(
                     "barriers": barriers,
                 },
                 "reintegration_recommended_action": action_code,
-                "reintegration_score_updated_at": pd.Timestamp.utcnow().to_pydatetime(),
+                "reintegration_score_updated_at": utc_now_py(),
             }
         )
 
@@ -1419,7 +1431,7 @@ def build_social_conversion_artifact(
                 "conversion_band": band,
                 "conversion_top_drivers": drivers,
                 "conversion_comparable_post_ids": peer_map.get(post_id, []),
-                "conversion_score_updated_at": pd.Timestamp.utcnow().to_pydatetime(),
+                "conversion_score_updated_at": utc_now_py(),
             }
         )
 
@@ -1715,7 +1727,7 @@ def build_safehouse_health_artifact(
             "trend_direction": row.trend_direction,
             "health_score_drivers": row.health_score_drivers,
             "incident_severity_distribution": row.incident_severity_distribution,
-            "health_score_computed_at": pd.Timestamp.utcnow().to_pydatetime(),
+            "health_score_computed_at": utc_now_py(),
         }
         for row in monthly.loc[monthly["metric_id"].notna()].itertuples(index=False)
     ]
@@ -1843,7 +1855,7 @@ def build_intervention_effectiveness_artifact(
                 "effectiveness_outcome_score": float(score),
                 "effectiveness_band": band,
                 "effectiveness_outcome_drivers": drivers,
-                "effectiveness_score_updated_at": pd.Timestamp.utcnow().to_pydatetime(),
+                "effectiveness_score_updated_at": utc_now_py(),
             }
         )
 
@@ -1871,7 +1883,7 @@ def build_intervention_effectiveness_artifact(
             "entity_key": f"intervention:{row.plan_category}:{row.services_cluster}",
             "entity_label": f"{row.plan_category} / {row.services_cluster}",
             "safehouse_id": None,
-            "record_timestamp": pd.Timestamp.utcnow().to_pydatetime(),
+            "record_timestamp": utc_now_py(),
             "prediction_value": None,
             "prediction_score": float((as_float(row.avg_outcome_score, default=0.0) or 0.0) / 100.0),
             "rank_order": rank_order,
@@ -2085,7 +2097,7 @@ def build_funding_gap_artifact(
                 "snapshot_id": int(latest_snapshot.iloc[0]["snapshot_id"]),
                 "projected_gap_php_30d": round(gap_30, 2),
                 "funding_gap_band": band,
-                "funding_gap_updated_at": pd.Timestamp.utcnow().to_pydatetime(),
+                "funding_gap_updated_at": utc_now_py(),
             }
         )
 
@@ -2093,10 +2105,10 @@ def build_funding_gap_artifact(
         {
             "entity_type": "org_month",
             "entity_id": None,
-            "entity_key": f"org-month:{str(pd.Timestamp.utcnow().date())}",
+            "entity_key": f"org-month:{str(utc_now().date())}",
             "entity_label": "Organization Forecast",
             "safehouse_id": None,
-            "record_timestamp": pd.Timestamp.utcnow().to_pydatetime(),
+            "record_timestamp": utc_now_py(),
             "prediction_value": None,
             "prediction_score": float(min(max(safe_ratio(forecast_30, max(target, 1.0), default=0.0), 0.0), 1.0)),
             "rank_order": 1,
