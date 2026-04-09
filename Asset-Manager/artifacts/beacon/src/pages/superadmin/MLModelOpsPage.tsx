@@ -67,6 +67,10 @@ const CAVEAT_CONFIG: Record<PipelineCaveatLevel, { label: string; className: str
   high: { label: "High caveat", className: "bg-red-100 text-red-700" },
 };
 
+const AUDIT_STATUS_CONFIG = {
+  risk: { label: "Risk", className: "bg-red-100 text-red-700" },
+} as const;
+
 // ── Pipeline Status Table ─────────────────────────────────────────────────────
 
 function PipelineStatusPanel({
@@ -339,6 +343,29 @@ function FeatureImportancePanel({ runId }: { runId: number | null }) {
   );
 }
 
+function AuditReadinessSummary() {
+  return (
+    <Card>
+      <SectionHeader
+        title="Audit Readiness"
+        sub="Cross-pipeline findings from the current repository audit, focused on model-proof maturity rather than page wiring."
+      />
+      <div className="grid gap-3 md:grid-cols-2">
+        {[
+          "Notebook executability proof is missing across the reviewed pipelines.",
+          "Evaluate entrypoints are still effectively stubs instead of real repeatable validation commands.",
+          "Validation depth is uneven, including unrealistic perfect regression performance signals in resource demand.",
+          "Frontend integration exists for the reviewed pipeline set, but model-proof maturity is still below pass.",
+        ].map(item => (
+          <div key={item} className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
+            {item}
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
 function ReviewedCoverageMatrix({ selectedPipelineName }: { selectedPipelineName: string | null }) {
   return (
     <Card>
@@ -350,7 +377,7 @@ function ReviewedCoverageMatrix({ selectedPipelineName }: { selectedPipelineName
         <table className="w-full min-w-[860px] text-sm">
           <thead>
             <tr className="border-b border-gray-100">
-              {["Pipeline", "Family", "Coverage", "Where to Demo", "Current Caveat"].map(header => (
+              {["Pipeline", "Family", "Coverage", "Audit", "Where to Demo", "Current Caveat"].map(header => (
                 <th key={header} className="pb-2 pr-4 text-left text-[10px] font-bold uppercase tracking-wider text-gray-400 whitespace-nowrap">
                   {header}
                 </th>
@@ -362,6 +389,7 @@ function ReviewedCoverageMatrix({ selectedPipelineName }: { selectedPipelineName
               const isSelected = [entry.internalName, entry.publicName, ...(entry.aliases ?? [])].includes(selectedPipelineName ?? "");
               const evidence = EVIDENCE_CONFIG[entry.evidence];
               const caveat = CAVEAT_CONFIG[entry.caveat];
+              const audit = AUDIT_STATUS_CONFIG[entry.auditStatus];
 
               return (
                 <tr key={entry.internalName} className={`border-b border-gray-50 ${isSelected ? "bg-teal-50/50" : ""}`}>
@@ -381,6 +409,12 @@ function ReviewedCoverageMatrix({ selectedPipelineName }: { selectedPipelineName
                       {evidence.label}
                     </span>
                     <div className="mt-2 max-w-[220px] text-xs leading-relaxed text-gray-500">{entry.summary}</div>
+                  </td>
+                  <td className="py-3 pr-4 align-top">
+                    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${audit.className}`}>
+                      {audit.label}
+                    </span>
+                    <div className="mt-2 max-w-[220px] text-xs leading-relaxed text-gray-500">{entry.videoSafety}</div>
                   </td>
                   <td className="py-3 pr-4 align-top">
                     <div className="flex max-w-[240px] flex-wrap gap-1.5">
@@ -420,6 +454,7 @@ function SelectedPipelineContext({ pipeline }: { pipeline: MlPipelineStatus | nu
   const catalogEntry = getPipelineCatalogEntry(pipeline.pipelineName);
   const evidence = catalogEntry ? EVIDENCE_CONFIG[catalogEntry.evidence] : null;
   const caveat = catalogEntry ? CAVEAT_CONFIG[catalogEntry.caveat] : null;
+  const audit = catalogEntry ? AUDIT_STATUS_CONFIG[catalogEntry.auditStatus] : null;
 
   return (
     <div className="space-y-4">
@@ -433,6 +468,9 @@ function SelectedPipelineContext({ pipeline }: { pipeline: MlPipelineStatus | nu
       {catalogEntry ? (
         <>
           <div className="flex flex-wrap gap-2">
+            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${audit?.className ?? "bg-slate-100 text-slate-700"}`}>
+              {audit?.label ?? "Unreviewed"}
+            </span>
             <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${evidence?.className ?? "bg-slate-100 text-slate-700"}`}>
               {evidence?.label ?? "Mapped"}
             </span>
@@ -463,6 +501,22 @@ function SelectedPipelineContext({ pipeline }: { pipeline: MlPipelineStatus | nu
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               ))}
+            </div>
+          </div>
+
+          <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Audit Summary</div>
+            <div className="text-xs leading-relaxed text-gray-600">
+              <span className="font-semibold text-gray-800">Complete:</span> {catalogEntry.complete}
+            </div>
+            <div className="text-xs leading-relaxed text-gray-600">
+              <span className="font-semibold text-gray-800">Weak:</span> {catalogEntry.weak}
+            </div>
+            <div className="text-xs leading-relaxed text-gray-600">
+              <span className="font-semibold text-gray-800">Missing:</span> {catalogEntry.missing}
+            </div>
+            <div className="rounded-md border border-amber-100 bg-amber-50 px-2.5 py-2 text-xs text-amber-900">
+              <span className="font-semibold">Video safety:</span> {catalogEntry.videoSafety}
             </div>
           </div>
         </>
@@ -592,6 +646,8 @@ export default function MLModelOpsPage() {
               </div>
             ))}
           </div>
+
+          <AuditReadinessSummary />
 
           <PipelineStatusPanel
             pipelines={pipelines}

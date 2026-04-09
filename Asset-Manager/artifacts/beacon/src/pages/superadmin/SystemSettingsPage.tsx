@@ -9,7 +9,7 @@ interface SettingSection {
 }
 
 const sections: SettingSection[] = [
-  { id: "security", icon: <Shield size={18} />, title: "Security", description: "Password policy, session timeouts, 2FA enforcement" },
+  { id: "security", icon: <Shield size={18} />, title: "Security", description: "Password policy, session handling, and hardening roadmap" },
   { id: "notifications", icon: <Bell size={18} />, title: "Notifications", description: "Email alerts, incident thresholds, report schedules" },
   { id: "data", icon: <Database size={18} />, title: "Data Retention", description: "Record archival rules and export settings" },
   { id: "access", icon: <Lock size={18} />, title: "Access Control", description: "Role permissions and safehouse assignment rules" },
@@ -22,7 +22,6 @@ export default function SystemSettingsPage() {
   const [settings, setSettings] = useState({
     minPasswordLength: 12,
     sessionTimeoutMinutes: 60,
-    require2fa: false,
     loginAttempts: 5,
     emailNotifications: true,
     incidentAlertThreshold: 3,
@@ -63,14 +62,11 @@ export default function SystemSettingsPage() {
                   onChange={e => setSettings(s => ({ ...s, loginAttempts: parseInt(e.target.value) }))}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]" />
               </div>
-              <div className="flex items-center gap-3 pt-5">
-                <button
-                  onClick={() => setSettings(s => ({ ...s, require2fa: !s.require2fa }))}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.require2fa ? "bg-[#2a9d72]" : "bg-gray-200"}`}
-                >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.require2fa ? "translate-x-6" : "translate-x-1"}`} />
-                </button>
-                <span className="text-sm text-gray-700">Require 2FA for admin roles</span>
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                <p className="text-sm font-medium text-amber-900">MFA enforcement is not active yet</p>
+                <p className="mt-1 text-xs leading-relaxed text-amber-800">
+                  Leave MFA out of security claims until the login challenge, recovery flow, and enforcement rules are implemented end-to-end.
+                </p>
               </div>
             </div>
           </div>

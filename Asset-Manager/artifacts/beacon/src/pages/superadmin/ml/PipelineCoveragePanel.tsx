@@ -18,6 +18,10 @@ const CAVEAT_CONFIG: Record<PipelineCaveatLevel, { label: string; className: str
   high: { label: "High caveat", className: "bg-red-100 text-red-700" },
 };
 
+const AUDIT_STATUS_CONFIG = {
+  risk: { label: "Risk", className: "bg-red-100 text-red-700" },
+} as const;
+
 export function PipelineCoveragePanel({
   title,
   subtitle,
@@ -47,6 +51,7 @@ export function PipelineCoveragePanel({
         {entries.map(entry => {
           const evidence = EVIDENCE_CONFIG[entry.evidence];
           const caveat = CAVEAT_CONFIG[entry.caveat];
+          const audit = AUDIT_STATUS_CONFIG[entry.auditStatus];
 
           return (
             <div key={entry.internalName} className="rounded-xl border border-gray-100 bg-gray-50 p-4">
@@ -56,6 +61,9 @@ export function PipelineCoveragePanel({
                   <div className="mt-0.5 text-[10px] font-mono text-gray-400">{entry.internalName}</div>
                 </div>
                 <div className="flex flex-wrap justify-end gap-1.5">
+                  <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${audit.className}`}>
+                    {audit.label}
+                  </span>
                   <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${evidence.className}`}>
                     {evidence.label}
                   </span>
@@ -70,6 +78,19 @@ export function PipelineCoveragePanel({
               <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <span>{entry.limitation}</span>
+              </div>
+
+              <div className="mt-3 space-y-2 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Audit Snapshot</div>
+                <div className="text-xs leading-relaxed text-gray-600">
+                  <span className="font-semibold text-gray-800">Weak:</span> {entry.weak}
+                </div>
+                <div className="text-xs leading-relaxed text-gray-600">
+                  <span className="font-semibold text-gray-800">Missing:</span> {entry.missing}
+                </div>
+                <div className="text-xs leading-relaxed text-gray-600">
+                  <span className="font-semibold text-gray-800">Video safety:</span> {entry.videoSafety}
+                </div>
               </div>
 
               <div className="mt-3 flex flex-wrap gap-2">

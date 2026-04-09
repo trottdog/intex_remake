@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useListUsers, useListSafehouses, createUser, updateUser, deleteUser, disableUser, enableUser, type User, type CreateUserPayload, type UpdateUserPayload } from "@/services/superadmin.service";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQueryPagination } from "@/hooks/useQueryPagination";
-import { Plus, Search, Shield, UserCheck, UserX, Loader2, Edit2, Power, Trash2, X, AlertCircle, Eye, EyeOff, Check } from "lucide-react";
+import { Plus, Search, UserCheck, UserX, Loader2, Edit2, Power, Trash2, X, AlertCircle, Eye, EyeOff, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -262,7 +262,6 @@ export default function UsersPage() {
               <th className="text-left px-4 py-3 font-semibold text-gray-600">Role</th>
               <th className="text-left px-4 py-3 font-semibold text-gray-600">Safehouse</th>
               <th className="text-left px-4 py-3 font-semibold text-gray-600">Status</th>
-              <th className="text-left px-4 py-3 font-semibold text-gray-600">MFA</th>
               <th className="text-left px-4 py-3 font-semibold text-gray-600">Last Login</th>
               <th className="text-right px-4 py-3 font-semibold text-gray-600">Actions</th>
             </tr>
@@ -270,7 +269,7 @@ export default function UsersPage() {
           <tbody className="divide-y divide-gray-50">
             {isLoading ? (
               Array.from({ length: 5 }, (_, i) => (
-                <tr key={i}><td colSpan={8} className="px-4 py-3"><div className="h-6 bg-gray-100 rounded animate-pulse" /></td></tr>
+                <tr key={i}><td colSpan={7} className="px-4 py-3"><div className="h-6 bg-gray-100 rounded animate-pulse" /></td></tr>
               ))
             ) : rows.map((u: User) => (
               <tr key={u.id} className="hover:bg-gray-50 transition-colors">
@@ -308,13 +307,6 @@ export default function UsersPage() {
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-3">
-                  {u.mfaEnabled ? (
-                    <span className="inline-flex items-center gap-1 text-xs text-purple-700 font-medium">
-                      <Shield className="w-3 h-3" /> On
-                    </span>
-                  ) : <span className="text-xs text-gray-300">Off</span>}
-                </td>
                 <td className="px-4 py-3 text-gray-500 text-xs">{u.lastLogin ? new Date(u.lastLogin).toLocaleDateString() : "Never"}</td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-1">
@@ -346,7 +338,7 @@ export default function UsersPage() {
             ))}
             {!isLoading && rows.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-sm text-gray-400">
+                <td colSpan={7} className="px-4 py-10 text-center text-sm text-gray-400">
                   No users found{search ? ` matching "${search}"` : ""}.
                 </td>
               </tr>

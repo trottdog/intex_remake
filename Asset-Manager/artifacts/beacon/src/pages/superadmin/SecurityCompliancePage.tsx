@@ -7,18 +7,18 @@ type ComplianceItem = {
 };
 
 const COMPLIANCE_MATRIX: ComplianceItem[] = [
-  { label: "Data Encryption at Rest", status: "compliant", notes: "PostgreSQL with AES-256 encryption enabled on all PII fields" },
-  { label: "Data Encryption in Transit", status: "compliant", notes: "TLS 1.3 enforced; HTTP redirected to HTTPS in production" },
+  { label: "Data Encryption at Rest", status: "review", notes: "Database hosting provides encrypted storage, but field-level encryption claims should not be made without deployment verification." },
+  { label: "Data Encryption in Transit", status: "review", notes: "HTTPS is expected in production; final grading still depends on runtime verification on the deployed site." },
   { label: "Role-Based Access Control (RBAC)", status: "compliant", notes: "5-tier role hierarchy: super_admin, admin, staff, donor, public" },
   { label: "Audit Trail Logging", status: "compliant", notes: "All create/update/delete/login actions logged with actor attribution" },
   { label: "JWT Token Security", status: "compliant", notes: "Ephemeral signing secret; tokens stored in-memory only; no cookies" },
-  { label: "Multi-Factor Authentication", status: "review", notes: "MFA flag present on users; TOTP flow not yet fully wired in UI" },
+  { label: "Multi-Factor Authentication", status: "pending", notes: "Do not claim MFA as enabled yet. Account flags may exist, but challenge and enforcement flow are not complete." },
   { label: "Password Policy Enforcement", status: "compliant", notes: "Minimum 12 chars, uppercase, numbers, special characters required" },
-  { label: "Input Sanitization", status: "compliant", notes: "Server-side sanitization middleware applied to all API routes" },
-  { label: "Content Security Policy (CSP)", status: "compliant", notes: "Strict self-only CSP; no inline scripts; connect-src scoped to API" },
-  { label: "HSTS (HTTP Strict Transport Security)", status: "compliant", notes: "max-age=31536000 with includeSubDomains and preload directives" },
-  { label: "Rate Limiting", status: "compliant", notes: "500 req/min per IP applied globally on all API routes" },
-  { label: "CORS Policy", status: "compliant", notes: "Origin-whitelist based; wildcard origin blocked in production" },
+  { label: "Input Sanitization", status: "review", notes: "Server-side validation exists, but wording is kept conservative until middleware coverage is re-audited." },
+  { label: "Content Security Policy (CSP)", status: "review", notes: "Frontend CSP headers are configured for Vercel deployment. Backend API CSP still needs runtime confirmation." },
+  { label: "HSTS (HTTP Strict Transport Security)", status: "review", notes: "Backend middleware exists, but the deployed response header still needs verification before calling it compliant." },
+  { label: "Rate Limiting", status: "review", notes: "Backend rate limiting is expected, but the exact production thresholds should be confirmed before presenting them as a guarantee." },
+  { label: "CORS Policy", status: "review", notes: "Cross-origin restrictions are part of the backend design, but production origin allow-listing still needs deployment verification." },
   { label: "Data Retention Policy", status: "pending", notes: "Policy framework defined; automated purge schedule not yet configured" },
   { label: "Backup & Recovery", status: "review", notes: "Database backups managed by hosting provider; DR plan in draft" },
   { label: "RA 9208 / RA 10364 Compliance", status: "compliant", notes: "Safehouse data compartmentalized; beneficiary records access-restricted to assigned staff only" },
@@ -31,7 +31,7 @@ const SECURITY_CONTROLS = [
   { icon: Eye, label: "IDOR Prevention", desc: "Donors scoped to own data; admins cannot access cross-safehouse data without super_admin role" },
   { icon: FileText, label: "Immutable Audit Logs", desc: "No UPDATE/DELETE permitted on audit_logs table; append-only by design" },
   { icon: AlertTriangle, label: "Impact Snapshot Gating", desc: "Public endpoint enforces isPublished=true; unpublished snapshots return 404" },
-  { icon: Clock, label: "Session Timeout", desc: "In-memory JWT cleared on page reload; no persistent session storage" },
+  { icon: Clock, label: "Session Handling", desc: "In-memory JWT is cleared on page reload; no persistent session storage is used in the frontend" },
 ];
 
 const statusConfig = {
@@ -49,7 +49,7 @@ export default function SecurityCompliancePage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Security & Compliance</h1>
-        <p className="text-sm text-gray-500 mt-1">IS 414 security posture, RBAC controls, and regulatory compliance matrix</p>
+        <p className="text-sm text-gray-500 mt-1">Operational security checklist for the current build. Items marked review or pending still need runtime validation or implementation work.</p>
       </div>
 
       {/* Summary KPIs */}
@@ -90,7 +90,7 @@ export default function SecurityCompliancePage() {
       <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100">
           <h3 className="font-semibold text-gray-800 text-sm uppercase tracking-wide">Compliance Matrix</h3>
-          <p className="text-xs text-gray-500 mt-1">IS 413 / IS 414 / RA 9208 / RA 10173 requirements</p>
+          <p className="text-xs text-gray-500 mt-1">Use this as an engineering status board, not as a final proof artifact.</p>
         </div>
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b border-gray-100">

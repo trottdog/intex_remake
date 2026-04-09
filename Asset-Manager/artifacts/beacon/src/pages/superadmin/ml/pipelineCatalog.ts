@@ -1,5 +1,6 @@
 export type PipelineEvidenceLevel = "direct" | "adjacent" | "model_ops";
 export type PipelineCaveatLevel = "normal" | "caution" | "high";
+export type PipelineAuditStatus = "risk";
 
 export interface PipelineRouteLink {
   label: string;
@@ -17,6 +18,11 @@ export interface PipelineCatalogEntry {
   summary: string;
   limitation: string;
   links: PipelineRouteLink[];
+  auditStatus: PipelineAuditStatus;
+  complete: string;
+  weak: string;
+  missing: string;
+  videoSafety: string;
   aliases?: string[];
 }
 
@@ -32,6 +38,11 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
     summary: "Surfaced directly in the supporter churn board.",
     limitation: "Validation and notebook evidence still need stronger proof, so demo it with caveat language.",
     links: [{ label: "Supporters: Churn Risk", href: "/superadmin/donors?tab=churn" }],
+    auditStatus: "risk",
+    complete: "Framing, predictive versus explanatory split, artifacts, and donor super-admin integration are present.",
+    weak: "Notebook execution evidence is absent and the evaluate entrypoint is not implemented.",
+    missing: "Reproducible executed notebook output and a real evaluation pipeline implementation.",
+    videoSafety: "Safe to show with caveat language.",
   },
   {
     internalName: "donor_upgrade",
@@ -44,6 +55,11 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
     summary: "Surfaced directly in the supporter upgrade board.",
     limitation: "The app integration is solid, but evaluation proof still needs a stronger repeatable path.",
     links: [{ label: "Supporters: Upgrade", href: "/superadmin/donors?tab=upgrade" }],
+    auditStatus: "risk",
+    complete: "Framing, contract artifacts, metrics outputs, and donor super-admin integration are present.",
+    weak: "There is no executed notebook proof and the evaluate entrypoint is still a stub.",
+    missing: "Executable notebook run evidence and a robust scripted evaluation path.",
+    videoSafety: "Safe to show with caveat language.",
   },
   {
     internalName: "next_donation_amount",
@@ -59,6 +75,11 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
       { label: "Supporters: Upgrade Context", href: "/superadmin/donors?tab=upgrade" },
       { label: "ML Control Center", href: "/superadmin/ml?pipeline=next_donation_amount" },
     ],
+    auditStatus: "risk",
+    complete: "Framing, regression artifacts, and donor integration references are present.",
+    weak: "Notebook execution evidence is missing and the evaluation path is still stub-level.",
+    missing: "A robust regression validation script and executed notebook proof.",
+    videoSafety: "Safe to show only with explicit limitations.",
   },
   {
     internalName: "resident_risk",
@@ -71,6 +92,11 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
     summary: "Surfaced directly in the resident regression watchlist.",
     limitation: "The routed UI is in place, but notebook execution and fuller validation evidence are still incomplete.",
     links: [{ label: "Residents: Regression", href: "/superadmin/residents?tab=regression" }],
+    auditStatus: "risk",
+    complete: "Framing, predictive setup, metrics, manifests, and resident ML page integration are present.",
+    weak: "Notebook execution proof is missing and the evaluate path is docstring-only.",
+    missing: "Reproducible notebook outputs and an implemented evaluation entrypoint.",
+    videoSafety: "Safe to show with caveat language.",
     aliases: ["resident_regression_risk"],
   },
   {
@@ -84,6 +110,11 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
     summary: "Surfaced directly in the reintegration funnel and readiness table.",
     limitation: "Evaluation automation and executable notebook proof still need tightening.",
     links: [{ label: "Residents: Reintegration", href: "/superadmin/residents?tab=reintegration" }],
+    auditStatus: "risk",
+    complete: "Framing, deployment notes, artifact outputs, and resident super-admin integration are present.",
+    weak: "There is no executable notebook evidence and evaluation automation is not implemented.",
+    missing: "Executed notebook proof and a functional evaluation script.",
+    videoSafety: "Safe to show with caveat language.",
   },
   {
     internalName: "case_prioritization",
@@ -99,6 +130,11 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
       { label: "Residents: Reintegration Context", href: "/superadmin/residents?tab=reintegration" },
       { label: "ML Control Center", href: "/superadmin/ml?pipeline=case_prioritization" },
     ],
+    auditStatus: "risk",
+    complete: "Framing, manifests, metrics, and resident integration references are present.",
+    weak: "The evaluate entrypoint is placeholder-only and the notebook is not executed.",
+    missing: "An implemented evaluation script and executed notebook proof.",
+    videoSafety: "Cautious yes, with explicit limitations.",
   },
   {
     internalName: "counseling_progress",
@@ -114,6 +150,11 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
       { label: "Residents: Interventions", href: "/superadmin/residents?tab=interventions" },
       { label: "ML Control Center", href: "/superadmin/ml?pipeline=counseling_progress" },
     ],
+    auditStatus: "risk",
+    complete: "Framing, contract artifacts, and resident integration references are present.",
+    weak: "The evaluation entrypoint is placeholder-only and notebook execution evidence is missing.",
+    missing: "A non-stub evaluate path and reproducible executed notebooks.",
+    videoSafety: "Cautious yes, with explicit limitations.",
   },
   {
     internalName: "education_improvement",
@@ -129,6 +170,11 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
       { label: "Residents: Interventions", href: "/superadmin/residents?tab=interventions" },
       { label: "ML Control Center", href: "/superadmin/ml?pipeline=education_improvement" },
     ],
+    auditStatus: "risk",
+    complete: "Framing, metrics, manifests, and resident integration references are present.",
+    weak: "The evaluate entrypoint is placeholder-level and there is no executed notebook evidence.",
+    missing: "Real evaluation automation and notebook execution proof.",
+    videoSafety: "Cautious yes, with explicit limitations.",
   },
   {
     internalName: "home_visitation_outcome",
@@ -144,6 +190,11 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
       { label: "Residents: Reintegration Context", href: "/superadmin/residents?tab=reintegration" },
       { label: "ML Control Center", href: "/superadmin/ml?pipeline=home_visitation_outcome" },
     ],
+    auditStatus: "risk",
+    complete: "Framing, artifacts, and resident integration references are present.",
+    weak: "The evaluation entrypoint is placeholder-only and notebook execution proof is absent.",
+    missing: "An executable evaluation script and reproducible notebook run outputs.",
+    videoSafety: "Cautious yes, with explicit limitations.",
   },
   {
     internalName: "social_media_conversion",
@@ -156,6 +207,11 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
     summary: "Surfaced directly in the social planner heatmap, recommendation card, and post table.",
     limitation: "Notebook execution proof is still missing, so keep the demo language practical rather than overclaiming.",
     links: [{ label: "Campaigns: Social Planner", href: "/superadmin/campaigns?tab=social" }],
+    auditStatus: "risk",
+    complete: "Framing, manifest, metrics artifacts, and campaigns super-admin integration are present.",
+    weak: "Notebook execution evidence is absent and the evaluate entrypoint is not implemented.",
+    missing: "Executed notebook outputs and a repeatable non-stub evaluation flow.",
+    videoSafety: "Safe to show with caveat language.",
     aliases: ["social_conversion"],
   },
   {
@@ -172,6 +228,11 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
       { label: "Campaigns: Social Planner", href: "/superadmin/campaigns?tab=social" },
       { label: "ML Control Center", href: "/superadmin/ml?pipeline=best_posting_time" },
     ],
+    auditStatus: "risk",
+    complete: "Framing, artifacts, campaigns page integration, and model-ops linkage are present.",
+    weak: "The notebook remains unexecuted and the evaluate entrypoint is docstring-only.",
+    missing: "Executable notebook proof and a real evaluation script.",
+    videoSafety: "Safe to show with caveat language.",
   },
   {
     internalName: "capacity_pressure",
@@ -187,6 +248,11 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
       { label: "ML Control Center", href: "/superadmin/ml?pipeline=capacity_pressure" },
       { label: "Residents: Safehouse Context", href: "/superadmin/residents?tab=safehouses" },
     ],
+    auditStatus: "risk",
+    complete: "Framing, artifacts, and resident super-admin integration references are present.",
+    weak: "The evaluate entrypoint is still a placeholder and notebook execution proof is absent.",
+    missing: "A runnable evaluation implementation and reproducible notebook execution evidence.",
+    videoSafety: "Cautious yes, with explicit limitations.",
   },
   {
     internalName: "resource_demand",
@@ -202,6 +268,11 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
       { label: "ML Control Center", href: "/superadmin/ml?pipeline=resource_demand" },
       { label: "Residents: Safehouse Context", href: "/superadmin/residents?tab=safehouses" },
     ],
+    auditStatus: "risk",
+    complete: "Framing, manifest, regression metrics, and resident or safehouse integration references are present.",
+    weak: "The evaluation entrypoint is placeholder-only, notebook execution proof is absent, and the perfect holdout signal remains in the artifacts.",
+    missing: "Leakage and split validation hardening plus a non-stub evaluate flow with reproducible evidence.",
+    videoSafety: "Only safe with strong caveat language.",
   },
 ];
 
