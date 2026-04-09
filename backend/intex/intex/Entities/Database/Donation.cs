@@ -2,21 +2,21 @@ namespace backend.intex.Entities.Database;
 
 public sealed class Donation
 {
-    public long DonationId { get; init; }
-    public long? SupporterId { get; init; }
-    public long? CampaignId { get; init; }
-    public string? DonationType { get; init; }
-    public DateOnly? DonationDate { get; init; }
-    public bool? IsRecurring { get; init; }
-    public string? CampaignName { get; init; }
-    public string? ChannelSource { get; init; }
-    public string? CurrencyCode { get; init; }
-    public decimal? Amount { get; init; }
-    public decimal? EstimatedValue { get; init; }
-    public string? ImpactUnit { get; init; }
-    public string? Notes { get; init; }
-    public long? ReferralPostId { get; init; }
-    public long? SafehouseId { get; init; }
-    public double? AttributedOutcomeScore { get; init; }
-    public long? AttributionRunId { get; init; }
+    public long DonationId { get; set; }
+    public long? SupporterId { get; set; }
+    public long? CampaignId { get; set; }
+    public string? DonationType { get; set; }
+    public DateOnly? DonationDate { get; set; }
+    public bool? IsRecurring { get; set; }
+    public string? CampaignName { get; set; }
+    public string? ChannelSource { get; set; }
+    public string? CurrencyCode { get; set; }
+    public decimal? Amount { get; set; }
+    public decimal? EstimatedValue { get; set; }
+    public string? ImpactUnit { get; set; }
+    public string? Notes { get; set; }
+    public long? ReferralPostId { get; set; }
+    public long? SafehouseId { get; set; }
+    public double? AttributedOutcomeScore { get; set; }
+    public long? AttributionRunId { get; set; }
 }

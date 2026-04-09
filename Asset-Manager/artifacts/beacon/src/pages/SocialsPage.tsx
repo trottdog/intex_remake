@@ -1,6 +1,9 @@
 import { Link } from "wouter";
 import { PublicLayout } from "@/components/layouts/PublicLayout";
 import { Heart, MessageCircle } from "lucide-react";
+import type { IconType } from "react-icons";
+import { FaFacebookF, FaInstagram, FaYoutube } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 import handsImg from "@assets/Hands_Circle_1775623133974.jpg";
 import jumpImg from "@assets/BackwardsJump-e1741389606772_1775623133972.jpg";
 import circleImg from "@assets/GreenGrassFingerStar-e1741389539890_1775623133974.jpg";
@@ -8,7 +11,17 @@ import pinkImg from "@assets/PinkShirtPinkFlower-768x705_1775623133974.jpg";
 import sunsetImg from "@assets/SunsetArmsUp_1775623133974.jpg";
 import beachImg from "@assets/HoldingHandsAtBeach_1775623758874.jpg";
 
-const SOCIAL_CHANNELS = [
+type SocialChannel = {
+  name: string;
+  handle: string;
+  url: string;
+  description: string;
+  followers: string;
+  color: string;
+  Icon: IconType;
+};
+
+const SOCIAL_CHANNELS: SocialChannel[] = [
   {
     name: "Facebook",
     handle: "@BeaconSanctuaryPH",
@@ -16,7 +29,7 @@ const SOCIAL_CHANNELS = [
     description: "Community updates, stories, and event announcements",
     followers: "4,200",
     color: "bg-[#1877F2]",
-    initial: "F",
+    Icon: FaFacebookF,
   },
   {
     name: "Instagram",
@@ -25,7 +38,7 @@ const SOCIAL_CHANNELS = [
     description: "Photo stories, reels, and behind-the-scenes life at the home",
     followers: "2,800",
     color: "bg-gradient-to-br from-[#f09433] via-[#e6683c] to-[#833ab4]",
-    initial: "I",
+    Icon: FaInstagram,
   },
   {
     name: "X (Twitter)",
@@ -34,7 +47,7 @@ const SOCIAL_CHANNELS = [
     description: "Advocacy updates, news, and mission-critical announcements",
     followers: "1,100",
     color: "bg-[#14171A]",
-    initial: "X",
+    Icon: FaXTwitter,
   },
   {
     name: "YouTube",
@@ -43,7 +56,7 @@ const SOCIAL_CHANNELS = [
     description: "Documentary shorts, testimonials, and program walkthroughs",
     followers: "890",
     color: "bg-[#FF0000]",
-    initial: "Y",
+    Icon: FaYoutube,
   },
 ];
 
@@ -171,7 +184,7 @@ export default function SocialsPage() {
                 className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-md transition-shadow flex items-start gap-5 group"
               >
                 <div className={`w-12 h-12 ${ch.color} rounded-xl flex items-center justify-center shrink-0 shadow-sm`}>
-                  <span className="text-white font-bold text-lg">{ch.initial}</span>
+                  <ch.Icon className="text-[1.35rem] text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
@@ -188,10 +201,10 @@ export default function SocialsPage() {
       </section>
 
       {/* ── Share CTA ────────────────────────────────────────────────── */}
-      <section className="bg-gradient-to-br from-[#214636] to-[#3a6a54] py-16 px-6">
+      <section className="bg-white py-16 px-6">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">Your share is a lifeline.</h2>
-          <p className="text-white/70 mb-8 max-w-xl mx-auto">
+          <h2 className="text-3xl font-bold text-[#214636] mb-4">Your share is a lifeline.</h2>
+          <p className="text-gray-600 mb-8 max-w-xl mx-auto">
             Every time you share our posts, you help a survivor reach someone who might become her next supporter. You don't have to give money to make a difference — your voice matters too.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
@@ -201,14 +214,15 @@ export default function SocialsPage() {
                 href={ch.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-white/10 hover:bg-[#2a9d72] border border-white/20 text-white px-6 py-2.5 rounded-full text-sm font-semibold transition-colors"
+                className="bg-white hover:bg-[#214636] border border-[#d7ddd8] text-[#214636] hover:text-white px-6 py-2.5 rounded-full text-sm font-semibold transition-colors inline-flex items-center gap-2"
               >
+                <ch.Icon className="text-base shrink-0" />
                 Follow on {ch.name}
               </a>
             ))}
           </div>
-          <div className="mt-10 pt-8 border-t border-white/10">
-            <p className="text-white/60 mb-4 text-sm">Want to go even further?</p>
+          <div className="mt-10 pt-8 border-t border-[#e5e7eb]">
+            <p className="text-gray-500 mb-4 text-sm">Want to go even further?</p>
             <Link
               href="/donate"
               className="inline-block bg-[#2a9d72] hover:bg-[#248c64] text-white px-10 py-4 rounded-full font-bold text-lg transition-colors"

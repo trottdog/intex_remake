@@ -1,7 +1,6 @@
 import { Link } from "wouter";
 import { PublicLayout } from "@/components/layouts/PublicLayout";
 import { Button } from "@/components/ui/button";
-import { triggerDonationConfetti } from "@/lib/confetti";
 import jumpImg from "@assets/BackwardsJump-e1741389606772_1775623133972.jpg";
 import circleImg from "@assets/GreenGrassFingerStar-e1741389539890_1775623133974.jpg";
 import handsImg from "@assets/Hands_Circle_1775623133974.jpg";
@@ -177,28 +176,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Final Donate CTA ────────────────────────────────────────────── */}
-      <section className="bg-[#2a9d72] py-16 px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">Be someone's beacon of hope.</h2>
-          <p className="text-white/80 mb-8 text-lg">A single gift — any size — tells a survivor she matters.</p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link
-              href="/donate"
-              onClick={() => triggerDonationConfetti()}
-              className="bg-white text-[#2a9d72] hover:bg-gray-50 px-10 py-4 rounded-full font-bold text-lg transition-colors shadow-lg"
-            >
-              Give Today
-            </Link>
-            <Link
-              href="/socials"
-              className="border-2 border-white/60 text-white hover:bg-white/10 px-8 py-4 rounded-full font-semibold transition-colors"
-            >
-              Follow Our Journey
-            </Link>
-          </div>
-        </div>
-      </section>
     </PublicLayout>
   );
 }

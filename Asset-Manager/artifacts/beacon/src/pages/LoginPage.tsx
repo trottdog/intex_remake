@@ -5,9 +5,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield, Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
 import { loginApi } from "@/services/auth.service";
 import { ApiError } from "@/services/api";
+import lighthouseLogo from "@assets/Minimalist_lighthouse_logo_design_1775623783267.png";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -50,8 +51,8 @@ export default function LoginPage() {
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-16">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#2a9d72] rounded-lg flex items-center justify-center">
-                <Shield className="w-6 h-6 text-white" />
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-[0_10px_22px_rgba(14,33,24,0.08)] ring-1 ring-[#eef4f0]">
+                <img src={lighthouseLogo} alt="Beacon" className="h-9 w-9 object-contain shrink-0" />
               </div>
               <span className="text-white text-2xl font-bold tracking-tight">Beacon</span>
             </div>
@@ -70,11 +71,12 @@ export default function LoginPage() {
             A unified management platform for safehouse networks supporting survivors of abuse and trafficking.
           </p>
         </div>
-        <div className="relative z-10 grid grid-cols-3 gap-4">
+        <div className="relative z-10 grid grid-cols-2 gap-4">
           {[
-            { label: "Residents Served", value: "500+" },
-            { label: "Active Safehouses", value: "3" },
-            { label: "Reintegrations", value: "87" },
+            { label: "Residents Served", value: "60+" },
+            { label: "Safe Homes", value: "9" },
+            { label: "Donations Raised", value: "₱30,000+" },
+            { label: "Donations", value: "420+" },
           ].map((stat) => (
             <div key={stat.label} className="bg-white/5 border border-white/10 rounded-xl p-4">
               <div className="text-2xl font-bold text-[#2a9d72]">{stat.value}</div>
@@ -88,8 +90,8 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#214636] rounded-lg flex items-center justify-center">
-                <Shield className="w-6 h-6 text-[#2a9d72]" />
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-[0_10px_22px_rgba(14,33,24,0.08)] ring-1 ring-[#eef4f0]">
+                <img src={lighthouseLogo} alt="Beacon" className="h-9 w-9 object-contain shrink-0" />
               </div>
               <span className="text-[#214636] text-2xl font-bold">Beacon</span>
             </div>

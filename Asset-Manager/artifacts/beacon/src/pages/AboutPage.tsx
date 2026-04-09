@@ -1,4 +1,3 @@
-import { Link } from "wouter";
 import { PublicLayout } from "@/components/layouts/PublicLayout";
 import { Shield, Heart, Leaf, Users, BarChart2, Sun } from "lucide-react";
 import handsImg from "@assets/Hands_Circle_1775623133974.jpg";
@@ -140,7 +139,7 @@ export default function AboutPage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <div className="text-xs text-[#2a9d72] font-bold uppercase tracking-widest mb-3">Board of Directors</div>
-            <h2 className="text-3xl font-bold text-[#214636]">The people behind Beacon</h2>
+            <h2 className="text-3xl font-bold text-[#214636]">The Leadership Behind Beacon</h2>
             <p className="text-gray-500 mt-3 max-w-md mx-auto">Dedicated leaders who have committed their time and expertise to protecting the most vulnerable.</p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
@@ -179,21 +178,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ── CTA ──────────────────────────────────────────────────────── */}
-      <section className="bg-[#2a9d72] py-16 px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">Join our mission.</h2>
-          <p className="text-white/80 mb-8">Whether you give, volunteer, or simply share our story — you become part of what makes Beacon possible.</p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/donate" className="bg-white text-[#2a9d72] hover:bg-gray-50 px-10 py-4 rounded-full font-bold text-base transition-colors shadow-lg">
-              Donate Now
-            </Link>
-            <Link href="/socials" className="border-2 border-white/60 text-white hover:bg-white/10 px-8 py-4 rounded-full font-semibold transition-colors">
-              Follow Us
-            </Link>
-          </div>
-        </div>
-      </section>
     </PublicLayout>
   );
 }
