@@ -1,0 +1,8 @@
+area,risky_fields,why_it_leaks
+resident_outcomes,"reintegration_status, reintegration_type, date_closed, current_risk_level",These fields directly encode the outcome or a late-stage summary that may only be known after the prediction timestamp.
+incident_prediction,"resolution_date, resolved, response_taken",These fields exist only after an incident has already happened and staff have responded.
+social_conversion,"donation_referrals, estimated_donation_value_php, click_throughs when predicting before publish",They are downstream post-performance outcomes rather than pre-post features.
+donor_churn,"first_donation_date, campaign_name, allocation rows created after the snapshot horizon",Snapshot features must be cut off in time or they embed future donation history.
+case_notes,"session_narrative, follow_up_actions, observations, notes, notes_restricted","Free text can mention future plans, outcomes, or sensitive details unavailable in a safe production scoring context."
+monthly_rollups,"safehouse_monthly_metrics incident_count, process_recording_count, avg_education_progress for the same target month",Same-period aggregates can absorb the very outcome the model is supposed to forecast.
+public_reporting,"public_impact_snapshots metric_payload_json, headline, summary_text",These are downstream communications artifacts and should never be modeling features.

@@ -1,0 +1,20 @@
+{
+  "best_model_name": "logistic_regression",
+  "train_rows": 649,
+  "test_rows": 163,
+  "target_col": "label_donation_referral_positive",
+  "split_col": "created_at",
+  "selection_metric": "average_precision",
+  "cutoff_date": null,
+  "task_type": "classification",
+  "sample_count": 163.0,
+  "positive_count": 104.0,
+  "positive_rate": 0.6380368098159509,
+  "accuracy": 0.6748466257668712,
+  "balanced_accuracy": 0.6645208604954367,
+  "precision": 0.7684210526315789,
+  "recall": 0.7019230769230769,
+  "f1": 0.7336683417085427,
+  "roc_auc": 0.735006518904824,
+  "average_precision": 0.8265668060372122
+}

@@ -1,0 +1,50 @@
+{
+  "pipeline_name": "capacity_pressure",
+  "display_name": "Capacity Pressure",
+  "task_type": "classification",
+  "model_name": "random_forest_classifier",
+  "row_count": 3,
+  "metrics": {
+    "best_model_name": "random_forest_classifier",
+    "train_rows": 324,
+    "test_rows": 117,
+    "target_col": "label_capacity_pressure_next_month",
+    "split_col": "month_start",
+    "selection_metric": "average_precision",
+    "cutoff_date": "2025-12-01",
+    "sample_count": 117.0,
+    "positive_count": 13.0,
+    "positive_rate": 0.1111111111111111,
+    "accuracy": 1.0,
+    "balanced_accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "roc_auc": 1.0,
+    "average_precision": 1.0
+  },
+  "prediction_contract": {
+    "prediction_field": "prediction",
+    "score_field": "prediction_score",
+    "score_semantics": "positive-class probability",
+    "snapshot_value_field": "prediction_value",
+    "snapshot_value_semantics": "predicted binary class in published snapshots"
+  },
+  "predictions": [
+    {
+      "safehouse_id": 1,
+      "prediction": 1,
+      "prediction_score": 0.795
+    },
+    {
+      "safehouse_id": 9,
+      "prediction": 0,
+      "prediction_score": 0.0
+    },
+    {
+      "safehouse_id": 2,
+      "prediction": 0,
+      "prediction_score": 0.0
+    }
+  ]
+}

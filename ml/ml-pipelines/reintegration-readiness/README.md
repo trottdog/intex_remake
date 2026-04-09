@@ -1,0 +1,10 @@
+# Reintegration Readiness
+
+This folder contains the standardized predictive and explanatory notebook templates for `reintegration_readiness`.
+
+## Notebook Standard
+
+- Decision support: Focus reintegration planning on residents with the strongest near-term readiness signal.
+- Target summary: Current predictive label: `label_reintegration_complete_next_90d` from resident-monthly snapshots.
+- Recommended widgets: `ranked_table_widget`, `insight_summary_card`, `recommendation_panel`
+- Primary users: case managers, safehouse leadership

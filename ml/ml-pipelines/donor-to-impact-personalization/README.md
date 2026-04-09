@@ -1,0 +1,10 @@
+# Donor-To-Impact Personalization
+
+This folder contains the standardized predictive and explanatory notebook templates for `donor_to_impact_personalization`.
+
+## Notebook Standard
+
+- Decision support: Document the personalization concept and the data needed to move from donor segments to individualized impact recommendations.
+- Target summary: Notebook-only track: the current data supports donor affinity exploration, but it does not yet include explicit feedback labels for personalized impact recommendations.
+- Recommended widgets: `recommendation_panel`, `insight_summary_card`, `ranked_table_widget`
+- Primary users: fundraisers, donor engagement leads

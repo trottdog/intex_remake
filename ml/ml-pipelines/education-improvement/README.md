@@ -1,0 +1,10 @@
+# Education Improvement
+
+This folder contains the standardized predictive and explanatory notebook templates for `education_improvement`.
+
+## Notebook Standard
+
+- Decision support: Help staff reinforce the education plans and support patterns linked to improvement.
+- Target summary: Current predictive label: `label_education_improvement_next_120d`, based on future attendance gains, progress gains, or a shift to completed status.
+- Recommended widgets: `insight_summary_card`, `ranked_table_widget`, `recommendation_panel`
+- Primary users: case managers, education coordinators

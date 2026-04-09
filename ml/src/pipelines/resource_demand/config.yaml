@@ -1,0 +1,18 @@
+pipeline_name: resource_demand
+dataset_name: resource_demand_dataset
+target: label_next_active_residents
+split_col: month_start
+cutoff_date: 2025-12-01
+selection_metric: r2
+drop_cols:
+  - safehouse_id
+  - month_start
+  - month_end
+  - open_date
+  - future_window_complete_1m
+  - next_active_residents
+  - next_process_recording_count
+  - next_home_visitation_count
+  - next_incident_count
+  - next_capacity_utilization_ratio
+  - label_capacity_pressure_next_month

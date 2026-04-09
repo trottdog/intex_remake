@@ -1,0 +1,10 @@
+# Donation Allocation Impact
+
+This folder contains the standardized predictive and explanatory notebook templates for `donation_allocation_impact`.
+
+## Notebook Standard
+
+- Decision support: Help leadership connect allocated donor funds to the strongest operational outcome patterns.
+- Target summary: Explanation-first track using safehouse-month allocations and outcomes rather than a causal or supervised label.
+- Recommended widgets: `explanation_chart_card`, `insight_summary_card`, `recommendation_panel`
+- Primary users: fundraising leadership, program leadership

@@ -1,0 +1,10 @@
+# Best Posting Time
+
+This folder contains the standardized predictive and explanatory notebook templates for `best_posting_time`.
+
+## Notebook Standard
+
+- Decision support: Choose posting windows and scheduling patterns that improve donation-linked post performance.
+- Target summary: Current predictive label: `label_donation_referral_positive`, using timing-focused post features.
+- Recommended widgets: `recommendation_panel`, `insight_summary_card`, `ranked_table_widget`
+- Primary users: outreach managers, social media staff

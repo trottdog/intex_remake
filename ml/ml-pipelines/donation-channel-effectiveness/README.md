@@ -1,0 +1,10 @@
+# Donation Channel Effectiveness
+
+This folder contains the standardized predictive and explanatory notebook templates for `donation_channel_effectiveness`.
+
+## Notebook Standard
+
+- Decision support: Help fundraising leadership invest in the channels that create better donor value over time.
+- Target summary: Explanation-first pipeline using campaign and supporter aggregates rather than a new supervised label.
+- Recommended widgets: `explanation_chart_card`, `insight_summary_card`, `recommendation_panel`
+- Primary users: fundraising leadership, campaign managers

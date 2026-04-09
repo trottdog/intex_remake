@@ -1,0 +1,15 @@
+pipeline_name: social_media_conversion
+dataset_name: social_media_conversion_dataset
+target: label_donation_referral_positive
+split_col: created_at
+selection_metric: average_precision
+drop_cols:
+  - post_id
+  - created_at
+  - post_month
+  - donation_referrals_per_100_clicks
+  - estimated_donation_value_per_click
+  - estimated_donation_value_per_1k_reach
+  - donation_referrals
+  - estimated_donation_value_php
+  - label_estimated_donation_value_php

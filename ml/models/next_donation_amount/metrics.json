@@ -1,0 +1,14 @@
+{
+  "best_model_name": "random_forest_regressor",
+  "train_rows": 583,
+  "test_rows": 134,
+  "target_col": "label_next_monetary_amount_180d",
+  "split_col": "snapshot_month",
+  "selection_metric": "r2",
+  "cutoff_date": "2025-04-01",
+  "task_type": "regression",
+  "sample_count": 134.0,
+  "mae": 437.8245518656713,
+  "rmse": 599.2339849490929,
+  "r2": 0.5043764123570644
+}

@@ -1,0 +1,10 @@
+# Donor Retention
+
+This folder contains the standardized predictive and explanatory notebook templates for `donor_retention`.
+
+## Notebook Standard
+
+- Decision support: Prioritize weekly donor-retention outreach and stewardship follow-up.
+- Target summary: Current predictive label: `label_lapsed_180d` from supporter snapshots.
+- Recommended widgets: `ranked_table_widget`, `risk_badge_widget`, `recommendation_panel`
+- Primary users: fundraisers, donor engagement leads

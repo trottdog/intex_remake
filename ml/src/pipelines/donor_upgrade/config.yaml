@@ -1,0 +1,17 @@
+pipeline_name: donor_upgrade
+dataset_name: donor_upgrade_dataset
+target: label_donor_upgrade_next_180d
+split_col: snapshot_month
+cutoff_date: 2025-04-01
+selection_metric: average_precision
+drop_cols:
+  - supporter_id
+  - snapshot_month
+  - created_at
+  - observation_window_complete_180d
+  - future_180d_donation_count
+  - future_180d_recurring_donation_count
+  - future_180d_total_resolved_value
+  - label_recurring_conversion_next_180d
+  - label_has_next_monetary_donation_180d
+  - label_next_monetary_amount_180d

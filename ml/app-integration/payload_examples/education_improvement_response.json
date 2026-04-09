@@ -1,0 +1,53 @@
+{
+  "pipeline_name": "education_improvement",
+  "display_name": "Education Improvement",
+  "task_type": "classification",
+  "model_name": "logistic_regression",
+  "row_count": 3,
+  "metrics": {
+    "best_model_name": "logistic_regression",
+    "train_rows": 756,
+    "test_rows": 653,
+    "target_col": "label_education_improvement_next_120d",
+    "split_col": "snapshot_month",
+    "selection_metric": "average_precision",
+    "cutoff_date": "2025-04-01",
+    "sample_count": 653.0,
+    "positive_count": 47.0,
+    "positive_rate": 0.07197549770290965,
+    "accuracy": 0.9540581929555896,
+    "balanced_accuracy": 0.8476757250193105,
+    "precision": 0.6666666666666666,
+    "recall": 0.723404255319149,
+    "f1": 0.6938775510204082,
+    "roc_auc": 0.9838143388806966,
+    "average_precision": 0.801761678983835
+  },
+  "prediction_contract": {
+    "prediction_field": "prediction",
+    "score_field": "prediction_score",
+    "score_semantics": "positive-class probability",
+    "snapshot_value_field": "prediction_value",
+    "snapshot_value_semantics": "predicted binary class in published snapshots"
+  },
+  "predictions": [
+    {
+      "resident_id": 50,
+      "safehouse_id": 4,
+      "prediction": 1,
+      "prediction_score": 0.9882580157391686
+    },
+    {
+      "resident_id": 13,
+      "safehouse_id": 2,
+      "prediction": 1,
+      "prediction_score": 0.9897870242291167
+    },
+    {
+      "resident_id": 45,
+      "safehouse_id": 3,
+      "prediction": 1,
+      "prediction_score": 0.9587675535812865
+    }
+  ]
+}

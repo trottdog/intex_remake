@@ -1,0 +1,10 @@
+# Donation Uplift
+
+This folder contains the standardized predictive and explanatory notebook templates for `donation_uplift`.
+
+## Notebook Standard
+
+- Decision support: Guide campaign design choices toward treatments that lift donations instead of just activity.
+- Target summary: Candidate target: campaign-period lift in donation value, donor count, or average gift.
+- Recommended widgets: `explanation_chart_card`, `insight_summary_card`, `recommendation_panel`
+- Primary users: campaign managers, fundraising leadership

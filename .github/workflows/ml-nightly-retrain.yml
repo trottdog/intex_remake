@@ -1,0 +1,53 @@
+name: ML Nightly Retrain
+
+on:
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ml-nightly-retrain
+  cancel-in-progress: false
+
+jobs:
+  retrain-and-publish:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_DB_CONNECTION_STRING: ${{ secrets.SUPABASE_DB_CONNECTION_STRING }}
+      PYTHONUTF8: '1'
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install ML dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install . pytest
+
+      - name: Run ML test suite
+        run: python -m pytest ml/tests
+
+      - name: Retrain and publish nightly ML outputs
+        env:
+          ML_USE_SUPABASE: 'true'
+        run: python ml/scripts/refresh_supabase_ml.py
+
+      - name: Upload nightly ML artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ml-nightly-artifacts
+          path: |
+            ml/reports/evaluation
+            ml/app-integration/payload_examples
+          if-no-files-found: warn

@@ -1,0 +1,18 @@
+table,domain,grain,row_count,column_count,numeric_column_count,datetime_column_count,boolean_column_count,categorical_column_count,duplicate_row_count,columns_with_missing_values,missing_cell_count,missing_cell_pct
+donation_allocations,donor_support,one row per donation x safehouse x program area,521,7,5,1,0,1,0,1,521,14.29
+donations,donor_support,one row per donation event,420,13,6,1,1,6,0,4,990,18.13
+education_records,case_management,one row per resident per record date,534,10,4,1,0,5,0,0,0,0.0
+health_wellbeing_records,case_management,one row per resident per record date,534,14,12,1,3,1,0,0,0,0.0
+home_visitations,case_management,one row per home or field visit,1337,14,4,1,2,9,0,2,974,5.2
+in_kind_donation_items,donor_support,one row per in-kind line item,129,9,4,0,0,5,0,0,0,0.0
+incident_reports,case_management,one row per incident,100,12,5,2,2,5,0,1,29,2.42
+intervention_plans,case_management,one row per intervention plan,180,11,3,4,0,4,0,1,48,2.42
+partner_assignments,reference,one row per partner x safehouse x program area,48,9,4,2,1,3,0,2,53,12.27
+partners,reference,one row per partner,30,12,1,2,0,9,0,1,27,7.5
+process_recordings,case_management,one row per counseling session,2819,15,7,1,3,7,0,1,2819,6.67
+public_impact_snapshots,public_reporting,one row per reporting month,50,7,2,2,1,3,0,0,0,0.0
+residents,case_management,one row per resident,60,49,20,8,17,21,0,9,278,9.46
+safehouse_monthly_metrics,operations,one row per safehouse per month,450,11,9,2,0,0,0,3,844,17.05
+safehouses,reference,one row per safehouse,9,13,5,1,0,7,0,1,9,7.69
+social_media_posts,outreach,one row per social media post,812,39,26,1,3,12,0,9,5153,16.27
+supporters,donor_support,one row per supporter,60,15,1,2,0,12,0,4,65,7.22

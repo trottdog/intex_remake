@@ -1,0 +1,103 @@
+{
+  "contract_version": "2026-04-phase-f",
+  "pipeline_name": "best_posting_time",
+  "slug": "best-posting-time",
+  "display_name": "Best Posting Time",
+  "task_type": "classification",
+  "entity_type": "social_media_post",
+  "business_question": "When should the team post to maximize donation-linked outcomes?",
+  "predictive_question": "When should the organization post to maximize donation-linked results?",
+  "explanatory_question": "Which timing windows and scheduling patterns align with stronger donation-linked post performance?",
+  "decision_support": "Choose posting windows and scheduling patterns that improve donation-linked post performance.",
+  "primary_users": [
+    "outreach managers",
+    "social media staff"
+  ],
+  "shared_dataset": "post_features",
+  "target_column": "label_donation_referral_positive",
+  "target_summary": "Current predictive label: `label_donation_referral_positive`, using timing-focused post features.",
+  "split_column": "created_at",
+  "passthrough_id_columns": [
+    "post_id"
+  ],
+  "request_columns": [
+    "post_id",
+    "platform",
+    "day_of_week",
+    "post_hour",
+    "num_hashtags",
+    "mentions_count",
+    "has_call_to_action",
+    "is_boosted",
+    "boost_budget_php",
+    "follower_count_at_post",
+    "subscriber_count_at_post",
+    "forwards",
+    "click_through_rate",
+    "boost_budget_per_1k_impressions",
+    "is_video_or_reel",
+    "has_campaign_link",
+    "is_weekend_post",
+    "days_since_previous_post_on_platform"
+  ],
+  "model_input_columns": [
+    "platform",
+    "day_of_week",
+    "post_hour",
+    "num_hashtags",
+    "mentions_count",
+    "has_call_to_action",
+    "is_boosted",
+    "boost_budget_php",
+    "follower_count_at_post",
+    "subscriber_count_at_post",
+    "forwards",
+    "click_through_rate",
+    "boost_budget_per_1k_impressions",
+    "is_video_or_reel",
+    "has_campaign_link",
+    "is_weekend_post",
+    "days_since_previous_post_on_platform"
+  ],
+  "recommended_widgets": [
+    "recommendation_panel",
+    "insight_summary_card",
+    "ranked_table_widget"
+  ],
+  "deployment_notes": [
+    "Use a recommendation panel that highlights the strongest posting windows by platform.",
+    "Show ranked time slots alongside a short evidence summary rather than a raw probability alone."
+  ],
+  "route_hints": {
+    "latest_run_endpoint": "/ml/pipelines/best_posting_time",
+    "prediction_feed_endpoint": "/ml/pipelines/best_posting_time/predictions",
+    "entity_insight_endpoint": null
+  },
+  "prediction_contract": {
+    "prediction_field": "prediction",
+    "score_field": "prediction_score",
+    "score_semantics": "positive-class probability",
+    "snapshot_value_field": "prediction_value",
+    "snapshot_value_semantics": "predicted binary class in published snapshots"
+  },
+  "metrics": {
+    "best_model_name": "logistic_regression",
+    "train_rows": 649,
+    "test_rows": 163,
+    "target_col": "label_donation_referral_positive",
+    "split_col": "created_at",
+    "selection_metric": "average_precision",
+    "cutoff_date": null,
+    "task_type": "classification",
+    "sample_count": 163.0,
+    "positive_count": 104.0,
+    "positive_rate": 0.6380368098159509,
+    "accuracy": 0.6748466257668712,
+    "balanced_accuracy": 0.6645208604954367,
+    "precision": 0.7684210526315789,
+    "recall": 0.7019230769230769,
+    "f1": 0.7336683417085427,
+    "roc_auc": 0.735006518904824,
+    "average_precision": 0.8265668060372122
+  }
+}

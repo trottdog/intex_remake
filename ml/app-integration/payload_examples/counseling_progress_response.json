@@ -1,0 +1,53 @@
+{
+  "pipeline_name": "counseling_progress",
+  "display_name": "Counseling Progress",
+  "task_type": "classification",
+  "model_name": "random_forest_classifier",
+  "row_count": 3,
+  "metrics": {
+    "best_model_name": "random_forest_classifier",
+    "train_rows": 655,
+    "test_rows": 485,
+    "target_col": "label_counseling_progress_next_90d",
+    "split_col": "snapshot_month",
+    "selection_metric": "average_precision",
+    "cutoff_date": "2025-04-01",
+    "sample_count": 485.0,
+    "positive_count": 221.0,
+    "positive_rate": 0.4556701030927835,
+    "accuracy": 0.5154639175257731,
+    "balanced_accuracy": 0.5118092691622103,
+    "precision": 0.46846846846846846,
+    "recall": 0.47058823529411764,
+    "f1": 0.46952595936794583,
+    "roc_auc": 0.5193164678458797,
+    "average_precision": 0.503712720069139
+  },
+  "prediction_contract": {
+    "prediction_field": "prediction",
+    "score_field": "prediction_score",
+    "score_semantics": "positive-class probability",
+    "snapshot_value_field": "prediction_value",
+    "snapshot_value_semantics": "predicted binary class in published snapshots"
+  },
+  "predictions": [
+    {
+      "resident_id": 50,
+      "safehouse_id": 4,
+      "prediction": 0,
+      "prediction_score": 0.315
+    },
+    {
+      "resident_id": 50,
+      "safehouse_id": 4,
+      "prediction": 1,
+      "prediction_score": 0.875
+    },
+    {
+      "resident_id": 13,
+      "safehouse_id": 2,
+      "prediction": 1,
+      "prediction_score": 0.92
+    }
+  ]
+}

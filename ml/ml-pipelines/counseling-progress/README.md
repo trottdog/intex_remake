@@ -1,0 +1,10 @@
+# Counseling Progress
+
+This folder contains the standardized predictive and explanatory notebook templates for `counseling_progress`.
+
+## Notebook Standard
+
+- Decision support: Help social workers spot which support patterns are most associated with near-term counseling progress.
+- Target summary: Current predictive label: `label_counseling_progress_next_90d`, based on future sessions with strong progress notes, positive end states, and low concern rates.
+- Recommended widgets: `insight_summary_card`, `ranked_table_widget`, `explanation_chart_card`
+- Primary users: social workers, case managers

@@ -1,0 +1,14 @@
+{
+  "best_model_name": "random_forest_regressor",
+  "train_rows": 324,
+  "test_rows": 117,
+  "target_col": "label_next_active_residents",
+  "split_col": "month_start",
+  "selection_metric": "r2",
+  "cutoff_date": "2025-12-01",
+  "task_type": "regression",
+  "sample_count": 117.0,
+  "mae": 0.0,
+  "rmse": 0.0,
+  "r2": 1.0
+}

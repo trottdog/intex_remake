@@ -1,0 +1,296 @@
+dataset,feature_name,dtype,feature_role,source_tables,description
+campaign_features,campaign_name,str,key,"donations, donation_allocations, social_media_posts",Campaign name
+campaign_features,allocation_program_diversity,int64,numeric_feature,"donations, donation_allocations, social_media_posts",Allocation program diversity
+campaign_features,avg_engagement_rate,float64,numeric_feature,"donations, donation_allocations, social_media_posts",Average engagement rate
+campaign_features,avg_monetary_amount,float64,numeric_feature,"donations, donation_allocations, social_media_posts",Average monetary amount
+campaign_features,boosted_post_count,int64,numeric_feature,"donations, donation_allocations, social_media_posts",Boosted post count
+campaign_features,campaign_quarter,int32,numeric_feature,"donations, donation_allocations, social_media_posts",Campaign quarter
+campaign_features,campaign_year,int32,numeric_feature,"donations, donation_allocations, social_media_posts",Campaign year
+campaign_features,channel_diversity,int64,numeric_feature,"donations, donation_allocations, social_media_posts",Channel diversity
+campaign_features,donation_count,int64,numeric_feature,"donations, donation_allocations, social_media_posts",Donation count
+campaign_features,donation_type_diversity,int64,numeric_feature,"donations, donation_allocations, social_media_posts",Donation type diversity
+campaign_features,linked_safehouse_count,int64,numeric_feature,"donations, donation_allocations, social_media_posts",Linked safehouse count
+campaign_features,linked_social_post_count,int64,numeric_feature,"donations, donation_allocations, social_media_posts",Linked social post count
+campaign_features,platform_mix,int64,numeric_feature,"donations, donation_allocations, social_media_posts",Platform mix
+campaign_features,recurring_donation_share,float64,numeric_feature,"donations, donation_allocations, social_media_posts",Recurring donation share
+campaign_features,resident_story_post_count,int64,numeric_feature,"donations, donation_allocations, social_media_posts",Resident story post count
+campaign_features,social_referred_donation_count,int64,numeric_feature,"donations, donation_allocations, social_media_posts",Social referred donation count
+campaign_features,total_allocated_amount,float64,numeric_feature,"donations, donation_allocations, social_media_posts",Total allocated amount
+campaign_features,total_click_throughs,int64,numeric_feature,"donations, donation_allocations, social_media_posts",Total click throughs
+campaign_features,total_donation_referrals,int64,numeric_feature,"donations, donation_allocations, social_media_posts",Total donation referrals
+campaign_features,total_engagement,int64,numeric_feature,"donations, donation_allocations, social_media_posts",Total engagement
+campaign_features,total_estimated_donation_value_php,float64,numeric_feature,"donations, donation_allocations, social_media_posts",Total estimated donation value php
+campaign_features,total_impressions,int64,numeric_feature,"donations, donation_allocations, social_media_posts",Total impressions
+campaign_features,total_monetary_amount,float64,numeric_feature,"donations, donation_allocations, social_media_posts",Total monetary amount
+campaign_features,total_reach,int64,numeric_feature,"donations, donation_allocations, social_media_posts",Total reach
+campaign_features,total_resolved_value,float64,numeric_feature,"donations, donation_allocations, social_media_posts",Total resolved value
+campaign_features,unique_supporter_count,int64,numeric_feature,"donations, donation_allocations, social_media_posts",Unique supporter count
+campaign_features,campaign_month,datetime64[us],time_index,"donations, donation_allocations, social_media_posts",Campaign month
+post_features,call_to_action_type,str,categorical_feature,social_media_posts,Call to action type
+post_features,content_topic,str,categorical_feature,social_media_posts,Content topic
+post_features,created_at,datetime64[us],categorical_feature,social_media_posts,Created at
+post_features,day_of_week,str,categorical_feature,social_media_posts,Day of week
+post_features,donation_referrals_per_100_clicks,object,categorical_feature,social_media_posts,Donation referrals per 100 clicks
+post_features,estimated_donation_value_per_click,object,categorical_feature,social_media_posts,Estimated donation value per click
+post_features,media_type,str,categorical_feature,social_media_posts,Media type
+post_features,platform,str,categorical_feature,social_media_posts,Platform
+post_features,post_type,str,categorical_feature,social_media_posts,Post type
+post_features,sentiment_tone,str,categorical_feature,social_media_posts,Sentiment tone
+post_features,features_resident_story,bool,flag,social_media_posts,Features resident story
+post_features,has_call_to_action,bool,flag,social_media_posts,Has call to action
+post_features,has_campaign_link,bool,flag,social_media_posts,Has campaign link
+post_features,is_boosted,bool,flag,social_media_posts,Is boosted
+post_features,is_video_or_reel,bool,flag,social_media_posts,Is video or reel
+post_features,is_weekend_post,bool,flag,social_media_posts,Is weekend post
+post_features,campaign_name,str,key,social_media_posts,Campaign name
+post_features,post_id,int64,key,social_media_posts,Post id
+post_features,label_donation_referral_positive,bool,label,social_media_posts,Label donation referral positive
+post_features,label_estimated_donation_value_php,float64,label,social_media_posts,Label estimated donation value php
+post_features,avg_view_duration_seconds,float64,numeric_feature,social_media_posts,Average view duration seconds
+post_features,boost_budget_per_1k_impressions,float64,numeric_feature,social_media_posts,Boost budget per 1k impressions
+post_features,boost_budget_php,float64,numeric_feature,social_media_posts,Boost budget php
+post_features,caption_length,int64,numeric_feature,social_media_posts,Caption length
+post_features,click_through_rate,float64,numeric_feature,social_media_posts,Click through rate
+post_features,click_throughs,int64,numeric_feature,social_media_posts,Click throughs
+post_features,comments,int64,numeric_feature,social_media_posts,Comments
+post_features,days_since_previous_post_on_platform,float64,numeric_feature,social_media_posts,Days since previous post on platform
+post_features,donation_referrals,int64,numeric_feature,social_media_posts,Donation referrals
+post_features,engagement_per_1k_reach,float64,numeric_feature,social_media_posts,Engagement per 1k reach
+post_features,engagement_rate,float64,numeric_feature,social_media_posts,Engagement rate
+post_features,engagement_total,int64,numeric_feature,social_media_posts,Engagement total
+post_features,estimated_donation_value_per_1k_reach,float64,numeric_feature,social_media_posts,Estimated donation value per 1k reach
+post_features,estimated_donation_value_php,float64,numeric_feature,social_media_posts,Estimated donation value php
+post_features,follower_count_at_post,int64,numeric_feature,social_media_posts,Follower count at post
+post_features,follower_count_delta,float64,numeric_feature,social_media_posts,Follower count delta
+post_features,forwards,float64,numeric_feature,social_media_posts,Forwards
+post_features,impressions,int64,numeric_feature,social_media_posts,Impressions
+post_features,likes,int64,numeric_feature,social_media_posts,Likes
+post_features,mentions_count,int64,numeric_feature,social_media_posts,Mentions count
+post_features,num_hashtags,int64,numeric_feature,social_media_posts,Number hashtags
+post_features,post_hour,int64,numeric_feature,social_media_posts,Post hour
+post_features,profile_visit_rate,float64,numeric_feature,social_media_posts,Profile visit rate
+post_features,profile_visits,int64,numeric_feature,social_media_posts,Profile visits
+post_features,reach,int64,numeric_feature,social_media_posts,Reach
+post_features,saves,int64,numeric_feature,social_media_posts,Saves
+post_features,shares,int64,numeric_feature,social_media_posts,Shares
+post_features,subscriber_count_at_post,float64,numeric_feature,social_media_posts,Subscriber count at post
+post_features,video_views,float64,numeric_feature,social_media_posts,Video views
+post_features,watch_time_seconds,float64,numeric_feature,social_media_posts,Watch time seconds
+post_features,post_month,datetime64[us],time_index,social_media_posts,Post month
+resident_features,age_upon_admission,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Age upon admission
+resident_features,assigned_social_worker,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Assigned social worker
+resident_features,birth_status,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Birth status
+resident_features,case_category,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Case category
+resident_features,case_control_no,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Case control no
+resident_features,case_status,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Case status
+resident_features,created_at,datetime64[us],categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Created at
+resident_features,current_risk_level,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Current risk level
+resident_features,initial_case_assessment,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Initial case assessment
+resident_features,initial_risk_level,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Initial risk level
+resident_features,internal_code,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Internal code
+resident_features,latest_completion_status,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Latest completion status
+resident_features,length_of_stay,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Length of stay
+resident_features,place_of_birth,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Place of birth
+resident_features,present_age,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Present age
+resident_features,pwd_type,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Pwd type
+resident_features,referral_source,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Referral source
+resident_features,referring_agency_person,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Referring agency person
+resident_features,reintegration_status,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Reintegration status
+resident_features,reintegration_type,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Reintegration type
+resident_features,religion,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Religion
+resident_features,safehouse_city,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Safehouse city
+resident_features,safehouse_code,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Safehouse code
+resident_features,safehouse_name,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Safehouse name
+resident_features,safehouse_region,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Safehouse region
+resident_features,safehouse_status,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Safehouse status
+resident_features,sex,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Sex
+resident_features,special_needs_diagnosis,str,categorical_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Special needs diagnosis
+resident_features,family_indigenous,bool,flag,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Family indigenous
+resident_features,family_informal_settler,bool,flag,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Family informal settler
+resident_features,family_is_4ps,bool,flag,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Family is 4ps
+resident_features,family_parent_pwd,bool,flag,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Family parent pwd
+resident_features,family_solo_parent,bool,flag,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Family solo parent
+resident_features,has_completed_reintegration,bool,flag,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Has completed reintegration
+resident_features,has_special_needs,bool,flag,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Has special needs
+resident_features,is_case_closed,bool,flag,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Is case closed
+resident_features,is_pwd,bool,flag,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Is pwd
+resident_features,sub_cat_at_risk,bool,flag,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Sub cat at risk
+resident_features,sub_cat_child_labor,bool,flag,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Sub cat child labor
+resident_features,sub_cat_child_with_hiv,bool,flag,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Sub cat child with hiv
+resident_features,sub_cat_cicl,bool,flag,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Sub cat cicl
+resident_features,sub_cat_orphaned,bool,flag,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Sub cat orphaned
+resident_features,sub_cat_osaec,bool,flag,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Sub cat osaec
+resident_features,sub_cat_physical_abuse,bool,flag,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Sub cat physical abuse
+resident_features,sub_cat_sexual_abuse,bool,flag,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Sub cat sexual abuse
+resident_features,sub_cat_street_child,bool,flag,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Sub cat street child
+resident_features,sub_cat_trafficked,bool,flag,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Sub cat trafficked
+resident_features,resident_id,int64,key,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Resident id
+resident_features,safehouse_id,int64,key,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Safehouse id
+resident_features,achieved_plan_count,int64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Achieved plan count
+resident_features,age_at_admission_years,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Age at admission years
+resident_features,age_latest_observed_years,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Age latest observed years
+resident_features,avg_attendance_rate,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Average attendance rate
+resident_features,avg_bmi,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Average bmi
+resident_features,avg_energy_level_score,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Average energy level score
+resident_features,avg_family_cooperation_score,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Average family cooperation score
+resident_features,avg_general_health_score,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Average general health score
+resident_features,avg_nutrition_score,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Average nutrition score
+resident_features,avg_progress_percent,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Average progress percent
+resident_features,avg_session_duration_minutes,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Average session duration minutes
+resident_features,avg_sleep_quality_score,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Average sleep quality score
+resident_features,completion_status_diversity,int64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Completion status diversity
+resident_features,concerns_flagged_count,int64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Concerns flagged count
+resident_features,distress_observed_count,int64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Distress observed count
+resident_features,education_plan_count,int64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Education plan count
+resident_features,family_vulnerability_flag_count,int64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Family vulnerability flag count
+resident_features,favorable_visit_count,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Favorable visit count
+resident_features,high_severity_incident_count,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",High severity incident count
+resident_features,home_visitation_count,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Home visitation count
+resident_features,incident_count,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Incident count
+resident_features,incident_type_diversity,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Incident type diversity
+resident_features,intervention_plan_count,int64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Intervention plan count
+resident_features,latest_attendance_rate,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Latest attendance rate
+resident_features,latest_bmi,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Latest bmi
+resident_features,latest_energy_level_score,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Latest energy level score
+resident_features,latest_general_health_score,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Latest general health score
+resident_features,latest_nutrition_score,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Latest nutrition score
+resident_features,latest_progress_percent,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Latest progress percent
+resident_features,latest_sleep_quality_score,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Latest sleep quality score
+resident_features,length_of_stay_days_computed,int64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Length of stay days computed
+resident_features,notes_restricted,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Notes restricted
+resident_features,open_or_in_progress_plan_count,int64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Open or in progress plan count
+resident_features,physical_health_plan_count,int64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Physical health plan count
+resident_features,plan_category_diversity,int64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Plan category diversity
+resident_features,positive_end_state_count,int64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Positive end state count
+resident_features,process_recording_count,int64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Process recording count
+resident_features,progress_noted_count,int64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Progress noted count
+resident_features,referral_made_count,int64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Referral made count
+resident_features,safety_plan_count,int64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Safety plan count
+resident_features,subcategory_flag_count,int64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Subcategory flag count
+resident_features,unfavorable_visit_count,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Unfavorable visit count
+resident_features,unresolved_incident_count,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Unresolved incident count
+resident_features,visit_follow_up_needed_count,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Visit follow up needed count
+resident_features,visit_safety_concern_count,float64,numeric_feature,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Visit safety concern count
+resident_features,date_case_study_prepared,datetime64[us],time_index,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Date case study prepared
+resident_features,date_closed,datetime64[us],time_index,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Date closed
+resident_features,date_colb_obtained,datetime64[us],time_index,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Date colb obtained
+resident_features,date_colb_registered,datetime64[us],time_index,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Date colb registered
+resident_features,date_enrolled,datetime64[us],time_index,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Date enrolled
+resident_features,date_of_admission,datetime64[us],time_index,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Date of admission
+resident_features,date_of_birth,datetime64[us],time_index,"residents, safehouses, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Date of birth
+resident_monthly_features,case_category,str,categorical_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Case category
+resident_monthly_features,case_status,str,categorical_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Case status
+resident_monthly_features,initial_risk_level,str,categorical_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Initial risk level
+resident_monthly_features,sex,str,categorical_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Sex
+resident_monthly_features,case_closed_as_of_snapshot,bool,flag,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Case closed as of snapshot
+resident_monthly_features,resident_id,int64,key,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Resident id
+resident_monthly_features,safehouse_id,int64,key,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Safehouse id
+resident_monthly_features,snapshot_month,datetime64[us],key,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Snapshot month
+resident_monthly_features,label_incident_next_30d,bool,label,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Label incident next 30d
+resident_monthly_features,label_reintegration_complete_next_90d,bool,label,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Label reintegration complete next 90d
+resident_monthly_features,age_years_at_snapshot,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Age years at snapshot
+resident_monthly_features,avg_attendance_rate_90d,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Average attendance rate 90d
+resident_monthly_features,avg_general_health_score_90d,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Average general health score 90d
+resident_monthly_features,avg_nutrition_score_90d,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Average nutrition score 90d
+resident_monthly_features,avg_progress_percent_90d,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Average progress percent 90d
+resident_monthly_features,education_plans_cumulative,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Education plans cumulative
+resident_monthly_features,family_vulnerability_flag_count,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Family vulnerability flag count
+resident_monthly_features,high_severity_incidents_90d,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",High severity incidents 90d
+resident_monthly_features,home_visit_recent_90d_count,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Home visit recent 90d count
+resident_monthly_features,incident_recent_30d_count,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Incident recent 30d count
+resident_monthly_features,incident_recent_90d_count,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Incident recent 90d count
+resident_monthly_features,latest_attendance_rate,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Latest attendance rate
+resident_monthly_features,latest_bmi,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Latest bmi
+resident_monthly_features,latest_energy_level_score,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Latest energy level score
+resident_monthly_features,latest_general_health_score,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Latest general health score
+resident_monthly_features,latest_nutrition_score,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Latest nutrition score
+resident_monthly_features,latest_progress_percent,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Latest progress percent
+resident_monthly_features,latest_sleep_quality_score,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Latest sleep quality score
+resident_monthly_features,physical_health_plans_cumulative,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Physical health plans cumulative
+resident_monthly_features,plans_created_90d_count,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Plans created 90d count
+resident_monthly_features,plans_total_cumulative,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Plans total cumulative
+resident_monthly_features,process_avg_session_duration_90d,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Process average session duration 90d
+resident_monthly_features,process_concerns_flags_90d,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Process concerns flags 90d
+resident_monthly_features,process_distress_observed_90d,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Process distress observed 90d
+resident_monthly_features,process_positive_end_state_90d,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Process positive end state 90d
+resident_monthly_features,process_progress_flags_90d,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Process progress flags 90d
+resident_monthly_features,process_recent_30d_count,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Process recent 30d count
+resident_monthly_features,process_recent_90d_count,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Process recent 90d count
+resident_monthly_features,process_referrals_90d,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Process referrals 90d
+resident_monthly_features,safety_plans_cumulative,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Safety plans cumulative
+resident_monthly_features,subcategory_flag_count,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Subcategory flag count
+resident_monthly_features,unresolved_incidents_cumulative,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Unresolved incidents cumulative
+resident_monthly_features,visit_avg_family_cooperation_90d,float64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Visit average family cooperation 90d
+resident_monthly_features,visit_follow_up_needed_90d,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Visit follow up needed 90d
+resident_monthly_features,visit_safety_concerns_90d,int64,numeric_feature,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Visit safety concerns 90d
+resident_monthly_features,months_since_admission,int64,time_index,"residents, process_recordings, home_visitations, intervention_plans, incident_reports, education_records, health_wellbeing_records",Months since admission
+safehouse_features,city,str,categorical_feature,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",City
+safehouse_features,country,str,categorical_feature,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Country
+safehouse_features,name,str,categorical_feature,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Name
+safehouse_features,province,str,categorical_feature,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Province
+safehouse_features,region,str,categorical_feature,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Region
+safehouse_features,safehouse_code,str,categorical_feature,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Safehouse code
+safehouse_features,status,str,categorical_feature,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Status
+safehouse_features,safehouse_id,int64,key,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Safehouse id
+safehouse_features,active_resident_count,int64,numeric_feature,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Active resident count
+safehouse_features,allocation_program_diversity,int64,numeric_feature,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Allocation program diversity
+safehouse_features,avg_length_of_stay_days,float64,numeric_feature,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Average length of stay days
+safehouse_features,capacity_girls,int64,numeric_feature,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Capacity girls
+safehouse_features,capacity_staff,int64,numeric_feature,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Capacity staff
+safehouse_features,capacity_utilization_ratio,float64,numeric_feature,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Capacity utilization ratio
+safehouse_features,completed_reintegration_count,int64,numeric_feature,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Completed reintegration count
+safehouse_features,current_occupancy,int64,numeric_feature,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Current occupancy
+safehouse_features,high_severity_incident_count,int64,numeric_feature,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",High severity incident count
+safehouse_features,incident_report_count,int64,numeric_feature,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Incident report count
+safehouse_features,notes,float64,numeric_feature,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Notes
+safehouse_features,resident_count,int64,numeric_feature,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Resident count
+safehouse_features,total_allocated_amount,float64,numeric_feature,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Total allocated amount
+safehouse_features,avg_active_residents_monthly,float64,time_index,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Average active residents monthly
+safehouse_features,avg_education_progress_monthly,float64,time_index,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Average education progress monthly
+safehouse_features,avg_health_score_monthly,float64,time_index,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Average health score monthly
+safehouse_features,open_date,datetime64[us],time_index,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Open date
+safehouse_features,total_home_visitations_monthly,int64,time_index,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Total home visitations monthly
+safehouse_features,total_incidents_monthly,int64,time_index,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Total incidents monthly
+safehouse_features,total_process_recordings_monthly,int64,time_index,"safehouses, residents, donation_allocations, safehouse_monthly_metrics, incident_reports",Total process recordings monthly
+supporter_features,acquisition_channel,str,categorical_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Acquisition channel
+supporter_features,country,str,categorical_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Country
+supporter_features,created_at,datetime64[us],categorical_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Created at
+supporter_features,display_name,str,categorical_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Display name
+supporter_features,email,str,categorical_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Email
+supporter_features,first_name,str,categorical_feature,"supporters, donations, donation_allocations, in_kind_donation_items",First name
+supporter_features,last_name,str,categorical_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Last name
+supporter_features,organization_name,str,categorical_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Organization name
+supporter_features,phone,str,categorical_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Phone
+supporter_features,region,str,categorical_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Region
+supporter_features,relationship_type,str,categorical_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Relationship type
+supporter_features,status,str,categorical_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Status
+supporter_features,supporter_type,str,categorical_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Supporter type
+supporter_features,has_any_donation,bool,flag,"supporters, donations, donation_allocations, in_kind_donation_items",Has any donation
+supporter_features,supporter_id,int64,key,"supporters, donations, donation_allocations, in_kind_donation_items",Supporter id
+supporter_features,label_lapsed_180d,bool,label,"supporters, donations, donation_allocations, in_kind_donation_items",Label lapsed 180d
+supporter_features,allocation_program_diversity,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Allocation program diversity
+supporter_features,allocation_safehouse_diversity,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Allocation safehouse diversity
+supporter_features,avg_monetary_amount,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Average monetary amount
+supporter_features,campaign_count,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Campaign count
+supporter_features,channel_diversity,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Channel diversity
+supporter_features,donation_active_days,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Donation active days
+supporter_features,donation_count,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Donation count
+supporter_features,donation_frequency_per_365d,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Donation frequency per 365d
+supporter_features,donation_recency_days,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Donation recency days
+supporter_features,donation_type_diversity,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Donation type diversity
+supporter_features,in_kind_category_diversity,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",In kind category diversity
+supporter_features,in_kind_estimated_value_total,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",In kind estimated value total
+supporter_features,in_kind_item_line_count,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",In kind item line count
+supporter_features,in_kind_quantity_total,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",In kind quantity total
+supporter_features,monetary_donation_count,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Monetary donation count
+supporter_features,non_monetary_donation_count,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Non monetary donation count
+supporter_features,recurring_donation_count,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Recurring donation count
+supporter_features,recurring_donation_share,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Recurring donation share
+supporter_features,social_referral_donation_count,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Social referral donation count
+supporter_features,supporter_tenure_days,int64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Supporter tenure days
+supporter_features,total_allocated_amount,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Total allocated amount
+supporter_features,total_monetary_amount,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Total monetary amount
+supporter_features,total_resolved_value,float64,numeric_feature,"supporters, donations, donation_allocations, in_kind_donation_items",Total resolved value
+supporter_features,first_donation_date,datetime64[us],time_index,"supporters, donations, donation_allocations, in_kind_donation_items",First donation date
+supporter_features,first_donation_date_actual,datetime64[us],time_index,"supporters, donations, donation_allocations, in_kind_donation_items",First donation date actual
+supporter_features,last_donation_date,datetime64[us],time_index,"supporters, donations, donation_allocations, in_kind_donation_items",Last donation date

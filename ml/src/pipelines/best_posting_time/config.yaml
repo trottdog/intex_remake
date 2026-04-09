@@ -1,0 +1,39 @@
+pipeline_name: best_posting_time
+dataset_name: best_posting_time_dataset
+target: label_donation_referral_positive
+split_col: created_at
+selection_metric: average_precision
+drop_cols:
+  - post_id
+  - created_at
+  - post_month
+  - donation_referrals
+  - estimated_donation_value_php
+  - label_estimated_donation_value_php
+  - donation_referrals_per_100_clicks
+  - estimated_donation_value_per_click
+  - estimated_donation_value_per_1k_reach
+  - post_type
+  - media_type
+  - call_to_action_type
+  - content_topic
+  - sentiment_tone
+  - caption_length
+  - features_resident_story
+  - campaign_name
+  - likes
+  - comments
+  - shares
+  - saves
+  - click_throughs
+  - video_views
+  - engagement_total
+  - engagement_rate
+  - engagement_per_1k_reach
+  - profile_visits
+  - profile_visit_rate
+  - follower_count_delta
+  - avg_view_duration_seconds
+  - watch_time_seconds
+  - reach
+  - impressions

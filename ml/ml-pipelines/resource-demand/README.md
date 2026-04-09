@@ -1,0 +1,10 @@
+# Resource Demand
+
+This folder contains the standardized predictive and explanatory notebook templates for `resource_demand`.
+
+## Notebook Standard
+
+- Decision support: Support staffing and fundraising planning with a forecast of near-term resident demand by site.
+- Target summary: Current regression target: `label_next_active_residents`, forecasting next-month resident load from safehouse-month patterns.
+- Recommended widgets: `forecast_widget`, `insight_summary_card`, `ranked_table_widget`
+- Primary users: operations leadership, fundraising leadership

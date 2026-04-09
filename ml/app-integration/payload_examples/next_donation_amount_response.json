@@ -1,0 +1,45 @@
+{
+  "pipeline_name": "next_donation_amount",
+  "display_name": "Next Donation Amount",
+  "task_type": "regression",
+  "model_name": "random_forest_regressor",
+  "row_count": 3,
+  "metrics": {
+    "best_model_name": "random_forest_regressor",
+    "train_rows": 583,
+    "test_rows": 134,
+    "target_col": "label_next_monetary_amount_180d",
+    "split_col": "snapshot_month",
+    "selection_metric": "r2",
+    "cutoff_date": "2025-04-01",
+    "task_type": "regression",
+    "sample_count": 134.0,
+    "mae": 437.8245518656713,
+    "rmse": 599.2339849490929,
+    "r2": 0.5043764123570644
+  },
+  "prediction_contract": {
+    "prediction_field": "prediction",
+    "score_field": "prediction_score",
+    "score_semantics": "predicted numeric value",
+    "snapshot_value_field": "prediction_value",
+    "snapshot_value_semantics": "null in published snapshots for regression pipelines"
+  },
+  "predictions": [
+    {
+      "supporter_id": 7,
+      "prediction": 481.9262500000008,
+      "prediction_score": 481.9262500000008
+    },
+    {
+      "supporter_id": 36,
+      "prediction": 860.1208999999994,
+      "prediction_score": 860.1208999999994
+    },
+    {
+      "supporter_id": 38,
+      "prediction": 1658.0136500000015,
+      "prediction_score": 1658.0136500000015
+    }
+  ]
+}

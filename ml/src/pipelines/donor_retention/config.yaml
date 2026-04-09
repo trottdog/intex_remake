@@ -1,0 +1,19 @@
+pipeline_name: donor_retention
+dataset_name: donor_retention_dataset
+target: label_lapsed_180d
+split_col: created_at
+selection_metric: average_precision
+drop_cols:
+  - supporter_id
+  - display_name
+  - organization_name
+  - first_name
+  - last_name
+  - email
+  - phone
+  - created_at
+  - first_donation_date
+  - first_donation_date_actual
+  - last_donation_date
+  - donation_recency_days
+  - has_any_donation

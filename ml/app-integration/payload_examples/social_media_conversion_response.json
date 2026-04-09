@@ -1,0 +1,50 @@
+{
+  "pipeline_name": "social_media_conversion",
+  "display_name": "Social Media Conversion",
+  "task_type": "classification",
+  "model_name": "random_forest_classifier",
+  "row_count": 3,
+  "metrics": {
+    "best_model_name": "random_forest_classifier",
+    "train_rows": 649,
+    "test_rows": 163,
+    "target_col": "label_donation_referral_positive",
+    "split_col": "created_at",
+    "selection_metric": "average_precision",
+    "cutoff_date": null,
+    "sample_count": 163.0,
+    "positive_count": 104.0,
+    "positive_rate": 0.6380368098159509,
+    "accuracy": 0.9386503067484663,
+    "balanced_accuracy": 0.9335886571056062,
+    "precision": 0.9519230769230769,
+    "recall": 0.9519230769230769,
+    "f1": 0.9519230769230769,
+    "roc_auc": 0.9760430247718385,
+    "average_precision": 0.984028903416911
+  },
+  "prediction_contract": {
+    "prediction_field": "prediction",
+    "score_field": "prediction_score",
+    "score_semantics": "positive-class probability",
+    "snapshot_value_field": "prediction_value",
+    "snapshot_value_semantics": "predicted binary class in published snapshots"
+  },
+  "predictions": [
+    {
+      "post_id": 318,
+      "prediction": 1,
+      "prediction_score": 0.94
+    },
+    {
+      "post_id": 529,
+      "prediction": 1,
+      "prediction_score": 1.0
+    },
+    {
+      "post_id": 86,
+      "prediction": 0,
+      "prediction_score": 0.085
+    }
+  ]
+}

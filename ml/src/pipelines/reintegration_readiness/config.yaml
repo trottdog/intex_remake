@@ -1,0 +1,12 @@
+pipeline_name: reintegration_readiness
+dataset_name: reintegration_readiness_dataset
+target: label_reintegration_complete_next_90d
+split_col: snapshot_month
+cutoff_date: 2025-04-01
+selection_metric: average_precision
+drop_cols:
+  - resident_id
+  - snapshot_month
+  - safehouse_id
+  - case_closed_as_of_snapshot
+  - label_incident_next_30d

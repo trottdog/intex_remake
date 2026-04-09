@@ -1,0 +1,10 @@
+# Resident Risk
+
+This folder contains the standardized predictive and explanatory notebook templates for `resident_risk`.
+
+## Notebook Standard
+
+- Decision support: Trigger earlier staff intervention for residents with elevated short-term safety risk.
+- Target summary: Current predictive label: `label_incident_next_30d` from resident-monthly snapshots.
+- Recommended widgets: `risk_badge_widget`, `ranked_table_widget`, `explanation_chart_card`
+- Primary users: case managers, operations staff

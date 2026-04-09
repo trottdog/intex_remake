@@ -1,0 +1,21 @@
+pipeline_name: education_improvement
+dataset_name: education_improvement_dataset
+target: label_education_improvement_next_120d
+split_col: snapshot_month
+cutoff_date: 2025-04-01
+selection_metric: average_precision
+drop_cols:
+  - resident_id
+  - snapshot_month
+  - safehouse_id
+  - case_closed_as_of_snapshot
+  - future_window_complete_30d
+  - future_window_complete_60d
+  - future_window_complete_90d
+  - future_window_complete_120d
+  - label_incident_next_30d
+  - label_case_prioritization_next_60d
+  - label_counseling_progress_next_90d
+  - label_wellbeing_deterioration_next_90d
+  - label_supportive_home_visit_next_120d
+  - label_reintegration_complete_next_90d

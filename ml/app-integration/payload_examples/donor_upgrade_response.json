@@ -1,0 +1,51 @@
+{
+  "pipeline_name": "donor_upgrade",
+  "display_name": "Donor Upgrade",
+  "task_type": "classification",
+  "model_name": "random_forest_classifier",
+  "row_count": 3,
+  "metrics": {
+    "best_model_name": "random_forest_classifier",
+    "train_rows": 1282,
+    "test_rows": 295,
+    "target_col": "label_donor_upgrade_next_180d",
+    "split_col": "snapshot_month",
+    "selection_metric": "average_precision",
+    "cutoff_date": "2025-04-01",
+    "task_type": "classification",
+    "sample_count": 295.0,
+    "positive_count": 68.0,
+    "positive_rate": 0.2305084745762712,
+    "accuracy": 0.8542372881355932,
+    "balanced_accuracy": 0.7147253174397512,
+    "precision": 0.8378378378378378,
+    "recall": 0.45588235294117646,
+    "f1": 0.5904761904761905,
+    "roc_auc": 0.8329554288675823,
+    "average_precision": 0.7300670378775117
+  },
+  "prediction_contract": {
+    "prediction_field": "prediction",
+    "score_field": "prediction_score",
+    "score_semantics": "positive-class probability",
+    "snapshot_value_field": "prediction_value",
+    "snapshot_value_semantics": "predicted binary class in published snapshots"
+  },
+  "predictions": [
+    {
+      "supporter_id": 7,
+      "prediction": 1,
+      "prediction_score": 0.97
+    },
+    {
+      "supporter_id": 19,
+      "prediction": 0,
+      "prediction_score": 0.005
+    },
+    {
+      "supporter_id": 27,
+      "prediction": 0,
+      "prediction_score": 0.04
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "pipeline_name": "resident_risk",
+  "display_name": "Resident Risk",
+  "task_type": "classification",
+  "model_name": "logistic_regression",
+  "row_count": 3,
+  "metrics": {
+    "best_model_name": "logistic_regression",
+    "train_rows": 756,
+    "test_rows": 777,
+    "target_col": "label_incident_next_30d",
+    "split_col": "snapshot_month",
+    "selection_metric": "average_precision",
+    "cutoff_date": "2025-04-01",
+    "task_type": "classification",
+    "sample_count": 777.0,
+    "positive_count": 36.0,
+    "positive_rate": 0.04633204633204633,
+    "accuracy": 0.8918918918918919,
+    "balanced_accuracy": 0.692251461988304,
+    "precision": 0.2073170731707317,
+    "recall": 0.4722222222222222,
+    "f1": 0.288135593220339,
+    "roc_auc": 0.905982905982906,
+    "average_precision": 0.22958721784818312
+  },
+  "prediction_contract": {
+    "prediction_field": "prediction",
+    "score_field": "prediction_score",
+    "score_semantics": "positive-class probability",
+    "snapshot_value_field": "prediction_value",
+    "snapshot_value_semantics": "predicted binary class in published snapshots"
+  },
+  "predictions": [
+    {
+      "resident_id": 50,
+      "safehouse_id": 4,
+      "prediction": 0,
+      "prediction_score": 0.002290064058637562
+    },
+    {
+      "resident_id": 45,
+      "safehouse_id": 3,
+      "prediction": 0,
+      "prediction_score": 0.0035364431743366066
+    },
+    {
+      "resident_id": 23,
+      "safehouse_id": 5,
+      "prediction": 1,
+      "prediction_score": 0.6228796260446962
+    }
+  ]
+}
