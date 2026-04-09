@@ -76,9 +76,16 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddDatabaseInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("PostgreSql")
-                              ?? configuration["DATABASE_URL"]
-                              ?? throw new InvalidOperationException("A PostgreSQL connection string must be configured.");
+        var connectionString = configuration.GetConnectionString("PostgreSql");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            connectionString = configuration["DATABASE_URL"];
+        }
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException("A PostgreSQL connection string must be configured.");
+        }
 
         var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
         var dataSource = dataSourceBuilder.Build();
