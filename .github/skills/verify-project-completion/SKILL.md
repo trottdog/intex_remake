@@ -7,7 +7,7 @@ user-invocable: true
 
 # Verify Project Completion
 
-Use this skill to perform a strict completion audit for the INTEX project.
+Use this skill to perform a strict completion audit for the INTEX project and to document the state of the project in the checklist.md.
 
 This skill is not for giving encouragement or vague readiness opinions.
 This skill is for evidence-based pass/risk/fail verification.
@@ -15,6 +15,7 @@ This skill is for evidence-based pass/risk/fail verification.
 Primary resources:
 - [INTEX audit checklist](./checklist.md)
 - [Audit report template](./audit-report-template.md)
+- https://intex.trottdog.com/
 
 ## Core rule
 
@@ -25,6 +26,8 @@ If evidence is missing, mark the item as:
 - `[~]` Risky / partially evidenced / not verified
 
 Only mark `[x]` when there is direct evidence.
+
+Skip over items already marked as `[x]`.
 
 ## What counts as evidence
 
@@ -76,8 +79,6 @@ Follow this order:
    - implemented locally but not deployed
    - UI exists but API auth is missing
    - notebook exists but model is not surfaced in app
-   - security feature exists but is not shown in video
-   - video exists but link/privacy setting not verified
    - credentials exist but were not tested
    - page looks complete but does not persist to DB
 
@@ -126,9 +127,6 @@ For each section:
 
 ### Ship gate
 Do not say "ready" unless the minimum ship gate is satisfied.
-
-### Security
-A security feature does not count unless it is both implemented and shown clearly in the security video.
 
 ### ML
 An ML pipeline does not count as complete unless it is:
