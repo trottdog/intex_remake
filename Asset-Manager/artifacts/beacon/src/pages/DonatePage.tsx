@@ -237,7 +237,7 @@ export default function DonatePage() {
             })),
         });
       }
-      triggerDonationConfetti();
+      triggerDonationConfetti("cascade");
       setSubmitted(true);
     } catch (err) {
       if (err instanceof ApiError) {
