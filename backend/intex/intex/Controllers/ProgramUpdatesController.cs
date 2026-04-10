@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using backend.intex.DTOs.Common;
 using backend.intex.Entities.Database;
 using backend.intex.Infrastructure.Auth;
@@ -33,8 +32,11 @@ public sealed class ProgramUpdatesController(BeaconDbContext dbContext) : ApiCon
         }
 
         var total = await query.CountAsync(cancellationToken);
-        var rows = await query
-            .OrderByDescending(item => item.UpdateId)
+        var orderedQuery = role == BeaconRoles.Donor
+            ? query.OrderByDescending(item => item.PublishedAt).ThenByDescending(item => item.UpdateId)
+            : query.OrderByDescending(item => item.CreatedAt).ThenByDescending(item => item.UpdateId);
+
+        var rows = await orderedQuery
             .Skip((resolvedPage - 1) * resolvedPageSize)
             .Take(resolvedPageSize)
             .Select(item => new
@@ -42,6 +44,7 @@ public sealed class ProgramUpdatesController(BeaconDbContext dbContext) : ApiCon
                 item.UpdateId,
                 Id = item.UpdateId,
                 item.Title,
+                Content = item.Summary,
                 item.Summary,
                 item.Category,
                 item.IsPublished,
@@ -59,32 +62,42 @@ public sealed class ProgramUpdatesController(BeaconDbContext dbContext) : ApiCon
             new StandardPaginationMeta(resolvedPage, resolvedPageSize, totalPages, resolvedPage < totalPages, resolvedPage > 1)));
     }
 
-    [Authorize(Policy = PolicyNames.AdminOrAbove)]
+    [Authorize(Policy = PolicyNames.StaffOrAbove)]
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
-    public async Task<IActionResult> Create([FromBody] JsonFieldsRequest request, CancellationToken cancellationToken)
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Create([FromBody] UpsertProgramUpdateRequest request, CancellationToken cancellationToken)
     {
-        var fieldMap = new Dictionary<string, JsonElement>(request.Fields, StringComparer.OrdinalIgnoreCase)
+        var title = request.Title?.Trim();
+        if (string.IsNullOrWhiteSpace(title))
         {
-            ["createdAt"] = JsonSerializer.SerializeToElement(DateTime.UtcNow),
-            ["updatedAt"] = JsonSerializer.SerializeToElement(DateTime.UtcNow)
-        };
-        if (!fieldMap.ContainsKey("createdBy") && User.GetUserId().HasValue)
-        {
-            fieldMap["createdBy"] = JsonSerializer.SerializeToElement((long)User.GetUserId()!.Value);
+            return BadRequest(new ErrorResponse("title is required"));
         }
 
-        var entity = EntityJsonMerge.DeserializeEntity<ProgramUpdate>(fieldMap);
+        var now = DateTime.UtcNow;
+        var entity = new ProgramUpdate
+        {
+            Title = title,
+            Summary = request.Summary ?? request.Content,
+            Category = NormalizeNullable(request.Category),
+            IsPublished = request.IsPublished,
+            PublishedAt = request.IsPublished == true ? now : null,
+            CreatedBy = User.GetUserId(),
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
         dbContext.ProgramUpdates.Add(entity);
         await dbContext.SaveChangesAsync(cancellationToken);
         return StatusCode(StatusCodes.Status201Created, await BuildResponseAsync(entity.UpdateId, cancellationToken));
     }
 
-    [Authorize(Policy = PolicyNames.AdminOrAbove)]
+    [Authorize(Policy = PolicyNames.StaffOrAbove)]
     [HttpPatch("{id:long}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ErrorResponse>(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Update(long id, [FromBody] JsonFieldsRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(long id, [FromBody] UpsertProgramUpdateRequest request, CancellationToken cancellationToken)
     {
         var entity = await dbContext.ProgramUpdates.FirstOrDefaultAsync(item => item.UpdateId == id, cancellationToken);
         if (entity is null)
@@ -92,12 +105,40 @@ public sealed class ProgramUpdatesController(BeaconDbContext dbContext) : ApiCon
             return NotFound(new ErrorResponse("Not found"));
         }
 
-        var fieldMap = new Dictionary<string, JsonElement>(request.Fields, StringComparer.OrdinalIgnoreCase)
-        {
-            ["updatedAt"] = JsonSerializer.SerializeToElement(DateTime.UtcNow)
-        };
+        var now = DateTime.UtcNow;
+        var entry = dbContext.Entry(entity);
 
-        EntityJsonMerge.ApplyMergedValues(dbContext, entity, fieldMap);
+        if (request.Title is not null)
+        {
+            var title = request.Title.Trim();
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                return BadRequest(new ErrorResponse("title is required"));
+            }
+
+            entry.Property(nameof(ProgramUpdate.Title)).CurrentValue = title;
+        }
+
+        if (request.Summary is not null || request.Content is not null)
+        {
+            entry.Property(nameof(ProgramUpdate.Summary)).CurrentValue = request.Summary ?? request.Content;
+        }
+
+        if (request.Category is not null)
+        {
+            entry.Property(nameof(ProgramUpdate.Category)).CurrentValue = NormalizeNullable(request.Category);
+        }
+
+        if (request.IsPublished.HasValue)
+        {
+            entry.Property(nameof(ProgramUpdate.IsPublished)).CurrentValue = request.IsPublished;
+            if (request.IsPublished == true && !entity.PublishedAt.HasValue)
+            {
+                entry.Property(nameof(ProgramUpdate.PublishedAt)).CurrentValue = now;
+            }
+        }
+
+        entry.Property(nameof(ProgramUpdate.UpdatedAt)).CurrentValue = now;
         await dbContext.SaveChangesAsync(cancellationToken);
         return Ok(await BuildResponseAsync(id, cancellationToken));
     }
@@ -136,6 +177,7 @@ public sealed class ProgramUpdatesController(BeaconDbContext dbContext) : ApiCon
                 item.UpdateId,
                 Id = item.UpdateId,
                 item.Title,
+                Content = item.Summary,
                 item.Summary,
                 item.Category,
                 item.IsPublished,
@@ -147,9 +189,15 @@ public sealed class ProgramUpdatesController(BeaconDbContext dbContext) : ApiCon
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    public sealed class JsonFieldsRequest
+    public sealed class UpsertProgramUpdateRequest
     {
-        [JsonExtensionData]
-        public Dictionary<string, JsonElement> Fields { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+        public string? Title { get; init; }
+        public string? Summary { get; init; }
+        public string? Content { get; init; }
+        public string? Category { get; init; }
+        public bool? IsPublished { get; init; }
     }
+
+    private static string? NormalizeNullable(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
