@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { PublicLayout } from "@/components/layouts/PublicLayout";
 import handsImg from "@assets/Hands_Circle_1775623133974.jpg";
 import { CheckCircle, Share2, Users, Package, Building2, Globe, ChevronRight, Eye, EyeOff } from "lucide-react";
@@ -71,7 +71,7 @@ export default function DonatePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
+  const thankYouRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -108,18 +108,28 @@ export default function DonatePage() {
   }, [safehousesRetryToken]);
 
   useEffect(() => {
-    if (!submitted || !createAccount || redirectCountdown === null) return;
-    if (redirectCountdown <= 0) {
-      window.location.href = "/login";
+    if (!submitted || !thankYouRef.current) {
       return;
     }
 
-    const timer = window.setTimeout(() => {
-      setRedirectCountdown((count) => (count === null ? null : count - 1));
-    }, 1000);
+    const scrollToThankYou = () => {
+      const cardRect = thankYouRef.current!.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const verticalPadding = 16;
+      const canFullyFit = cardRect.height + verticalPadding * 2 <= viewportHeight;
 
-    return () => window.clearTimeout(timer);
-  }, [submitted, createAccount, redirectCountdown]);
+      const centeredTop = window.scrollY + cardRect.top - (viewportHeight - cardRect.height) / 2;
+      const topAligned = window.scrollY + cardRect.top - verticalPadding;
+      const scrollTargetY = canFullyFit ? centeredTop : topAligned;
+
+      window.scrollTo({
+        top: Math.max(scrollTargetY, 0),
+        behavior: "auto",
+      });
+    };
+
+    requestAnimationFrame(() => requestAnimationFrame(scrollToThankYou));
+  }, [submitted]);
 
   const finalAmount = selectedAmount ?? (customAmount ? parseInt(customAmount) : 0);
   const selectedSafehouse = destination !== "general" ? safehouses.find(s => s.safehouseId === destination) : null;
@@ -190,9 +200,6 @@ export default function DonatePage() {
       });
       triggerDonationConfetti();
       setSubmitted(true);
-      if (createAccount) {
-        setRedirectCountdown(5);
-      }
     } catch (err) {
       if (err instanceof ApiError) {
         setSubmitError(err.message);
@@ -227,7 +234,7 @@ export default function DonatePage() {
         <div className="max-w-5xl mx-auto grid md:grid-cols-5 gap-10">
           <div className="md:col-span-3">
             {submitted ? (
-              <div className="bg-white rounded-3xl border border-gray-100 p-10 text-center shadow-sm">
+              <div ref={thankYouRef} className="bg-white rounded-3xl border border-gray-100 p-10 text-center shadow-sm">
                 <div className="w-16 h-16 bg-[#f0faf6] rounded-full flex items-center justify-center mx-auto mb-5">
                   <CheckCircle className="w-8 h-8 text-[#2a9d72]" />
                 </div>
@@ -244,21 +251,26 @@ export default function DonatePage() {
                   <p className="text-sm text-gray-500 mb-2">Going to the General Fund — our team will allocate it where it's needed most.</p>
                 )}
                 <p className="text-gray-500 text-sm mb-8">A receipt and impact report will be sent to <strong>{form.email}</strong> within 24 hours.</p>
-                {createAccount && redirectCountdown !== null && (
-                  <p className="text-sm text-[#214636] mb-6">
-                    Account created successfully. Redirecting to login in <strong>{redirectCountdown}</strong>...
-                  </p>
+                {createAccount && (
+                  <div className="mb-6 rounded-xl border border-[#c8e6d4] bg-[#f0faf6] px-4 py-4 text-sm text-[#214636]">
+                    <p className="font-semibold">Account created successfully. Welcome to Beacon Sanctuary PH!</p>
+                    <p className="mt-1 text-[#3f6a58]">You can log in whenever you are ready to view your donor account.</p>
+                  </div>
                 )}
                 <button
                   onClick={() => {
+                    if (createAccount) {
+                      window.location.href = "/login";
+                      return;
+                    }
+
                     setSubmitted(false);
-                    setRedirectCountdown(null);
                     setForm({ name: "", email: "", message: "" });
                     setStep("destination");
                     setDestination("general");
                   }}
                   className="border-2 border-[#2a9d72] text-[#2a9d72] hover:bg-[#2a9d72] hover:text-white px-8 py-3 rounded-full font-semibold transition-colors"
-                >Give Again</button>
+                >{createAccount ? "Log In to Donate Again" : "Give Again"}</button>
               </div>
             ) : step === "destination" ? (
               /* ── Step 1: Choose Destination ── */
@@ -425,6 +437,19 @@ export default function DonatePage() {
                       <span className="block text-xs text-[#3f6a58] mt-1">Your account helps you track giving history and lets our team support you better.</span>
                     </span>
                   </label>
+
+                  <p className="text-xs text-[#3f6a58]">
+                    Already have an account?{" "}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        window.location.href = "/login";
+                      }}
+                      className="font-semibold text-[#2a9d72] hover:underline"
+                    >
+                      Log in
+                    </button>
+                  </p>
 
                   {createAccount && (
                     <div className="space-y-3 pt-1">

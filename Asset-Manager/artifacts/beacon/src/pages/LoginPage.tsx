@@ -104,8 +104,8 @@ export default function LoginPage() {
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-16">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-[0_10px_22px_rgba(14,33,24,0.08)] ring-1 ring-[#eef4f0]">
-                <img src={lighthouseLogo} alt="Beacon" className="h-9 w-9 object-contain shrink-0" />
+              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl border border-white bg-[#214636] ring-1 ring-white/30 shrink-0">
+                <img src={lighthouseLogo} alt="Beacon" className="h-8 w-8 object-contain shrink-0" />
               </div>
               <span className="text-white text-2xl font-bold tracking-tight">Beacon</span>
             </div>
@@ -146,8 +146,8 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-[0_10px_22px_rgba(14,33,24,0.08)] ring-1 ring-[#eef4f0]">
-                <img src={lighthouseLogo} alt="Beacon" className="h-9 w-9 object-contain shrink-0" />
+              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl border border-white bg-[#214636] ring-1 ring-white/30 shrink-0">
+                <img src={lighthouseLogo} alt="Beacon" className="h-8 w-8 object-contain shrink-0" />
               </div>
               <span className="text-[#214636] text-2xl font-bold">Beacon</span>
             </div>

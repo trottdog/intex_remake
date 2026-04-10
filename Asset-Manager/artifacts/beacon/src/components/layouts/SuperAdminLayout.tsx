@@ -37,7 +37,7 @@ const SUPERADMIN_NAV = [
 
 export function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <DashboardLayout navItems={SUPERADMIN_NAV} portalName="Super Admin" brandLogoSrc={lighthouseLogo} compactSidebar>
+    <DashboardLayout navItems={SUPERADMIN_NAV} portalName="Super Admin" brandLogoSrc={lighthouseLogo} compactSidebar showThemeToggle={false}>
       {children}
     </DashboardLayout>
   );
