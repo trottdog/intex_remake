@@ -10,7 +10,7 @@ public sealed class InterventionPlanConfiguration : IEntityTypeConfiguration<Int
     {
         builder.ToTable("intervention_plans");
         builder.HasKey(x => x.PlanId);
-        builder.Property(x => x.PlanId).HasColumnName("plan_id").ValueGeneratedOnAdd();
+        builder.Property(x => x.PlanId).HasColumnName("plan_id").ValueGeneratedNever();
         builder.Property(x => x.ResidentId).HasColumnName("resident_id");
         builder.Property(x => x.PlanCategory).HasColumnName("plan_category");
         builder.Property(x => x.PlanDescription).HasColumnName("plan_description");

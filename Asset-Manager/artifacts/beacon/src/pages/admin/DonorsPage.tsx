@@ -15,6 +15,7 @@ import { useCreateDonation, useUpdateDonation, useDeleteDonation } from "@/servi
 import { useAuth } from "@/contexts/AuthContext";
 import { ApiError, apiFetch, apiPost, apiDelete } from "@/services/api";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
+import { SupporterProfileDrawer } from "@/components/supporters/SupporterProfileDrawer";
 import {
   Search, Loader2, Users, DollarSign, TrendingUp,
   Layers, Building2, X, Plus, Trash2, CheckCircle2, AlertCircle, RefreshCw, Heart,
@@ -498,6 +499,7 @@ export default function DonorsPage() {
   const [tab, setTab] = useState<"supporters" | "donations">("supporters");
   const [donorModal, setDonorModal] = useState<{ mode: "create" | "edit"; supporter: Supporter | null } | null>(null);
   const [supporterDeleteTarget, setSupporterDeleteTarget] = useState<Supporter | null>(null);
+  const [selectedSupporterId, setSelectedSupporterId] = useState<number | null>(null);
   const [contributionsSupporter, setContributionsSupporter] = useState<Supporter | null>(null);
   const [search, setSearch] = useState("");
   const [donorSearch, setDonorSearch] = useState("");
@@ -611,6 +613,12 @@ export default function DonorsPage() {
         />
       )}
       {selectedDonation && <AllocateModal donation={selectedDonation} onClose={() => setSelectedDonation(null)} />}
+      <SupporterProfileDrawer
+        open={selectedSupporterId !== null}
+        supporterId={selectedSupporterId}
+        onClose={() => setSelectedSupporterId(null)}
+        onEdit={(supporter) => setDonorModal({ mode: "edit", supporter })}
+      />
 
       <div className="flex items-center justify-between">
         <div>
@@ -730,7 +738,16 @@ export default function DonorsPage() {
                     ? "bg-green-100 text-green-700"
                     : s.status === "inactive" ? "bg-gray-100 text-gray-500" : "bg-amber-100 text-amber-700";
                   return (
-                    <tr key={s.supporterId ?? s.id} className="hover:bg-gray-50 transition-colors">
+                    <tr
+                      key={s.supporterId ?? s.id}
+                      className="hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => {
+                        const id = Number(s.supporterId ?? s.id ?? 0);
+                        if (id > 0) {
+                          setSelectedSupporterId(id);
+                        }
+                      }}
+                    >
                       <td className="px-4 py-3">
                         <div className="font-medium text-gray-900">{name}</div>
                         <div className="text-xs text-gray-500">{s.email ?? "—"}</div>
@@ -757,8 +774,19 @@ export default function DonorsPage() {
                           </span>
                         ) : <span className="text-gray-300 text-xs">—</span>}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
                         <div className="flex items-center gap-2">
+                          <button
+                            className="text-xs text-[#2a9d72] hover:underline"
+                            onClick={() => {
+                              const id = Number(s.supporterId ?? s.id ?? 0);
+                              if (id > 0) {
+                                setSelectedSupporterId(id);
+                              }
+                            }}
+                          >
+                            View
+                          </button>
                           <button
                             className="text-xs text-[#2a9d72] hover:underline"
                             onClick={() => setDonorModal({ mode: "edit", supporter: s })}

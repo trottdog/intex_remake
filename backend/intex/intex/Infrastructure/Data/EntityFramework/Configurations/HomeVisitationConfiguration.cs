@@ -10,7 +10,7 @@ public sealed class HomeVisitationConfiguration : IEntityTypeConfiguration<HomeV
     {
         builder.ToTable("home_visitations");
         builder.HasKey(x => x.VisitationId);
-        builder.Property(x => x.VisitationId).HasColumnName("visitation_id").ValueGeneratedOnAdd();
+        builder.Property(x => x.VisitationId).HasColumnName("visitation_id").ValueGeneratedNever();
         builder.Property(x => x.ResidentId).HasColumnName("resident_id");
         builder.Property(x => x.VisitDate).HasColumnName("visit_date");
         builder.Property(x => x.SocialWorker).HasColumnName("social_worker");

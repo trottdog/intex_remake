@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiFetch, apiPost, apiPatch, apiDelete } from "@/services/api";
+import { ApiError, apiFetch, apiPost, apiPatch, apiDelete } from "@/services/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQueryPagination } from "@/hooks/useQueryPagination";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,8 @@ interface Resident {
 
 interface ApiResponse { data: ProcessRecording[]; total: number; pagination: { totalPages: number } }
 
-const SESSION_TYPES = ["Individual", "Group", "Family", "Crisis", "Intake", "Follow-up", "Other"];
+const SESSION_TYPES = ["Individual", "Group"] as const;
+const EMOTIONAL_STATES = ["Calm", "Anxious", "Sad", "Angry", "Hopeful", "Withdrawn", "Happy", "Distressed"] as const;
 
 type FormState = {
   residentId: number | null;
@@ -135,14 +136,14 @@ export default function ProcessRecordingsPage() {
     mutationFn: (body: object) =>
       apiPost<ProcessRecording>("/api/process-recordings", body, token ?? undefined),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["process-recordings"] }); closePanel(); },
-    onError: () => setFormError("Failed to save. Please check all fields."),
+    onError: (error) => setFormError(error instanceof ApiError ? error.message : "Failed to save process recording."),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, body }: { id: number; body: object }) =>
       apiPatch<ProcessRecording>(`/api/process-recordings/${id}`, body, token ?? undefined),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["process-recordings"] }); closePanel(); },
-    onError: () => setFormError("Failed to update. Please check all fields."),
+    onError: (error) => setFormError(error instanceof ApiError ? error.message : "Failed to update process recording."),
   });
 
   const deleteMutation = useMutation({
@@ -528,28 +529,30 @@ export default function ProcessRecordingsPage() {
               {/* Section 2: Emotional State */}
               <section>
                 <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">Emotional State</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">At Start of Session</label>
-                    <input
-                      type="text"
-                      value={form.emotionalStateObserved}
-                      onChange={e => set("emotionalStateObserved", e.target.value)}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#2a9d72] focus:outline-none"
-                      placeholder="e.g. Anxious, withdrawn"
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">At Start of Session</label>
+                      <select
+                        value={form.emotionalStateObserved}
+                        onChange={e => set("emotionalStateObserved", e.target.value)}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-[#2a9d72] focus:outline-none"
+                      >
+                        <option value="">— Select —</option>
+                        {EMOTIONAL_STATES.map((state) => <option key={state} value={state}>{state}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">At End of Session</label>
+                      <select
+                        value={form.emotionalStateEnd}
+                        onChange={e => set("emotionalStateEnd", e.target.value)}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-[#2a9d72] focus:outline-none"
+                      >
+                        <option value="">— Select —</option>
+                        {EMOTIONAL_STATES.map((state) => <option key={state} value={state}>{state}</option>)}
+                      </select>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">At End of Session</label>
-                    <input
-                      type="text"
-                      value={form.emotionalStateEnd}
-                      onChange={e => set("emotionalStateEnd", e.target.value)}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#2a9d72] focus:outline-none"
-                      placeholder="e.g. Calmer, more open"
-                    />
-                  </div>
-                </div>
               </section>
 
               {/* Section 3: Session Content */}

@@ -10,7 +10,7 @@ public sealed class IncidentReportConfiguration : IEntityTypeConfiguration<Incid
     {
         builder.ToTable("incident_reports");
         builder.HasKey(x => x.IncidentId);
-        builder.Property(x => x.IncidentId).HasColumnName("incident_id").ValueGeneratedOnAdd();
+        builder.Property(x => x.IncidentId).HasColumnName("incident_id").ValueGeneratedNever();
         builder.Property(x => x.ResidentId).HasColumnName("resident_id");
         builder.Property(x => x.SafehouseId).HasColumnName("safehouse_id");
         builder.Property(x => x.IncidentDate).HasColumnName("incident_date");

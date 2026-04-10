@@ -10,7 +10,7 @@ public sealed class ProcessRecordingConfiguration : IEntityTypeConfiguration<Pro
     {
         builder.ToTable("process_recordings");
         builder.HasKey(x => x.RecordingId);
-        builder.Property(x => x.RecordingId).HasColumnName("recording_id").ValueGeneratedOnAdd();
+        builder.Property(x => x.RecordingId).HasColumnName("recording_id").ValueGeneratedNever();
         builder.Property(x => x.ResidentId).HasColumnName("resident_id");
         builder.Property(x => x.SessionDate).HasColumnName("session_date");
         builder.Property(x => x.SocialWorker).HasColumnName("social_worker");

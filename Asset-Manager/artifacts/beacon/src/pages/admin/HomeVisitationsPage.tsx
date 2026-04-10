@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiFetch, apiPost, apiPatch, apiDelete } from "@/services/api";
+import { ApiError, apiFetch, apiPost, apiPatch, apiDelete } from "@/services/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQueryPagination } from "@/hooks/useQueryPagination";
 import { Button } from "@/components/ui/button";
@@ -46,9 +46,9 @@ interface HomeVisitation {
 interface Resident { residentId: number; internalCode: string | null; }
 interface ApiResponse { data: HomeVisitation[]; total: number; pagination: { totalPages: number } }
 
-const VISIT_TYPES = ["Initial Visit", "Follow-up Visit", "Routine Check", "Crisis Visit", "Family Assessment", "Reintegration Visit", "Other"];
-const COOPERATION_LEVELS = ["Excellent", "Good", "Moderate", "Poor", "Uncooperative"];
-const VISIT_OUTCOMES = ["Positive", "Neutral", "Concerning", "Requires Follow-up", "Referred"];
+const VISIT_TYPES = ["Initial Assessment", "Routine Follow-Up", "Reintegration Assessment", "Post-Placement Monitoring", "Emergency"] as const;
+const COOPERATION_LEVELS = ["Highly Cooperative", "Cooperative", "Neutral", "Uncooperative"] as const;
+const VISIT_OUTCOMES = ["Favorable", "Needs Improvement", "Unfavorable", "Inconclusive"] as const;
 
 type FormState = {
   residentId: number | null;
@@ -121,12 +121,12 @@ export default function HomeVisitationsPage() {
   const createMutation = useMutation({
     mutationFn: (body: object) => apiPost<HomeVisitation>("/api/home-visitations", body, token ?? undefined),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["home-visitations"] }); closePanel(); },
-    onError: () => setFormError("Failed to save. Please check all fields."),
+    onError: (error) => setFormError(error instanceof ApiError ? error.message : "Failed to save home visit."),
   });
   const updateMutation = useMutation({
     mutationFn: ({ id, body }: { id: number; body: object }) => apiPatch<HomeVisitation>(`/api/home-visitations/${id}`, body, token ?? undefined),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["home-visitations"] }); closePanel(); },
-    onError: () => setFormError("Failed to update. Please check all fields."),
+    onError: (error) => setFormError(error instanceof ApiError ? error.message : "Failed to update home visit."),
   });
   const deleteMutation = useMutation({
     mutationFn: (id: number) => apiDelete(`/api/home-visitations/${id}`, token ?? undefined),

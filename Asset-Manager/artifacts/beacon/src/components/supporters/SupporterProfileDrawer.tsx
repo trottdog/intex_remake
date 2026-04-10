@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { Building2, CalendarDays, Heart, Loader2, Mail, MapPin, Package, Phone, Wallet, X } from "lucide-react";
+import { Building2, CalendarDays, Heart, Loader2, Mail, MapPin, Package, Phone, ShieldCheck, User2, Wallet, X } from "lucide-react";
 import { useGetSupporterProfile, type Supporter, type SupporterDonationHistoryItem } from "@/services/supporters.service";
 
 interface SupporterProfileDrawerProps {
@@ -76,6 +76,10 @@ export function SupporterProfileDrawer({
           ) : (
             <div className="space-y-6">
               <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <InfoCard icon={<User2 className="w-4 h-4" />} label="Display Name" value={supporter.displayName ?? "—"} />
+                <InfoCard icon={<User2 className="w-4 h-4" />} label="Supporter Type" value={supporter.supporterType ?? "—"} />
+                <InfoCard icon={<User2 className="w-4 h-4" />} label="First Name" value={supporter.firstName ?? "—"} />
+                <InfoCard icon={<User2 className="w-4 h-4" />} label="Last Name" value={supporter.lastName ?? "—"} />
                 <InfoCard icon={<Mail className="w-4 h-4" />} label="Email" value={supporter.email ?? "—"} />
                 <InfoCard icon={<Phone className="w-4 h-4" />} label="Phone" value={supporter.phone ?? "—"} />
                 <InfoCard icon={<MapPin className="w-4 h-4" />} label="Region" value={supporter.region ?? "—"} />
@@ -101,7 +105,24 @@ export function SupporterProfileDrawer({
                   <DetailRow label="Relationship Type" value={supporter.relationshipType ?? "—"} />
                   <DetailRow label="Acquisition Channel" value={supporter.acquisitionChannel ?? "—"} />
                   <DetailRow label="Recurring Enabled" value={(supporter.recurringEnabled || supporter.hasRecurring) ? "Yes" : "No"} />
+                  <DetailRow label="Can Login" value={supporter.canLogin ? "Yes" : "No"} />
+                  <DetailRow label="Identity User Id" value={supporter.identityUserId ?? "—"} />
+                  <DetailRow label="Communication Preference" value={supporter.communicationPreference ?? "—"} />
+                  <DetailRow label="Donor Tier" value={supporter.donorTier ?? "—"} />
                   <DetailRow label="Created At" value={fmtDate(supporter.createdAt)} />
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-gray-100 bg-white p-5">
+                <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                  <ShieldCheck className="w-4 h-4 text-[#2a9d72]" />
+                  Giving Profile
+                </div>
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  <DetailRow label="Total Given" value={fmtPeso(data.givingStats.totalGiven)} />
+                  <DetailRow label="Average Gift Amount" value={fmtPeso(data.givingStats.avgGiftAmount)} />
+                  <DetailRow label="Donation Count" value={String(data.givingStats.donationCount ?? 0)} />
+                  <DetailRow label="Last Donation Date" value={fmtDate(data.givingStats.lastDonationDate)} />
                 </div>
               </section>
 
