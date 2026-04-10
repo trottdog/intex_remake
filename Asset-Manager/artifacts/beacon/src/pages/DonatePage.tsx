@@ -119,7 +119,12 @@ export default function DonatePage() {
       });
     };
 
-    requestAnimationFrame(() => requestAnimationFrame(scrollToThankYou));
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        scrollToThankYou();
+        triggerDonationConfetti();
+      }),
+    );
   }, [submitted]);
 
   const finalAmount = selectedAmount ?? (customAmount ? parseInt(customAmount) : 0);
@@ -188,7 +193,6 @@ export default function DonatePage() {
             })),
         });
       }
-      triggerDonationConfetti("cascade");
       setSubmitted(true);
     } catch (err) {
       if (err instanceof ApiError) {
