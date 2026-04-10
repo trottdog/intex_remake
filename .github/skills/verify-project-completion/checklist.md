@@ -370,66 +370,66 @@ Audit note (2026-04-09 local verification): headless Chrome verified anonymous a
 
 ## 6.2 Confidentiality
 
-- [x] Public site uses HTTPS/TLS
-- [x] Certificate is valid
-- [x] HTTP redirects to HTTPS
+- [x] Public site uses HTTPS/TLS (Evidence: [HTTPS headers 200](../../../Asset-Manager/attached_assets/is414-proof/frontend-https-headers.txt#L5), [TLS handshake](../../../Asset-Manager/attached_assets/is414-proof/frontend-tls-handshake.txt#L11))
+- [x] Certificate is valid (Evidence: [TLS handshake success](../../../Asset-Manager/attached_assets/is414-proof/frontend-tls-handshake.txt#L27), [HTTPS response over TLS](../../../Asset-Manager/attached_assets/is414-proof/frontend-tls-handshake.txt#L21))
+- [x] HTTP redirects to HTTPS (Evidence: [308 redirect](../../../Asset-Manager/attached_assets/is414-proof/frontend-http-to-https-redirect.txt#L5), [Location header](../../../Asset-Manager/attached_assets/is414-proof/frontend-http-to-https-redirect.txt#L7))
 - [ ] HTTPS behavior is demonstrated in browser
 
 ## 6.3 Authentication
 
-- [x] Username/password authentication works
-- [x] Visitors can browse public pages unauthenticated
-- [x] Authenticated users can access protected pages
-- [x] Better-than-default password policy is configured according to class expectations
-- [x] Team can explain the exact password rules used
-- [x] /login and /auth/me style endpoints are accessible as needed
-- [x] Protected endpoints reject unauthorized users
+- [x] Username/password authentication works (Evidence: [admin/donor login verified](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L11), [login endpoint](../../../backend/intex/intex/Controllers/AuthController.cs#L37))
+- [x] Visitors can browse public pages unauthenticated (Evidence: [public home/privacy/impact verified](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L16), [public route evidence](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L17))
+- [x] Authenticated users can access protected pages (Evidence: [admin route access](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L11), [donor route access](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L14))
+- [x] Better-than-default password policy is configured according to class expectations (Evidence: [12+ chars rule](../../../backend/intex/intex/Infrastructure/Auth/PasswordRules.cs#L9), [complexity rules](../../../backend/intex/intex/Infrastructure/Auth/PasswordRules.cs#L14))
+- [x] Team can explain the exact password rules used (Evidence: [digit rule](../../../backend/intex/intex/Infrastructure/Auth/PasswordRules.cs#L24), [special char rule](../../../backend/intex/intex/Infrastructure/Auth/PasswordRules.cs#L29))
+- [x] /login and /auth/me style endpoints are accessible as needed (Evidence: [login route](../../../backend/intex/intex/Controllers/AuthController.cs#L37), [/auth/me route](../../../backend/intex/intex/Controllers/AuthController.cs#L93))
+- [x] Protected endpoints reject unauthorized users (Evidence: [donor-summary without token -> 401](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L26), [unauthorized test coverage](../../../Asset-Manager/attached_assets/is414-proof/backend-security-tests.txt#L19))
 
 ## 6.4 RBAC Authorization
 
-- [x] Admin role exists
-- [x] Donor role exists
-- [x] Public/non-authenticated access is restricted appropriately
-- [x] Only admin can create data where required
-- [x] Only admin can update data where required
-- [x] Only admin can delete data where required
-- [x] Donor can view donor-specific history/impact if implemented
-- [x] Endpoint-level authorization matches UI restrictions
+- [x] Admin role exists (Evidence: [admin role constant](../../../backend/intex/intex/Infrastructure/Auth/BeaconRoles.cs#L8), [admin-or-above policy](../../../backend/intex/intex/Infrastructure/Auth/PolicyNames.cs#L7))
+- [x] Donor role exists (Evidence: [donor role constant](../../../backend/intex/intex/Infrastructure/Auth/BeaconRoles.cs#L6), [donor-only policy](../../../backend/intex/intex/Infrastructure/Auth/PolicyNames.cs#L5))
+- [x] Public/non-authenticated access is restricted appropriately (Evidence: [anonymous /admin redirected to /login](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L10), [API auth middleware enabled](../../../backend/intex/intex/Program.cs#L164))
+- [x] Only admin can create data where required (Evidence: [staff-or-above create routes](../../../backend/intex/intex/Controllers/DonationsController.cs#L43), [admin-only policy defined](../../../backend/intex/intex/Infrastructure/Auth/PolicyNames.cs#L7))
+- [x] Only admin can update data where required (Evidence: [staff-or-above update routes](../../../backend/intex/intex/Controllers/DonationsController.cs#L79), [admin-or-above policy use](../../../backend/intex/intex/Controllers/SupportersController.cs#L160))
+- [x] Only admin can delete data where required (Evidence: [delete guarded by AdminOrAbove](../../../backend/intex/intex/Controllers/DonationsController.cs#L89), [supporter delete guarded](../../../backend/intex/intex/Controllers/SupportersController.cs#L160))
+- [x] Donor can view donor-specific history/impact if implemented (Evidence: [donor ledger history verified](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L28), [donor-only ledger endpoint policy](../../../backend/intex/intex/Controllers/DonationsController.cs#L99))
+- [x] Endpoint-level authorization matches UI restrictions (Evidence: [donor blocked from /admin](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L15), [role-based controller policies](../../../backend/intex/intex/Controllers/SupportersController.cs#L105))
 
 ## 6.5 Integrity
 
-- [x] Change/delete actions require authorization
-- [x] Delete confirmation is required
-- [x] Unauthorized CUD attempts fail
-- [x] Team can demonstrate those failures
+- [x] Change/delete actions require authorization (Evidence: [update requires StaffOrAbove](../../../backend/intex/intex/Controllers/DonationsController.cs#L79), [delete requires AdminOrAbove](../../../backend/intex/intex/Controllers/DonationsController.cs#L89))
+- [x] Delete confirmation is required (Evidence: [delete confirmation modal](../../../Asset-Manager/artifacts/beacon/src/pages/admin/CaseConferencesPage.tsx#L387), [explicit destructive action trigger](../../../Asset-Manager/artifacts/beacon/src/pages/admin/CaseConferencesPage.tsx#L398))
+- [x] Unauthorized CUD attempts fail (Evidence: [donor DELETE denied 403](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L29), [unauthorized CUD tests](../../../Asset-Manager/attached_assets/is414-proof/backend-security-tests.txt#L20))
+- [x] Team can demonstrate those failures (Evidence: [local failure proof log](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L29), [test run includes security assertions](../../../Asset-Manager/attached_assets/is414-proof/backend-security-tests.txt#L17))
 
 ## 6.6 Credentials
 
 - [ ] No secrets are committed to the public repo
-- [x] Secrets are stored in .env, env vars, or secrets manager
+- [x] Secrets are stored in .env, env vars, or secrets manager (Evidence: [.env template variables](../../../backend/intex/intex/.env.example#L1), [production template placeholders](../../../backend/intex/intex/appsettings.Production.template.json#L3))
 - [ ] Deployment secrets are handled safely
 - [ ] Team can show where secrets are configured without exposing them
 
 ## 6.7 Privacy
 
-- [x] GDPR-style privacy policy is customized
-- [x] Privacy policy is linked from footer
-- [x] Cookie consent notification is implemented
-- [x] Team can explain whether consent is functional or cosmetic
+- [x] GDPR-style privacy policy is customized (Evidence: [privacy policy page content](../../../Asset-Manager/artifacts/beacon/src/pages/PrivacyPage.tsx#L20), [resident data protection section](../../../Asset-Manager/artifacts/beacon/src/pages/PrivacyPage.tsx#L39))
+- [x] Privacy policy is linked from footer (Evidence: [public footer privacy link](../../../Asset-Manager/artifacts/beacon/src/components/layouts/PublicLayout.tsx#L213), [footer privacy text](../../../Asset-Manager/artifacts/beacon/src/components/layouts/PublicLayout.tsx#L214))
+- [x] Cookie consent notification is implemented (Evidence: [cookie consent component](../../../Asset-Manager/artifacts/beacon/src/components/CookieConsent.tsx#L32), [consent component mounted](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L327))
+- [x] Team can explain whether consent is functional or cosmetic (Evidence: [consent levels defined](../../../Asset-Manager/artifacts/beacon/src/lib/consent.ts#L3), [optional cookie only on opt-in](../../../Asset-Manager/artifacts/beacon/src/lib/consent.ts#L24))
 - [ ] Public/private data boundary is appropriate for sensitive minors/survivors
 
 ## 6.8 Attack Mitigations
 
-- [x] CSP is sent as an HTTP response header
-- [x] CSP is not just a meta tag
+- [x] CSP is sent as an HTTP response header (Evidence: [runtime CSP header](../../../Asset-Manager/attached_assets/is414-proof/frontend-https-headers.txt#L12), [middleware sets CSP header](../../../backend/intex/intex/Infrastructure/Middleware/SecurityHeadersMiddleware.cs#L15))
+- [x] CSP is not just a meta tag (Evidence: [server middleware injects header](../../../backend/intex/intex/Infrastructure/Middleware/SecurityHeadersMiddleware.cs#L13), [header observed in response](../../../Asset-Manager/attached_assets/is414-proof/frontend-https-headers.txt#L12))
 - [ ] CSP is visible in browser devtools
 - [ ] CSP is restricted to only needed sources
 - [ ] Team can explain allowed sources
-- [x] Data sanitization or output encoding is used to reduce injection risk
+- [x] Data sanitization or output encoding is used to reduce injection risk (Evidence: [sanitizeInput middleware](../../../Asset-Manager/artifacts/api-server/src/middleware/security.ts#L49), [script/javascript stripping](../../../Asset-Manager/artifacts/api-server/src/middleware/security.ts#L53))
 
 ## 6.9 Availability
 
-- [x] Site is publicly accessible
+- [x] Site is publicly accessible (Evidence: [public URL returns 200](../../../Asset-Manager/attached_assets/is414-proof/frontend-https-headers.txt#L5), [deployment domain](../../../Asset-Manager/attached_assets/is414-proof/frontend-https-headers.txt#L2))
 - [ ] Site is stable enough for TA access
 - [ ] Identity/login works in deployed environment
 - [ ] Operational database works in deployed environment
@@ -440,23 +440,23 @@ Mark only what was actually completed and can be proved.
 
 - [ ] Third-party authentication
 - [ ] MFA / 2FA
-- [x] HSTS
-- [x] Browser-accessible preference cookie used by React
-- [x] Additional sanitization/encoding protections
+- [x] HSTS (Evidence: [HSTS response header](../../../Asset-Manager/attached_assets/is414-proof/frontend-https-headers.txt#L20), [HSTS enabled in backend pipeline](../../../backend/intex/intex/Program.cs#L158))
+- [x] Browser-accessible preference cookie used by React (Evidence: [cookie set with SameSite + Secure](../../../Asset-Manager/artifacts/beacon/src/lib/cookies.ts#L19), [consent cookie key](../../../Asset-Manager/artifacts/beacon/src/lib/consent.ts#L5))
+- [x] Additional sanitization/encoding protections (Evidence: [sanitize middleware registered](../../../Asset-Manager/artifacts/api-server/src/app.ts#L53), [HTML/script stripping rules](../../../Asset-Manager/artifacts/api-server/src/middleware/security.ts#L50))
 - [ ] Both operational and identity DBs deployed to real DBMS
 - [ ] Dockerized deployment
 - [ ] Other: ______________________
 
 ## 6.11 Required Grading Credentials
 
-- [x] Admin account without MFA exists
-- [x] Admin account without MFA works
-- [x] Donor account without MFA exists
-- [x] Donor account without MFA works
-- [x] Donor account is tied to historical donations
+- [x] Admin account without MFA exists (Evidence: [credential observation](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L32), [admin login succeeded](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L11))
+- [x] Admin account without MFA works (Evidence: [admin API login success](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L21), [admin route access](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L11))
+- [x] Donor account without MFA exists (Evidence: [credential observation](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L33), [donor login proof](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L14))
+- [x] Donor account without MFA works (Evidence: [donor API login success](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L22), [donor dashboard access](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L27))
+- [x] Donor account is tied to historical donations (Evidence: [ledger shows total history](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L28), [credential observation confirms historical tie](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L34))
 - [ ] MFA-enabled account exists
 - [ ] MFA-enabled account is configured correctly
-- [x] Credentials are accurate and tested
+- [x] Credentials are accurate and tested (Evidence: [admin/donor/superadmin credential tests](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L21), [credential observations summary](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L31))
 - [ ] Credentials are included where required in final submission
 
 ---
