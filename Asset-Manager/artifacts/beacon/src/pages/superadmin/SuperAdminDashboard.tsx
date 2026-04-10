@@ -5,7 +5,7 @@ import {
   useGetExecutiveDashboardSummary,
 } from "@/services/superadmin.service";
 import { useListSocialMediaPosts } from "@/services";
-import { useListResidents } from "@/services/residents.service";
+import { useGetResidentStats, useListResidents } from "@/services/residents.service";
 import { apiFetch } from "@/services/api";
 import {
   Area,
@@ -186,6 +186,9 @@ export default function SuperAdminDashboard() {
   const months = 12;
 
   const { data, isLoading, error, refetch } = useGetExecutiveDashboardSummary({ safehouseId, months });
+  const { data: residentStats, isLoading: isResidentStatsLoading } = useGetResidentStats({
+    safehouseId: safehouseId ?? undefined,
+  });
   const { data: residentsData, isLoading: isResidentsLoading } = useListResidents({
     page: 1,
     pageSize: 2000,
@@ -247,7 +250,7 @@ export default function SuperAdminDashboard() {
 
   const dashboardKpis = useMemo(() => {
     const survivorsInCare = activeResidents.length;
-    const casesAtRisk = allResidents.filter(isHighOrCriticalRisk).length;
+    const casesAtRisk = residentStats?.highRiskResidents ?? allResidents.filter(isHighOrCriticalRisk).length;
     const totalDonations = data?.totalDonations ?? data?.donationsYtd ?? null;
     const returningDonorsPct = data?.orgRetentionEstimate ?? null;
 
@@ -257,7 +260,7 @@ export default function SuperAdminDashboard() {
       totalDonations,
       returningDonorsPct,
     };
-  }, [activeResidents, allResidents, data?.donationsYtd, data?.orgRetentionEstimate, data?.totalDonations]);
+  }, [activeResidents, allResidents, data?.donationsYtd, data?.orgRetentionEstimate, data?.totalDonations, residentStats?.highRiskResidents]);
 
   const reintegrationData = useMemo(() => {
     const breakdown = data?.reintegrationBreakdown;
@@ -294,7 +297,7 @@ export default function SuperAdminDashboard() {
     }
   };
 
-  if (isLoading || isResidentsLoading) {
+  if (isLoading || isResidentsLoading || isResidentStatsLoading) {
     return (
       <div className="flex h-72 flex-col items-center justify-center gap-3 text-gray-400">
         <Loader2 className="h-8 w-8 animate-spin text-[#2a9d72]" />

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { useListResidents, useCreateResident, type Resident } from "@/services/residents.service";
+import { useListResidents, useCreateResident, useGetResidentStats, type Resident } from "@/services/residents.service";
 import { useListSafehouses } from "@/services/superadmin.service";
 import { useQueryPagination } from "@/hooks/useQueryPagination";
 import { Users, Plus, Search, Eye } from "lucide-react";
@@ -67,6 +67,9 @@ export default function ResidentsPage() {
     safehouseId: filterSafehouse ?? undefined,
   });
   const allResidents = allResidentsData?.data ?? [];
+  const { data: residentStats } = useGetResidentStats({
+    safehouseId: filterSafehouse ?? undefined,
+  });
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -88,15 +91,20 @@ export default function ResidentsPage() {
   const safePage = Math.min(page, totalPages);
   const rows = filteredResidents.slice((safePage - 1) * pageSize, safePage * pageSize);
   const hasActiveFilters = Boolean(search || filterStatus || filterRisk || filterSafehouse !== null);
+  const hasClientSideFilters = Boolean(search || filterStatus || filterRisk);
   const derivedStats = {
-    totalActive: filteredResidents.filter(isActiveResident).length,
+    totalActive: hasClientSideFilters
+      ? filteredResidents.filter(isActiveResident).length
+      : (residentStats?.totalActive ?? residentStats?.active ?? filteredResidents.filter(isActiveResident).length),
     newAdmissions: filteredResidents.filter((resident) => {
       const rawDate = resident.dateOfAdmission ?? resident.admissionDate;
       if (!rawDate) return false;
       const parsed = new Date(rawDate);
       return !Number.isNaN(parsed.getTime()) && parsed >= thirtyDaysAgo;
     }).length,
-    highRiskResidents: filteredResidents.filter(isHighOrCriticalRisk).length,
+    highRiskResidents: hasClientSideFilters
+      ? filteredResidents.filter(isHighOrCriticalRisk).length
+      : (residentStats?.highRiskResidents ?? filteredResidents.filter(isHighOrCriticalRisk).length),
     total: totalFilteredResidents,
   };
 
