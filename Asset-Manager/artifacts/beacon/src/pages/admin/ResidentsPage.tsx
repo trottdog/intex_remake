@@ -64,7 +64,6 @@ export default function ResidentsPage() {
     page: 1,
     pageSize: 2000,
     safehouseId: filterSafehouse ?? undefined,
-    caseStatus: filterStatus || undefined,
   });
   const allResidents = allResidentsData?.data ?? [];
   const thirtyDaysAgo = new Date();
@@ -87,6 +86,7 @@ export default function ResidentsPage() {
   const totalPages = totalFilteredResidents === 0 ? 1 : Math.ceil(totalFilteredResidents / pageSize);
   const safePage = Math.min(page, totalPages);
   const rows = filteredResidents.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const hasActiveFilters = Boolean(search || filterStatus || filterRisk || filterSafehouse !== null);
   const derivedStats = {
     totalActive: filteredResidents.filter((resident) => resident.caseStatus === "Active").length,
     newAdmissions: filteredResidents.filter((resident) => {
@@ -129,14 +129,33 @@ export default function ResidentsPage() {
         }}
       />
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Residents</h1>
           <p className="text-sm text-gray-500 mt-1">All case files and resident records</p>
         </div>
-        <Button onClick={() => setShowAdd(true)} className="bg-[#2a9d72] hover:bg-[#23856a] text-white gap-1.5">
-          <Plus className="w-4 h-4" /> Add Resident
-        </Button>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end lg:justify-end">
+          <div className="w-full sm:min-w-[220px]">
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+              Safehouse
+            </label>
+            <select
+              value={filterSafehouse ?? ""}
+              onChange={(e) => setFilterSafehouse(e.target.value ? Number(e.target.value) : null)}
+              className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 shadow-sm outline-none transition focus:border-[#2a9d72] focus:ring-2 focus:ring-[#2a9d72]/15"
+            >
+              <option value="">All Safehouses</option>
+              {safehouses.map((safehouse) => (
+                <option key={safehouse.safehouseId ?? safehouse.id} value={safehouse.safehouseId ?? safehouse.id ?? ""}>
+                  {safehouse.name ?? `Safehouse #${safehouse.safehouseId ?? safehouse.id}`}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Button onClick={() => setShowAdd(true)} className="bg-[#2a9d72] hover:bg-[#23856a] text-white gap-1.5">
+            <Plus className="w-4 h-4" /> Add Resident
+          </Button>
+        </div>
       </div>
 
       {/* Stats Bar */}
@@ -162,49 +181,64 @@ export default function ResidentsPage() {
       )}
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-[220px]">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <Input
-            placeholder="Search by code, worker, or safehouse..."
-            className="pl-9"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      <div className="rounded-2xl border border-gray-100 bg-white p-4 space-y-3">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_180px]">
+          <div className="relative min-w-0">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="Search by code, worker, or safehouse..."
+              className="h-11 rounded-xl border-gray-200 bg-white pl-10 shadow-sm"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 shadow-sm outline-none transition focus:border-[#2a9d72] focus:ring-2 focus:ring-[#2a9d72]/15"
+            >
+              <option value="">All Statuses</option>
+              <option value="Active">Active</option>
+              <option value="Closed">Closed</option>
+              <option value="Transferred">Transferred</option>
+            </select>
+          </div>
+          <div>
+            <select
+              value={filterRisk}
+              onChange={(e) => setFilterRisk(e.target.value)}
+              className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 shadow-sm outline-none transition focus:border-[#2a9d72] focus:ring-2 focus:ring-[#2a9d72]/15"
+            >
+              <option value="">All Risk Levels</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
         </div>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white min-w-[140px]"
-        >
-          <option value="">All Statuses</option>
-          <option value="Active">Active</option>
-          <option value="Closed">Closed</option>
-          <option value="Transferred">Transferred</option>
-        </select>
-        <select
-          value={filterRisk}
-          onChange={(e) => setFilterRisk(e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white min-w-[140px]"
-        >
-          <option value="">All Risk Levels</option>
-          <option value="Low">Low</option>
-          <option value="Medium">Medium</option>
-          <option value="High">High</option>
-          <option value="Critical">Critical</option>
-        </select>
-        <select
-          value={filterSafehouse ?? ""}
-          onChange={(e) => setFilterSafehouse(e.target.value ? Number(e.target.value) : null)}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white min-w-[180px]"
-        >
-          <option value="">All Safehouses</option>
-          {safehouses.map((safehouse) => (
-            <option key={safehouse.safehouseId ?? safehouse.id} value={safehouse.safehouseId ?? safehouse.id ?? ""}>
-              {safehouse.name ?? `Safehouse #${safehouse.safehouseId ?? safehouse.id}`}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 sm:justify-end">
+            <span className="text-sm text-gray-500">
+              {totalFilteredResidents} resident{totalFilteredResidents === 1 ? "" : "s"}
+            </span>
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSearch("");
+                  setFilterStatus("");
+                  setFilterRisk("");
+                  setFilterSafehouse(null);
+                }}
+              >
+                Clear Filters
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Table */}

@@ -72,7 +72,7 @@ export function QuickDonateModal({ open, onClose, defaultRecurring = false }: Pr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={handleClose} />
+      <div className="absolute -inset-4 bg-black/40 backdrop-blur-sm" onClick={handleClose} />
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
 
         <div className="bg-gradient-to-br from-[#f0faf5] to-[#e8f5ee] px-6 pt-6 pb-5 border-b border-[#c8e6d4]">

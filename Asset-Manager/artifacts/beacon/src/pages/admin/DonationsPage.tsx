@@ -131,7 +131,7 @@ function AllocateModal({
         onConfirm={() => { if (deleteTarget) { deleteAllocation(deleteTarget.allocationId); setDeleteTarget(null); } }}
         onCancel={() => setDeleteTarget(null)}
       />
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={!deleteTarget ? onClose : undefined} />
+      <div className="absolute -inset-4 bg-black/40 backdrop-blur-sm" onClick={!deleteTarget ? onClose : undefined} />
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden max-h-[90vh] flex flex-col">
 
         <div className="bg-[#0e2118] px-6 pt-6 pb-5 shrink-0">

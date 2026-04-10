@@ -522,17 +522,23 @@ public sealed class DashboardController(IDbContextFactory<BeaconDbContext> dbFac
 
     [Authorize(Policy = PolicyNames.AdminOrAbove)]
     [HttpGet("executive-summary")]
-    public async Task<IActionResult> GetExecutiveSummary(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetExecutiveSummary([FromQuery] long? safehouseId, [FromQuery] int months = 12, CancellationToken cancellationToken = default)
     {
+        var resolvedMonths = Math.Clamp(months <= 0 ? 12 : months, 1, 24);
+
         var payload = await RunAsync(async db =>
         {
-            var totalSafehouses = await db.Safehouses.AsNoTracking().CountAsync(cancellationToken);
-            var totalResidents = await db.Residents.AsNoTracking().CountAsync(cancellationToken);
-            var totalSupporters = await db.Supporters.AsNoTracking().CountAsync(cancellationToken);
-            var totalDonations = await db.Donations.AsNoTracking().SumAsync(d => (decimal?)d.Amount, cancellationToken);
-            var openIncidents = await db.IncidentReports.AsNoTracking()
-                .CountAsync(item => item.Status == null || !EF.Functions.ILike(item.Status, "resolved"), cancellationToken);
-            var safehouseBreakdown = await db.Safehouses.AsNoTracking()
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var sevenDaysAgo = today.AddDays(-7);
+            var currentYear = today.Year;
+
+            var safehousesQuery = db.Safehouses.AsNoTracking();
+            if (safehouseId.HasValue)
+            {
+                safehousesQuery = safehousesQuery.Where(item => item.SafehouseId == safehouseId.Value);
+            }
+
+            var safehouses = await safehousesQuery
                 .Select(item => new
                 {
                     item.SafehouseId,
@@ -544,14 +550,187 @@ public sealed class DashboardController(IDbContextFactory<BeaconDbContext> dbFac
                 .OrderBy(item => item.Name)
                 .ToListAsync(cancellationToken);
 
+            var residentsQuery = db.Residents.AsNoTracking();
+            if (safehouseId.HasValue)
+            {
+                residentsQuery = residentsQuery.Where(item => item.SafehouseId == safehouseId.Value);
+            }
+
+            var residents = await residentsQuery
+                .Select(item => new
+                {
+                    item.ResidentId,
+                    item.SafehouseId,
+                    item.CaseStatus,
+                    item.CurrentRiskLevel,
+                    item.ReintegrationStatus
+                })
+                .ToListAsync(cancellationToken);
+
+            var donationsQuery = db.Donations.AsNoTracking();
+            if (safehouseId.HasValue)
+            {
+                donationsQuery = donationsQuery.Where(item => item.SafehouseId == safehouseId.Value);
+            }
+
+            var donations = await donationsQuery
+                .Select(item => new
+                {
+                    item.SupporterId,
+                    item.DonationDate,
+                    item.Amount,
+                    item.ChannelSource
+                })
+                .ToListAsync(cancellationToken);
+
+            var incidentsQuery = db.IncidentReports.AsNoTracking();
+            if (safehouseId.HasValue)
+            {
+                incidentsQuery = incidentsQuery.Where(item => item.SafehouseId == safehouseId.Value);
+            }
+
+            var incidents = await incidentsQuery
+                .Select(item => new
+                {
+                    item.SafehouseId,
+                    item.IncidentDate,
+                    item.Status
+                })
+                .ToListAsync(cancellationToken);
+
+            var activeResidents = residents
+                .Where(item => string.Equals(item.CaseStatus, "active", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            var highRiskResidents = activeResidents.Count(item => IsHighRisk(item.CurrentRiskLevel));
+            var openIncidents = incidents.Count(item =>
+                item.Status is null || !string.Equals(item.Status, "resolved", StringComparison.OrdinalIgnoreCase));
+            var incidentsThisWeek = incidents.Count(item => item.IncidentDate.HasValue && item.IncidentDate.Value >= sevenDaysAgo);
+
+            var totalDonations = decimal.Round(donations.Sum(item => item.Amount ?? 0m), 2);
+            var totalDonationCount = donations.Count;
+            var donationsYtd = decimal.Round(
+                donations.Where(item => item.DonationDate.HasValue && item.DonationDate.Value.Year == currentYear)
+                    .Sum(item => item.Amount ?? 0m),
+                2);
+
+            var donorGroups = donations
+                .Where(item => item.SupporterId.HasValue)
+                .GroupBy(item => item.SupporterId!.Value)
+                .ToList();
+            var totalUniqueDonors = donorGroups.Count;
+            var returningDonorCount = donorGroups.Count(group => group.Count() > 1);
+            var orgRetentionEstimate = totalUniqueDonors > 0
+                ? Math.Round((returningDonorCount / (double)totalUniqueDonors) * 100d, 1)
+                : 0d;
+
+            var totalSupporters = safehouseId.HasValue
+                ? totalUniqueDonors
+                : await db.Supporters.AsNoTracking().CountAsync(cancellationToken);
+
+            var riskDistribution = new
+            {
+                low = activeResidents.Count(item => EqualsIgnoreCase(item.CurrentRiskLevel, "low")),
+                medium = activeResidents.Count(item => EqualsIgnoreCase(item.CurrentRiskLevel, "medium")),
+                high = activeResidents.Count(item => EqualsIgnoreCase(item.CurrentRiskLevel, "high")),
+                critical = activeResidents.Count(item => EqualsIgnoreCase(item.CurrentRiskLevel, "critical")),
+                unknown = activeResidents.Count(item => string.IsNullOrWhiteSpace(item.CurrentRiskLevel))
+            };
+
+            var reintegrationBreakdown = new
+            {
+                notStarted = activeResidents.Count(item => NormalizeReintegrationDashboardStage(item.ReintegrationStatus) == "not_started"),
+                inProgress = activeResidents.Count(item => NormalizeReintegrationDashboardStage(item.ReintegrationStatus) == "in_progress"),
+                ready = activeResidents.Count(item => NormalizeReintegrationDashboardStage(item.ReintegrationStatus) == "ready"),
+                completed = residents.Count(item => NormalizeReintegrationDashboardStage(item.ReintegrationStatus) == "completed")
+            };
+
+            var completedReintegrations = reintegrationBreakdown.completed;
+            var reintegrationSuccessRate = residents.Count > 0
+                ? Math.Round((completedReintegrations / (double)residents.Count) * 100d, 1)
+                : 0d;
+
+            var monthStart = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+            var donationTrend = Enumerable.Range(0, resolvedMonths)
+                .Select(offset =>
+                {
+                    var point = monthStart.AddMonths(-(resolvedMonths - 1 - offset));
+                    var total = donations
+                        .Where(item =>
+                            item.DonationDate.HasValue
+                            && item.DonationDate.Value.Year == point.Year
+                            && item.DonationDate.Value.Month == point.Month)
+                        .ToList();
+
+                    return new
+                    {
+                        month = $"{point.Year:D4}-{point.Month:D2}",
+                        year = point.Year.ToString(),
+                        label = point.ToString("MMM yy"),
+                        amount = decimal.Round(total.Sum(item => item.Amount ?? 0m), 2),
+                        count = total.Count
+                    };
+                })
+                .ToList();
+
+            var donationByChannel = donations
+                .GroupBy(item => string.IsNullOrWhiteSpace(item.ChannelSource) ? "unknown" : item.ChannelSource!.Trim().ToLowerInvariant())
+                .Select(group => new
+                {
+                    channel = group.Key,
+                    amount = decimal.Round(group.Sum(item => item.Amount ?? 0m), 2)
+                })
+                .OrderByDescending(item => item.amount)
+                .ToList();
+
+            var safehouseBreakdown = safehouses.Select(item =>
+            {
+                var safehouseResidents = residents.Where(resident => resident.SafehouseId == item.SafehouseId).ToList();
+                var safehouseActiveResidents = safehouseResidents
+                    .Where(resident => string.Equals(resident.CaseStatus, "active", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                var safehouseIncidents = incidents.Where(incident => incident.SafehouseId == item.SafehouseId).ToList();
+                var occupancyPct = item.CapacityGirls.HasValue && item.CapacityGirls.Value > 0
+                    ? Math.Round(((item.CurrentOccupancy ?? 0) / (double)item.CapacityGirls.Value) * 100d, 1)
+                    : 0d;
+
+                return new
+                {
+                    safehouseId = item.SafehouseId,
+                    name = item.Name,
+                    status = item.Status,
+                    capacityGirls = item.CapacityGirls,
+                    currentOccupancy = item.CurrentOccupancy,
+                    occupancyPct,
+                    activeResidents = safehouseActiveResidents.Count,
+                    totalResidents = safehouseResidents.Count,
+                    highRiskCount = safehouseActiveResidents.Count(resident => IsHighRisk(resident.CurrentRiskLevel)),
+                    openIncidents = safehouseIncidents.Count(incident =>
+                        incident.Status is null || !string.Equals(incident.Status, "resolved", StringComparison.OrdinalIgnoreCase))
+                };
+            }).ToList();
+
             return new
             {
-                totalSafehouses,
-                activeSafehouses = safehouseBreakdown.Count(item => string.Equals(item.Status, "active", StringComparison.OrdinalIgnoreCase)),
-                totalResidents,
+                totalSafehouses = safehouses.Count,
+                activeSafehouses = safehouses.Count(item => string.Equals(item.Status, "active", StringComparison.OrdinalIgnoreCase)),
+                totalResidents = residents.Count,
+                activeResidents = activeResidents.Count,
+                totalActiveResidents = activeResidents.Count,
                 totalSupporters,
-                totalDonations = decimal.Round(totalDonations ?? 0m, 2),
+                totalDonations,
+                totalDonationCount,
+                donationsYtd,
+                orgRetentionEstimate,
                 openIncidents,
+                incidentsThisWeek,
+                highRiskResidents,
+                reintegrationCount = completedReintegrations,
+                reintegrationSuccessRate,
+                riskDistribution,
+                reintegrationBreakdown,
+                donationTrend,
+                donationByChannel,
                 safehouseBreakdown
             };
         });

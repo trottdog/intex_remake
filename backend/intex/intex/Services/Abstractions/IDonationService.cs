@@ -8,6 +8,7 @@ public interface IDonationService
     Task<IReadOnlyList<PriorDonorSupporterOptionDto>> SearchPriorDonorSupportersAsync(string? search, int? limit, CancellationToken cancellationToken = default);
     Task<StandardPagedResponse<DonationResponseDto>> ListMyLedgerAsync(long? supporterId, ListDonationLedgerQuery query, CancellationToken cancellationToken = default);
     Task<DonationTrendsResponse> GetDonationTrendsAsync(int months, CancellationToken cancellationToken = default);
+    Task<DonationStatsResponse> GetDonationStatsAsync(string? fundType, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default);
     Task<StandardPagedResponse<DonationResponseDto>> ListDonationsAsync(ListDonationsQuery query, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default);
     Task<DonationResponseDto?> GetDonationAsync(long donationId, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default);
     Task<DonationResponseDto> CreateDonationAsync(CreateDonationRequest request, CancellationToken cancellationToken = default);
@@ -16,6 +17,7 @@ public interface IDonationService
     Task<bool> DeleteDonationAsync(long donationId, CancellationToken cancellationToken = default);
     Task<(DonationWithMessageResponse? Response, string? ErrorMessage)> GiveDonationAsync(long? supporterId, GiveDonationRequest request, CancellationToken cancellationToken = default);
     Task<(PublicDonationResponse? Response, string? ErrorMessage)> CreatePublicDonationAsync(PublicDonationRequest request, CancellationToken cancellationToken = default);
+    Task<(PublicDonationResponse? Response, string? ErrorMessage)> CreatePublicInKindDonationAsync(PublicInKindDonationRequest request, CancellationToken cancellationToken = default);
     Task<DonationAllocationsResponse> ListDonationAllocationsAsync(ListDonationAllocationsQuery query, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default);
     Task<(DonationAllocationResponseDto? Response, string? ErrorMessage)> CreateDonationAllocationAsync(CreateDonationAllocationRequest request, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default);
     Task<bool> DeleteDonationAllocationAsync(long allocationId, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default);

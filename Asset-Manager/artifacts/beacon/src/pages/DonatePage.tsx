@@ -5,6 +5,7 @@ import { CheckCircle, Share2, Users, Package, Building2, Globe, ChevronRight, Ey
 import { triggerDonationConfetti } from "@/lib/confetti";
 import { ApiError, apiFetch, apiPost } from "@/services/api";
 import { registerDonorApi } from "@/services/auth.service";
+import { createPublicInKindDonation, type PublicInKindDonationItemPayload } from "@/services/donations.service";
 
 const PRESET_AMOUNTS = [500, 1000, 2500, 5000, 10000];
 
@@ -60,8 +61,12 @@ export default function DonatePage() {
   const [safehousesError, setSafehousesError] = useState<string | null>(null);
   const [safehousesRetryToken, setSafehousesRetryToken] = useState(0);
   const [selectedAmount, setSelectedAmount] = useState<number | null>(2500);
+  const [donationMode, setDonationMode] = useState<"monetary" | "in-kind">("monetary");
   const [customAmount, setCustomAmount] = useState("");
   const [frequency, setFrequency] = useState<"once" | "monthly">("once");
+  const [inKindItems, setInKindItems] = useState<PublicInKindDonationItemPayload[]>([
+    { itemName: "", quantity: 1, itemCategory: "", unitOfMeasure: "pcs", estimatedUnitValue: undefined, intendedUse: "", receivedCondition: "new" },
+  ]);
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [createAccount, setCreateAccount] = useState(wantsAccountFromQuery);
   const [accountForm, setAccountForm] = useState({ username: "", password: "", confirmPassword: "" });
@@ -145,7 +150,20 @@ export default function DonatePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
-    if (!finalAmount || !form.name || !form.email) return;
+    if (!form.name || !form.email) return;
+    if (donationMode === "monetary" && !finalAmount) return;
+    if (donationMode === "in-kind") {
+      const validItems = inKindItems.filter((item) => item.itemName.trim().length > 0);
+      if (validItems.length === 0) {
+        setSubmitError("Add at least one in-kind item.");
+        return;
+      }
+      const invalidQuantity = validItems.find((item) => !Number.isFinite(item.quantity) || item.quantity <= 0);
+      if (invalidQuantity) {
+        setSubmitError(`Quantity must be greater than zero for "${invalidQuantity.itemName}".`);
+        return;
+      }
+    }
     if (createAccount) {
       if (!accountForm.username.trim()) {
         setSubmitError("Username is required to create an account.");
@@ -179,15 +197,36 @@ export default function DonatePage() {
         supporterId = account.supporterId;
       }
 
-      await apiPost("/api/donations/public", {
-        amount: finalAmount,
-        name: form.name,
-        email: form.email,
-        notes: form.message || undefined,
-        isRecurring: frequency === "monthly",
-        safehouseId: destination !== "general" ? destination : null,
-        supporterId,
-      });
+      if (donationMode === "monetary") {
+        await apiPost("/api/donations/public", {
+          amount: finalAmount,
+          name: form.name,
+          email: form.email,
+          notes: form.message || undefined,
+          isRecurring: frequency === "monthly",
+          safehouseId: destination !== "general" ? destination : null,
+          supporterId,
+        });
+      } else {
+        await createPublicInKindDonation({
+          name: form.name,
+          email: form.email,
+          notes: form.message || undefined,
+          safehouseId: destination !== "general" ? destination : null,
+          supporterId,
+          items: inKindItems
+            .filter((item) => item.itemName.trim().length > 0)
+            .map((item) => ({
+              ...item,
+              itemName: item.itemName.trim(),
+              itemCategory: item.itemCategory?.trim() || undefined,
+              unitOfMeasure: item.unitOfMeasure?.trim() || undefined,
+              intendedUse: item.intendedUse?.trim() || undefined,
+              receivedCondition: item.receivedCondition?.trim() || undefined,
+              estimatedUnitValue: item.estimatedUnitValue ?? undefined,
+            })),
+        });
+      }
       triggerDonationConfetti();
       setSubmitted(true);
       if (createAccount) {
@@ -233,7 +272,9 @@ export default function DonatePage() {
                 </div>
                 <h2 className="text-2xl font-bold text-[#214636] mb-3">Thank you, {form.name.split(" ")[0]}!</h2>
                 <p className="text-gray-600 mb-2">
-                  Your {frequency === "monthly" ? "monthly" : "one-time"} gift of <strong>₱{finalAmount?.toLocaleString()}</strong> is making a real difference.
+                  {donationMode === "monetary"
+                    ? <>Your {frequency === "monthly" ? "monthly" : "one-time"} gift of <strong>₱{finalAmount?.toLocaleString()}</strong> is making a real difference.</>
+                    : <>Your in-kind donation has been recorded and queued for coordination with our logistics team.</>}
                 </p>
                 {selectedSafehouse && (
                   <p className="text-sm text-[#2a9d72] font-medium mb-2">
@@ -254,6 +295,10 @@ export default function DonatePage() {
                     setSubmitted(false);
                     setRedirectCountdown(null);
                     setForm({ name: "", email: "", message: "" });
+                    setDonationMode("monetary");
+                    setSelectedAmount(2500);
+                    setCustomAmount("");
+                    setInKindItems([{ itemName: "", quantity: 1, itemCategory: "", unitOfMeasure: "pcs", estimatedUnitValue: undefined, intendedUse: "", receivedCondition: "new" }]);
                     setStep("destination");
                     setDestination("general");
                   }}
@@ -357,8 +402,31 @@ export default function DonatePage() {
 
                 <h2 className="text-xl font-bold text-[#214636]">Make your donation</h2>
 
-                {/* Frequency */}
+                {/* Donation mode */}
                 <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Donation Type</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {([
+                      { key: "monetary", label: "Monetary Donation" },
+                      { key: "in-kind", label: "In-Kind Donation" },
+                    ] as const).map((opt) => (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => setDonationMode(opt.key)}
+                        className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors ${
+                          donationMode === opt.key ? "bg-[#214636] border-[#214636] text-white" : "border-gray-200 text-gray-600 hover:border-gray-300"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Frequency */}
+                {donationMode === "monetary" && (
+                  <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Giving Frequency</label>
                   <div className="grid grid-cols-2 gap-3">
                     {(["once", "monthly"] as const).map((f) => (
@@ -369,32 +437,91 @@ export default function DonatePage() {
                     ))}
                   </div>
                   {frequency === "monthly" && <p className="text-xs text-[#2a9d72] mt-2 font-medium">Monthly donors provide sustained support — the most impactful way to give.</p>}
-                </div>
+                  </div>
+                )}
 
                 {/* Amount */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Donation Amount (PHP)</label>
-                  <div className="grid grid-cols-3 gap-3 mb-3">
-                    {PRESET_AMOUNTS.map((amt) => (
-                      <button key={amt} type="button" onClick={() => { setSelectedAmount(amt); setCustomAmount(""); }}
-                        className={`py-3 rounded-xl text-sm font-bold border-2 transition-colors ${
-                          selectedAmount === amt && !customAmount ? "bg-[#2a9d72] border-[#2a9d72] text-white" : "border-gray-200 text-gray-700 hover:border-[#2a9d72]"
-                        }`}>₱{amt.toLocaleString()}</button>
-                    ))}
-                    <div onClick={() => setSelectedAmount(null)}
-                      className={`col-span-3 border-2 rounded-xl px-3 py-2 flex items-center gap-2 transition-colors cursor-text ${customAmount ? "border-[#2a9d72]" : "border-gray-200"}`}>
-                      <span className="text-gray-400 text-sm font-medium">₱</span>
-                      <input type="number" min="100" placeholder="Custom amount" value={customAmount}
-                        onChange={(e) => { setCustomAmount(e.target.value); setSelectedAmount(null); }}
-                        className="flex-1 outline-none text-sm text-gray-800 bg-transparent" />
+                {donationMode === "monetary" ? (
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Donation Amount (PHP)</label>
+                    <div className="grid grid-cols-3 gap-3 mb-3">
+                      {PRESET_AMOUNTS.map((amt) => (
+                        <button key={amt} type="button" onClick={() => { setSelectedAmount(amt); setCustomAmount(""); }}
+                          className={`py-3 rounded-xl text-sm font-bold border-2 transition-colors ${
+                            selectedAmount === amt && !customAmount ? "bg-[#2a9d72] border-[#2a9d72] text-white" : "border-gray-200 text-gray-700 hover:border-[#2a9d72]"
+                          }`}>₱{amt.toLocaleString()}</button>
+                      ))}
+                      <div onClick={() => setSelectedAmount(null)}
+                        className={`col-span-3 border-2 rounded-xl px-3 py-2 flex items-center gap-2 transition-colors cursor-text ${customAmount ? "border-[#2a9d72]" : "border-gray-200"}`}>
+                        <span className="text-gray-400 text-sm font-medium">₱</span>
+                        <input type="number" min="100" placeholder="Custom amount" value={customAmount}
+                          onChange={(e) => { setCustomAmount(e.target.value); setSelectedAmount(null); }}
+                          className="flex-1 outline-none text-sm text-gray-800 bg-transparent" />
+                      </div>
+                    </div>
+                    {finalAmount > 0 && IMPACT_MAP[finalAmount] && (
+                      <div className="bg-[#f0faf6] border border-[#2a9d72]/20 rounded-xl px-4 py-3 text-sm text-[#214636]">
+                        <span className="font-semibold">Your impact: </span>{IMPACT_MAP[finalAmount].desc}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest">In-Kind Items</label>
+                      <button
+                        type="button"
+                        onClick={() => setInKindItems((items) => [...items, { itemName: "", quantity: 1, itemCategory: "", unitOfMeasure: "pcs", estimatedUnitValue: undefined, intendedUse: "", receivedCondition: "new" }])}
+                        className="text-xs font-semibold text-[#2a9d72] hover:underline"
+                      >
+                        + Add item
+                      </button>
+                    </div>
+                    <div className="space-y-3">
+                      {inKindItems.map((item, index) => (
+                        <div key={`in-kind-${index}`} className="grid grid-cols-12 gap-2 bg-[#f9f9f7] border border-gray-100 rounded-xl p-3">
+                          <input
+                            className="col-span-4 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                            placeholder="Item name"
+                            value={item.itemName}
+                            onChange={(e) => setInKindItems((items) => items.map((it, i) => i === index ? { ...it, itemName: e.target.value } : it))}
+                          />
+                          <input
+                            className="col-span-2 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                            placeholder="Qty"
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={item.quantity}
+                            onChange={(e) => setInKindItems((items) => items.map((it, i) => i === index ? { ...it, quantity: Number(e.target.value || 0) } : it))}
+                          />
+                          <input
+                            className="col-span-2 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                            placeholder="Unit"
+                            value={item.unitOfMeasure ?? ""}
+                            onChange={(e) => setInKindItems((items) => items.map((it, i) => i === index ? { ...it, unitOfMeasure: e.target.value } : it))}
+                          />
+                          <input
+                            className="col-span-2 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                            placeholder="Est. unit value"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={item.estimatedUnitValue ?? ""}
+                            onChange={(e) => setInKindItems((items) => items.map((it, i) => i === index ? { ...it, estimatedUnitValue: e.target.value ? Number(e.target.value) : undefined } : it))}
+                          />
+                          <button
+                            type="button"
+                            className="col-span-2 text-xs text-red-500 hover:underline"
+                            onClick={() => setInKindItems((items) => items.length === 1 ? items : items.filter((_, i) => i !== index))}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  {finalAmount > 0 && IMPACT_MAP[finalAmount] && (
-                    <div className="bg-[#f0faf6] border border-[#2a9d72]/20 rounded-xl px-4 py-3 text-sm text-[#214636]">
-                      <span className="font-semibold">Your impact: </span>{IMPACT_MAP[finalAmount].desc}
-                    </div>
-                  )}
-                </div>
+                )}
 
                 {/* Personal Info */}
                 <div>
@@ -485,11 +612,20 @@ export default function DonatePage() {
                   </div>
                 )}
 
-                <button type="submit" disabled={!finalAmount || !form.name || !form.email || submitting}
+                <button
+                  type="submit"
+                  disabled={
+                    !form.name
+                    || !form.email
+                    || submitting
+                    || (donationMode === "monetary" && !finalAmount)
+                  }
                   className="w-full bg-[#2a9d72] hover:bg-[#248c64] disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-base transition-colors shadow-md">
-                  {submitting ? "Processing..." : finalAmount > 0
-                    ? `Donate ₱${finalAmount.toLocaleString()}${frequency === "monthly" ? "/mo" : ""}`
-                    : "Select an Amount"}
+                  {submitting ? "Processing..." : donationMode === "monetary"
+                    ? (finalAmount > 0
+                      ? `Donate ₱${finalAmount.toLocaleString()}${frequency === "monthly" ? "/mo" : ""}`
+                      : "Select an Amount")
+                    : "Submit In-Kind Donation"}
                 </button>
                 <p className="text-center text-xs text-gray-400">Secure giving. Your information is never shared. You will receive a BIR receipt.</p>
               </form>

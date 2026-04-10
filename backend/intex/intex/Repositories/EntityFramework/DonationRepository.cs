@@ -119,6 +119,50 @@ public sealed class DonationRepository(BeaconDbContext dbContext, IPostgresConne
             .ToList();
     }
 
+    public async Task<DonationStatsRecord> GetDonationStatsAsync(string? fundType, IReadOnlyList<long> allowedSafehouses, bool enforceSafehouseScope, CancellationToken cancellationToken = default)
+    {
+        var rows = await ApplyDonationFilters(dbContext.Donations.AsNoTracking(), fundType, allowedSafehouses, enforceSafehouseScope)
+            .Select(donation => new
+            {
+                donation.Amount,
+                donation.SupporterId,
+                TotalAllocated = dbContext.DonationAllocations
+                    .Where(allocation => allocation.DonationId == donation.DonationId)
+                    .Sum(allocation => (decimal?)allocation.AmountAllocated) ?? 0m
+            })
+            .ToListAsync(cancellationToken);
+
+        var totalReceived = 0m;
+        var totalAllocated = 0m;
+        var pendingAllocationCount = 0;
+        var uniqueDonorIds = new HashSet<long>();
+
+        foreach (var row in rows)
+        {
+            var amount = decimal.Round(row.Amount ?? 0m, 2);
+            var allocated = decimal.Round(row.TotalAllocated, 2);
+            var unallocated = Math.Max(0m, amount - allocated);
+
+            totalReceived += amount;
+            totalAllocated += allocated;
+            if (unallocated > 0.005m)
+            {
+                pendingAllocationCount += 1;
+            }
+
+            if (row.SupporterId.HasValue)
+            {
+                uniqueDonorIds.Add(row.SupporterId.Value);
+            }
+        }
+
+        return new DonationStatsRecord(
+            decimal.Round(totalReceived, 2),
+            decimal.Round(totalAllocated, 2),
+            pendingAllocationCount,
+            uniqueDonorIds.Count);
+    }
+
     public async Task<(IReadOnlyList<DonationSummaryRecord> Donations, int Total)> ListDonationsAsync(int page, int pageSize, string? fundType, IReadOnlyList<long> allowedSafehouses, bool enforceSafehouseScope, CancellationToken cancellationToken = default)
     {
         var baseQuery = ApplyDonationFilters(dbContext.Donations.AsNoTracking(), fundType, allowedSafehouses, enforceSafehouseScope);
@@ -270,6 +314,18 @@ public sealed class DonationRepository(BeaconDbContext dbContext, IPostgresConne
         return await GetDonationAsync(donation.DonationId, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<InKindDonationItem>> CreateInKindDonationItemsAsync(IReadOnlyList<InKindDonationItem> items, CancellationToken cancellationToken = default)
+    {
+        if (items.Count == 0)
+        {
+            return [];
+        }
+
+        dbContext.InKindDonationItems.AddRange(items);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return items;
+    }
+
     public async Task<Donation?> UpdateDonationAsync(long donationId, IReadOnlyDictionary<string, JsonElement> fields, CancellationToken cancellationToken = default)
     {
         var entity = await dbContext.Donations.FirstOrDefaultAsync(donation => donation.DonationId == donationId, cancellationToken);
@@ -295,30 +351,39 @@ public sealed class DonationRepository(BeaconDbContext dbContext, IPostgresConne
 
     public async Task<bool> DeleteDonationAsync(long donationId, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var executionStrategy = dbContext.Database.CreateExecutionStrategy();
+        var deleted = false;
 
-        var donation = await dbContext.Donations.FirstOrDefaultAsync(item => item.DonationId == donationId, cancellationToken);
-        if (donation is null)
+        await executionStrategy.ExecuteAsync(async () =>
         {
-            return false;
-        }
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-        var allocations = await dbContext.DonationAllocations.Where(item => item.DonationId == donationId).ToListAsync(cancellationToken);
-        if (allocations.Count > 0)
-        {
-            dbContext.DonationAllocations.RemoveRange(allocations);
-        }
+            var donation = await dbContext.Donations.FirstOrDefaultAsync(item => item.DonationId == donationId, cancellationToken);
+            if (donation is null)
+            {
+                deleted = false;
+                return;
+            }
 
-        var inKindItems = await dbContext.InKindDonationItems.Where(item => item.DonationId == donationId).ToListAsync(cancellationToken);
-        if (inKindItems.Count > 0)
-        {
-            dbContext.InKindDonationItems.RemoveRange(inKindItems);
-        }
+            var allocations = await dbContext.DonationAllocations.Where(item => item.DonationId == donationId).ToListAsync(cancellationToken);
+            if (allocations.Count > 0)
+            {
+                dbContext.DonationAllocations.RemoveRange(allocations);
+            }
 
-        dbContext.Donations.Remove(donation);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
-        return true;
+            var inKindItems = await dbContext.InKindDonationItems.Where(item => item.DonationId == donationId).ToListAsync(cancellationToken);
+            if (inKindItems.Count > 0)
+            {
+                dbContext.InKindDonationItems.RemoveRange(inKindItems);
+            }
+
+            dbContext.Donations.Remove(donation);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            deleted = true;
+        });
+
+        return deleted;
     }
 
     public async Task<IReadOnlyList<DonationAllocationRecord>> ListDonationAllocationsAsync(long? donationId, IReadOnlyList<long> allowedSafehouses, bool enforceSafehouseScope, CancellationToken cancellationToken = default)

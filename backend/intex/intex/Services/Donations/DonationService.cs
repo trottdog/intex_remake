@@ -1,14 +1,16 @@
 using System.Globalization;
+using Microsoft.EntityFrameworkCore;
 using backend.intex.DTOs.Common;
 using backend.intex.DTOs.Donations;
 using backend.intex.Entities.Database;
 using backend.intex.Infrastructure.Auth;
+using backend.intex.Infrastructure.Data.EntityFramework;
 using backend.intex.Repositories.Abstractions;
 using backend.intex.Services.Abstractions;
 
 namespace backend.intex.Services.Donations;
 
-public sealed class DonationService(IDonationRepository donationRepository) : IDonationService
+public sealed class DonationService(IDonationRepository donationRepository, BeaconDbContext dbContext) : IDonationService
 {
     private static readonly HashSet<string> SupporterTypes = new([
         "MonetaryDonor", "InKindDonor", "Volunteer", "SkillsContributor", "SocialMediaAdvocate", "PartnerOrganization"
@@ -103,6 +105,17 @@ public sealed class DonationService(IDonationRepository donationRepository) : ID
             item.DonationCount,
             item.DonationCount,
             item.AvgAmount)).ToList());
+    }
+
+    public async Task<DonationStatsResponse> GetDonationStatsAsync(string? fundType, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default)
+    {
+        var enforceScope = role is BeaconRoles.Staff or BeaconRoles.Admin;
+        var stats = await donationRepository.GetDonationStatsAsync(fundType, assignedSafehouses, enforceScope, cancellationToken);
+        return new DonationStatsResponse(
+            decimal.Round(stats.TotalReceived, 2),
+            decimal.Round(stats.TotalAllocated, 2),
+            stats.PendingAllocationCount,
+            stats.UniqueDonors);
     }
 
     public async Task<StandardPagedResponse<DonationResponseDto>> ListDonationsAsync(ListDonationsQuery query, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default)
@@ -488,6 +501,73 @@ public sealed class DonationService(IDonationRepository donationRepository) : ID
         }, cancellationToken);
 
         return (new PublicDonationResponse(created.DonationId, "Thank you for your donation!"), null);
+    }
+
+    public async Task<(PublicDonationResponse? Response, string? ErrorMessage)> CreatePublicInKindDonationAsync(PublicInKindDonationRequest request, CancellationToken cancellationToken = default)
+    {
+        var items = request.Items?.Where(item => !string.IsNullOrWhiteSpace(item.ItemName)).ToList() ?? [];
+        if (items.Count == 0)
+        {
+            return (null, "At least one in-kind item is required");
+        }
+
+        foreach (var item in items)
+        {
+            if (!item.Quantity.HasValue || item.Quantity.Value <= 0)
+            {
+                return (null, $"Quantity must be greater than zero for item '{item.ItemName ?? "unknown"}'");
+            }
+        }
+
+        var estimatedValue = items
+            .Where(item => item.EstimatedUnitValue.HasValue && item.Quantity.HasValue)
+            .Sum(item => item.EstimatedUnitValue!.Value * item.Quantity!.Value);
+
+        var notes = string.Join(" | ", new[]
+        {
+            !string.IsNullOrWhiteSpace(request.Name) ? $"From: {request.Name}" : null,
+            !string.IsNullOrWhiteSpace(request.Email) ? $"Email: {request.Email}" : null,
+            !string.IsNullOrWhiteSpace(request.Notes) ? request.Notes : null
+        }.Where(static item => !string.IsNullOrWhiteSpace(item)));
+
+        var executionStrategy = dbContext.Database.CreateExecutionStrategy();
+        Donation? createdDonation = null;
+
+        await executionStrategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+            createdDonation = await donationRepository.CreateDonationAsync(new Donation
+            {
+                SupporterId = request.SupporterId,
+                DonationType = "in_kind",
+                DonationDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                CurrencyCode = "PHP",
+                ChannelSource = "in_kind",
+                Notes = string.IsNullOrWhiteSpace(notes) ? null : notes,
+                IsRecurring = false,
+                SafehouseId = request.SafehouseId,
+                EstimatedValue = estimatedValue > 0 ? decimal.Round(estimatedValue, 2) : null,
+                ImpactUnit = "items"
+            }, cancellationToken);
+
+            var mappedItems = items.Select(item => new InKindDonationItem
+            {
+                DonationId = createdDonation.DonationId,
+                ItemName = item.ItemName?.Trim(),
+                ItemCategory = item.ItemCategory?.Trim(),
+                Quantity = item.Quantity.HasValue ? decimal.Round(item.Quantity.Value, 2) : null,
+                UnitOfMeasure = item.UnitOfMeasure?.Trim(),
+                EstimatedUnitValue = item.EstimatedUnitValue.HasValue ? decimal.Round(item.EstimatedUnitValue.Value, 2) : null,
+                IntendedUse = item.IntendedUse?.Trim(),
+                ReceivedCondition = item.ReceivedCondition?.Trim()
+            }).ToList();
+
+            await donationRepository.CreateInKindDonationItemsAsync(mappedItems, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        });
+
+        return (new PublicDonationResponse(createdDonation!.DonationId, "Thank you for your in-kind donation!"), null);
     }
 
     public async Task<DonationAllocationsResponse> ListDonationAllocationsAsync(ListDonationAllocationsQuery query, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default)

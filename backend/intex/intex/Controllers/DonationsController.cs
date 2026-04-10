@@ -29,6 +29,12 @@ public sealed class DonationsController(IDonationService donationService, IUserS
         => Ok(await donationService.GetDonationTrendsAsync(query.Months, cancellationToken));
 
     [Authorize(Policy = PolicyNames.StaffOrAbove)]
+    [HttpGet("stats")]
+    [ProducesResponseType<DonationStatsResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<DonationStatsResponse>> GetStats([FromQuery] DonationStatsQuery query, CancellationToken cancellationToken)
+        => Ok(await donationService.GetDonationStatsAsync(query.FundType, User.GetRole(), await userScopeService.GetAssignedSafehousesAsync(User, cancellationToken), cancellationToken));
+
+    [Authorize(Policy = PolicyNames.StaffOrAbove)]
     [HttpGet]
     [ProducesResponseType<StandardPagedResponse<DonationResponseDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<StandardPagedResponse<DonationResponseDto>>> ListDonations([FromQuery] ListDonationsQuery query, CancellationToken cancellationToken)
@@ -111,6 +117,18 @@ public sealed class DonationsController(IDonationService donationService, IUserS
         var result = await donationService.CreatePublicDonationAsync(request, cancellationToken);
         return result.Response is null
             ? BadRequest(new ErrorResponse(result.ErrorMessage ?? "Failed to record donation"))
+            : StatusCode(StatusCodes.Status201Created, result.Response);
+    }
+
+    [AllowAnonymous]
+    [HttpPost("public/in-kind")]
+    [ProducesResponseType<PublicDonationResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PublicDonationResponse>> PublicInKindDonate([FromBody] PublicInKindDonationRequest request, CancellationToken cancellationToken)
+    {
+        var result = await donationService.CreatePublicInKindDonationAsync(request, cancellationToken);
+        return result.Response is null
+            ? BadRequest(new ErrorResponse(result.ErrorMessage ?? "Failed to record in-kind donation"))
             : StatusCode(StatusCodes.Status201Created, result.Response);
     }
 }

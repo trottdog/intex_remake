@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { apiFetch } from "./api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiDelete, apiFetch, apiPatch, apiPost } from "./api";
 
 export interface SupporterStatsSupportTypeMixItem {
   type: string;
@@ -161,5 +161,55 @@ export function useGetSupporterGivingStats(id: number | string | null) {
     queryKey: ["supporters", id, "giving-stats"],
     queryFn: () => apiFetch(`/api/supporters/${id}/giving-stats`),
     enabled: !!id,
+  });
+}
+
+export interface CreateSupporterPayload {
+  supporterType?: string;
+  displayName?: string;
+  firstName?: string;
+  lastName?: string;
+  organizationName?: string;
+  email?: string;
+  phone?: string;
+  status?: string;
+  acquisitionChannel?: string;
+  recurringEnabled?: boolean;
+  region?: string;
+  country?: string;
+}
+
+export function useCreateSupporter() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateSupporterPayload) => apiPost("/api/supporters", payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["supporters"] });
+      qc.invalidateQueries({ queryKey: ["supporters", "stats"] });
+    },
+  });
+}
+
+export function useUpdateSupporter() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: Record<string, unknown> }) => apiPatch(`/api/supporters/${id}`, payload),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ["supporters"] });
+      qc.invalidateQueries({ queryKey: ["supporters", variables.id] });
+      qc.invalidateQueries({ queryKey: ["supporters", "stats"] });
+    },
+  });
+}
+
+export function useDeleteSupporter() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => apiDelete(`/api/supporters/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["supporters"] });
+      qc.invalidateQueries({ queryKey: ["supporters", "stats"] });
+      qc.invalidateQueries({ queryKey: ["donations"] });
+    },
   });
 }

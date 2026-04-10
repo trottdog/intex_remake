@@ -57,6 +57,7 @@ export interface ExecutiveDashboardSummary {
   totalSupporters?: number;
   totalDonations?: number;
   totalDonationCount?: number;
+  donationsYtd?: number;
   openIncidents?: number;
   incidentsThisWeek?: number;
   highRiskResidents?: number;
@@ -64,8 +65,10 @@ export interface ExecutiveDashboardSummary {
   upcomingCaseConferences?: number;
   activeInterventionPlans?: number;
   processRecordingsThisMonth?: number;
+  orgRetentionEstimate?: number;
   reintegrationRate?: number;
   reintegrationCount?: number;
+  reintegrationSuccessRate?: number;
   avgHealthScore?: number | null;
   avgEducationProgress?: number | null;
   // Breakdowns

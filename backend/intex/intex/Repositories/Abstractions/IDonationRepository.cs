@@ -10,10 +10,12 @@ public interface IDonationRepository
     Task<bool> SafehouseExistsAsync(long safehouseId, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<DonationLedgerRecord> Donations, int Total)> ListMyLedgerAsync(long supporterId, int page, int pageSize, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<DonationTrendRecord>> ListDonationTrendsAsync(int months, CancellationToken cancellationToken = default);
+    Task<DonationStatsRecord> GetDonationStatsAsync(string? fundType, IReadOnlyList<long> allowedSafehouses, bool enforceSafehouseScope, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<DonationSummaryRecord> Donations, int Total)> ListDonationsAsync(int page, int pageSize, string? fundType, IReadOnlyList<long> allowedSafehouses, bool enforceSafehouseScope, CancellationToken cancellationToken = default);
     Task<DonationSummaryRecord?> GetDonationAsync(long donationId, CancellationToken cancellationToken = default);
     Task<Donation> CreateDonationAsync(Donation donation, CancellationToken cancellationToken = default);
     Task<DonationSummaryRecord?> CreateAdministrativeDonationAsync(AdminDonationCreateCommand command, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<InKindDonationItem>> CreateInKindDonationItemsAsync(IReadOnlyList<InKindDonationItem> items, CancellationToken cancellationToken = default);
     Task<Donation?> UpdateDonationAsync(long donationId, IReadOnlyDictionary<string, JsonElement> fields, CancellationToken cancellationToken = default);
     Task<bool> DeleteDonationAsync(long donationId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<DonationAllocationRecord>> ListDonationAllocationsAsync(long? donationId, IReadOnlyList<long> allowedSafehouses, bool enforceSafehouseScope, CancellationToken cancellationToken = default);
@@ -129,6 +131,13 @@ public sealed record DonationTrendRecord(
     decimal TotalAmount,
     int DonationCount,
     decimal AvgAmount
+);
+
+public sealed record DonationStatsRecord(
+    decimal TotalReceived,
+    decimal TotalAllocated,
+    int PendingAllocationCount,
+    int UniqueDonors
 );
 
 public sealed record DonationAllocationRecord(

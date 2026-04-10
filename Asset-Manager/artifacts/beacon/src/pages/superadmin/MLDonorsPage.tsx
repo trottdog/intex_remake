@@ -1,12 +1,7 @@
 import { useEffect, useState } from "react";
-import { ArrowUpDown, ExternalLink, Download } from "lucide-react";
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Cell,
-} from "recharts";
+import { ArrowUpDown, ExternalLink } from "lucide-react";
 import {
   useGetDonorChurn, useGetDonorUpgrade, useGetDonorDonationsRecent,
-  useGetAttributionSankey, useGetAttributionPrograms,
   usePatchDonorAction,
   type DonorChurnItem, type DonorUpgradeItem,
 } from "@/services/superadminMl.service";
@@ -14,18 +9,17 @@ import {
   BandBadge, ScoreBar, LoadingState, ErrorState, EmptyState,
   PrivacyBanner, SectionHeader, Card, TabBar, DateRangeSelector,
   FilterSelect, SideDrawer, Pagination, ActionButton,
-  fmtPeso, fmtDate, fmtRelativeDate, fmtScore, ACCENT,
+  fmtPeso, fmtDate, fmtRelativeDate, fmtScore,
 } from "./ml/Shared";
 import { PipelineCoveragePanel, PipelineInterpretationNotice } from "./ml/PipelineCoveragePanel";
 import { SupporterManagementPanel } from "@/components/supporters/SupporterManagementPanel";
 
-type Tab = "supporters" | "churn" | "upgrade" | "attribution";
+type Tab = "supporters" | "churn" | "upgrade";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "supporters", label: "Supporters" },
   { id: "churn", label: "Churn Risk" },
   { id: "upgrade", label: "Upgrade Potential" },
-  { id: "attribution", label: "Donation Attribution" },
 ];
 
 const CHURN_BAND_OPTS = [
@@ -40,12 +34,10 @@ const UPGRADE_BAND_OPTS = [
   { value: "not-ready", label: "Not Ready" },
 ];
 
-const DATE_RANGE_OPTS = [
-  { value: "30d", label: "30 days" },
-  { value: "90d", label: "90 days" },
-  { value: "6mo", label: "6 months" },
-  { value: "12mo", label: "12 months" },
-];
+function fmtModelScore(value: number | null | undefined): string {
+  if (value == null) return "—";
+  return value > 1 ? value.toFixed(1) : fmtScore(value);
+}
 
 // ── Churn Tab ─────────────────────────────────────────────────────────────────
 
@@ -144,7 +136,10 @@ function ChurnTab() {
                         <div className="text-xs text-gray-400">{d.email}</div>
                       </td>
                       <td className="py-2.5 pr-4 w-36">
-                        <ScoreBar score={d.churnRiskScore} />
+                        <div className="space-y-0.5">
+                          <ScoreBar score={d.churnRiskScore} />
+                          <div className="text-[10px] text-gray-400">Raw: {fmtModelScore(d.churnRiskScore)}</div>
+                        </div>
                       </td>
                       <td className="py-2.5 pr-4">
                         <BandBadge band={d.churnBand} />
@@ -389,7 +384,10 @@ function UpgradeTab() {
                         <div className="text-xs text-gray-400">{d.email}</div>
                       </td>
                       <td className="py-2.5 pr-4 w-36">
-                        <ScoreBar score={d.upgradeLikelihoodScore} />
+                        <div className="space-y-0.5">
+                          <ScoreBar score={d.upgradeLikelihoodScore} />
+                          <div className="text-[10px] text-gray-400">Raw: {fmtModelScore(d.upgradeLikelihoodScore)}</div>
+                        </div>
                       </td>
                       <td className="py-2.5 pr-4">
                         <BandBadge band={d.upgradeBand} />
@@ -478,134 +476,12 @@ function UpgradeTab() {
   );
 }
 
-// ── Attribution Tab ───────────────────────────────────────────────────────────
-
-const PROGRAM_COLORS = [ACCENT, "#0e2118", "#7bc5a6", "#457b9d", "#e9c46a", "#f4a261", "#e76f51"];
-
-function AttributionTab() {
-  const [dateRange, setDateRange] = useState("90d");
-
-  const { data: programsData, isLoading, error, refetch } = useGetAttributionPrograms({ dateRange });
-  const programs = programsData?.data ?? [];
-
-  const chartData = programs.map((p, i) => ({
-    programArea: p.programArea,
-    amount: parseFloat(p.totalAllocatedPhp),
-    outcomeScore: p.avgAttributedOutcomeScore,
-    color: PROGRAM_COLORS[i % PROGRAM_COLORS.length],
-  }));
-
-  return (
-    <div className="space-y-4">
-      <Card>
-        <SectionHeader
-          title="Donation-to-Impact Attribution"
-          sub="How donations are allocated across program areas and their attributed outcome scores"
-          action={
-            <div className="flex items-center gap-2">
-              <DateRangeSelector value={dateRange} onChange={setDateRange} />
-              <a
-                href={`/api/superadmin/attribution/export?dateRange=${dateRange}`}
-                download="attribution_export.csv"
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <Download className="w-3.5 h-3.5" /> Export
-              </a>
-            </div>
-          }
-        />
-
-        {isLoading ? (
-          <LoadingState />
-        ) : error ? (
-          <ErrorState onRetry={refetch} />
-        ) : programs.length === 0 ? (
-          <EmptyState label="No attribution data available" />
-        ) : (
-          <div className="space-y-6">
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-3">
-                Allocated Amount by Program Area
-              </div>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={chartData} margin={{ left: -10, right: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="programArea" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 10 }} tickFormatter={v => `₱${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip
-                    formatter={(v: number, name: string) => [
-                      name === "amount" ? fmtPeso(v) : `${(v * 100).toFixed(1)}%`,
-                      name === "amount" ? "Allocated" : "Outcome Score",
-                    ]}
-                    contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e2e8f0" }}
-                  />
-                  <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
-                    {chartData.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">
-                Program Area Breakdown
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-100">
-                      {["Program Area", "Allocated", "Avg Outcome Score", "Safehouses", "Health Delta", "Education Delta"].map(h => (
-                        <th key={h} className="pb-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-400 whitespace-nowrap pr-4">
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {programs.map((p, i) => (
-                      <tr key={p.programArea} className="border-b border-gray-50 hover:bg-gray-50/50">
-                        <td className="py-2.5 pr-4">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: PROGRAM_COLORS[i % PROGRAM_COLORS.length] }} />
-                            <span className="font-medium text-gray-900">{p.programArea}</span>
-                          </div>
-                        </td>
-                        <td className="py-2.5 pr-4 text-xs font-semibold text-gray-800">{fmtPeso(p.totalAllocatedPhp)}</td>
-                        <td className="py-2.5 pr-4">
-                          {p.avgAttributedOutcomeScore != null ? (
-                            <div className="w-24">
-                              <ScoreBar score={p.avgAttributedOutcomeScore} />
-                            </div>
-                          ) : "—"}
-                        </td>
-                        <td className="py-2.5 pr-4 text-xs text-gray-600">{p.safehouseCount}</td>
-                        <td className="py-2.5 pr-4 text-xs text-gray-600">
-                          {p.healthScoreDelta != null ? `${p.healthScoreDelta > 0 ? "+" : ""}${p.healthScoreDelta.toFixed(1)}` : "—"}
-                        </td>
-                        <td className="py-2.5 text-xs text-gray-600">
-                          {p.educationProgressDelta != null ? `${p.educationProgressDelta > 0 ? "+" : ""}${p.educationProgressDelta.toFixed(1)}%` : "—"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-      </Card>
-    </div>
-  );
-}
-
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function MLDonorsPage() {
   const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
   const defaultTab = (params.get("tab") as Tab) || "supporters";
-  const [tab, setTab] = useState<Tab>(["supporters", "churn", "upgrade", "attribution"].includes(defaultTab) ? defaultTab : "supporters");
+  const [tab, setTab] = useState<Tab>(["supporters", "churn", "upgrade"].includes(defaultTab) ? defaultTab : "supporters");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -630,11 +506,6 @@ export default function MLDonorsPage() {
       subtitle: "This route is the direct UI surface for donor upgrade, with next-donation forecasting used as adjacent context.",
       pipelines: ["donor_upgrade", "next_donation_amount"],
     },
-    attribution: {
-      title: "Attribution Context",
-      subtitle: "This tab supports fundraising interpretation, but the reviewed predictive pipeline coverage still lives on the churn and upgrade tabs.",
-      pipelines: ["donor_retention", "donor_upgrade", "next_donation_amount"],
-    },
   };
 
   return (
@@ -642,11 +513,11 @@ export default function MLDonorsPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Supporters & Intelligence</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          Manage supporter records and donation history, with routed ML views for retention, upgrade, and attribution context
+          Manage supporter records and donation history, with routed ML views for retention and upgrade
         </p>
       </div>
 
-      <TabBar tabs={TABS} active={tab} onChange={setTab} />
+      <TabBar<Tab> tabs={TABS} active={tab} onChange={(next) => setTab(next)} />
 
       {tab !== "supporters" && (
         <PipelineCoveragePanel
@@ -659,7 +530,6 @@ export default function MLDonorsPage() {
       {tab === "supporters" && <SupporterManagementPanel />}
       {tab === "churn" && <ChurnTab />}
       {tab === "upgrade" && <UpgradeTab />}
-      {tab === "attribution" && <AttributionTab />}
     </div>
   );
 }
