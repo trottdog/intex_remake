@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 import { setApiTokenGetter } from "../services/api";
 
@@ -26,14 +26,58 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
+const AUTH_STORAGE_KEY = "beacon.auth.v1";
+
+function persistAuth(token: string, user: AuthUser) {
+  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ token, user }));
+}
+
+function clearPersistedAuth() {
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+}
+
+function restorePersistedAuth(): { token: string; user: AuthUser } | null {
+  const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw) as { token?: unknown; user?: unknown };
+    if (typeof parsed.token !== "string" || !parsed.user || typeof parsed.user !== "object") {
+      clearPersistedAuth();
+      return null;
+    }
+
+    return {
+      token: parsed.token,
+      user: parsed.user as AuthUser,
+    };
+  } catch {
+    clearPersistedAuth();
+    return null;
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const restored = restorePersistedAuth();
+    if (restored) {
+      setToken(restored.token);
+      setUser(restored.user);
+      setAuthTokenGetter(() => restored.token);
+      setApiTokenGetter(() => restored.token);
+    }
+
+    setIsLoading(false);
+  }, []);
 
   const logout = () => {
     setToken(null);
     setUser(null);
+    clearPersistedAuth();
     setAuthTokenGetter(null);
     setApiTokenGetter(null);
   };
@@ -41,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = (newToken: string, newUser: AuthUser) => {
     setToken(newToken);
     setUser(newUser);
+    persistAuth(newToken, newUser);
     setAuthTokenGetter(() => newToken);
     setApiTokenGetter(() => newToken);
   };
@@ -63,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated: !!user, user, token, login, logout, isLoading: false }}
+      value={{ isAuthenticated: !!user, user, token, login, logout, isLoading }}
     >
       {children}
     </AuthContext.Provider>

@@ -1,0 +1,26 @@
+Commands:
+curl.exe -sS -D - https://beacon-api.azurewebsites.net/api/healthz -o NUL
+curl.exe -sS -D - https://beacon-api.azurewebsites.net/api/healthz/ready -o NUL
+curl.exe -sS -D - https://beacon-api.azurewebsites.net/api/auth/login -o NUL -X POST -H "Content-Type: application/json" --data "{}"
+curl.exe -sS https://beacon-api.azurewebsites.net/swagger/v1/swagger.json
+
+Observed responses:
+- `GET /api/healthz` -> `404 Not Found`
+- `GET /api/healthz/ready` -> `404 Not Found`
+- `POST /api/auth/login` -> `404 Not Found`
+- `GET /swagger/index.html` -> Swagger UI loads successfully
+
+Observed deployed OpenAPI paths:
+- `/api/Beacon/{id}`
+- `/api/Beacon`
+- `/Health`
+
+Expected repo contract examples:
+- `/api/healthz`
+- `/api/auth/login`
+- `/api/dashboard/donor-summary`
+- `/api/process-recordings`
+
+Interpretation:
+- The Azure host is alive, but it is not serving the API contract expected by this repo.
+- Until the deployed backend matches this branch's routes, IS 414 deployed auth/runtime proofs remain blocked.

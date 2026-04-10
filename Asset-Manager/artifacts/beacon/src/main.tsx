@@ -5,7 +5,9 @@ import { setBaseUrl } from "@workspace/api-client-react";
 import { getCookie } from "@/lib/cookies";
 import { reconcileConsentCookies } from "@/lib/consent";
 
-const apiBase = import.meta.env.VITE_API_BASE_URL || "";
+const apiBase =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD ? "https://beacon-api.azurewebsites.net" : "");
 setBaseUrl(apiBase);
 
 // Apply saved theme

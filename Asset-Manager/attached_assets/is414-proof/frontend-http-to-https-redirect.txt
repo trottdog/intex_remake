@@ -1,0 +1,9 @@
+Command:
+curl.exe -I -sS http://intex.trottdog.com/C
+
+Output:
+HTTP/1.0 308 Permanent Redirect
+Content-Type: text/plain
+Location: https://intex.trottdog.com/C
+Refresh: 0;url=https://intex.trottdog.com/C
+server: Vercel

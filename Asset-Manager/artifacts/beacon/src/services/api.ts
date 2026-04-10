@@ -1,4 +1,6 @@
-const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
+const API_BASE =
+  (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
+  (import.meta.env.PROD ? "https://beacon-api.azurewebsites.net" : "");
 
 export class ApiError extends Error {
   constructor(

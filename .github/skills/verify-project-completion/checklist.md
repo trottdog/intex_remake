@@ -52,7 +52,7 @@ A feature is not complete for grading if:
 
 Do not call the project ready unless every item below is true.
 
-- [ ] Deployed website is publicly reachable
+- [x] Deployed website is publicly reachable
 - [ ] Deployed operational database is reachable through the app
 - [ ] App truly persists data to the deployed database
 - [ ] Login works on the deployed site
@@ -60,7 +60,7 @@ Do not call the project ready unless every item below is true.
 - [ ] Donor account exists and works on the deployed site
 - [ ] Donor account has historical donations tied correctly
 - [ ] At least one account exists with MFA enabled for testing
-- [ ] Public pages work without authentication
+- [x] Public pages work without authentication
 - [ ] Required protected staff/admin pages work after login
 - [ ] At least one ML pipeline is complete end-to-end
 - [ ] At least one ML pipeline is meaningfully integrated into the deployed app
@@ -218,13 +218,15 @@ Audit note (2026-04-09): Team confirmed Monday through Thursday IS401 deliverabl
 - [x] Frontend uses React / TypeScript / Vite
 - [x] Database uses Azure SQL, MySQL, or PostgreSQL
 - [x] Database design follows good relational principles
-- [ ] App is deployed
+- [x] App is deployed
 - [ ] Database is deployed
 - [ ] App and DB both work together in deployed environment
 - [x] Data validation exists
 - [x] Error handling exists
 - [ ] Titles/icons/branding/navigation are consistent
 - [ ] Performance is acceptable for demo use
+
+Deployment note (2026-04-09): public pages are live, but authenticated deployed proof was blocked by two frontend issues until this patch set: `Asset-Manager/vercel.json` rewrote `/api/*` requests to `index.html`, and `Asset-Manager/artifacts/beacon/src/contexts/AuthContext.tsx` did not persist auth across refreshes. The current frontend patch adds an Azure API fallback, restores `/api/*` proxying to Azure, and persists the JWT/user session so deployed CRUD refresh flows can be re-verified.
 
 ## 5.2 Public Experience
 
@@ -233,7 +235,7 @@ Audit note (2026-04-09): Team confirmed Monday through Thursday IS401 deliverabl
 - [x] Mission is clearly explained
 - [x] Clear calls to action exist
 - [x] Trust/credibility signals are present
-- [ ] Page works unauthenticated
+- [x] Page works unauthenticated
 
 ### Impact / Donor-Facing Dashboard
 - [x] Public impact dashboard exists
@@ -366,15 +368,15 @@ Audit note (2026-04-09): Team confirmed Monday through Thursday IS401 deliverabl
 
 ## 6.2 Confidentiality
 
-- [ ] Public site uses HTTPS/TLS
-- [ ] Certificate is valid
-- [ ] HTTP redirects to HTTPS
+- [x] Public site uses HTTPS/TLS
+- [x] Certificate is valid
+- [x] HTTP redirects to HTTPS
 - [ ] HTTPS behavior is demonstrated in browser
 
 ## 6.3 Authentication
 
 - [x] Username/password authentication works
-- [ ] Visitors can browse public pages unauthenticated
+- [x] Visitors can browse public pages unauthenticated
 - [ ] Authenticated users can access protected pages
 - [x] Better-than-default password policy is configured according to class expectations
 - [x] Team can explain the exact password rules used
@@ -396,7 +398,7 @@ Audit note (2026-04-09): Team confirmed Monday through Thursday IS401 deliverabl
 
 - [x] Change/delete actions require authorization
 - [x] Delete confirmation is required
-- [ ] Unauthorized CUD attempts fail
+- [x] Unauthorized CUD attempts fail
 - [ ] Team can demonstrate those failures
 
 ## 6.6 Credentials
@@ -425,7 +427,7 @@ Audit note (2026-04-09): Team confirmed Monday through Thursday IS401 deliverabl
 
 ## 6.9 Availability
 
-- [ ] Site is publicly accessible
+- [x] Site is publicly accessible
 - [ ] Site is stable enough for TA access
 - [ ] Identity/login works in deployed environment
 - [ ] Operational database works in deployed environment
@@ -589,10 +591,10 @@ Mark only what was actually completed and can be proved.
 This section exists because many teams verify only from repo code.
 
 ## 9.1 Deployed URL Smoke Test
-- [ ] Home page opens
-- [ ] Footer opens privacy policy
-- [ ] Cookie consent appears
-- [ ] Login page opens
+- [x] Home page opens
+- [x] Footer opens privacy policy
+- [x] Cookie consent appears
+- [x] Login page opens
 - [ ] Invalid login behaves correctly
 - [ ] Valid admin login behaves correctly
 - [ ] Valid donor login behaves correctly
@@ -703,7 +705,7 @@ This section exists because many teams verify only from repo code.
 
 Open every link from a logged-out browser/private window.
 
-- [ ] Website link opens
+- [x] Website link opens
 - [ ] GitHub link opens publicly
 - [ ] Notebook links open
 - [ ] IS 413 video opens

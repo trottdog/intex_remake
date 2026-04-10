@@ -33,6 +33,10 @@
   ],
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "https://beacon-api.azurewebsites.net/api/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
