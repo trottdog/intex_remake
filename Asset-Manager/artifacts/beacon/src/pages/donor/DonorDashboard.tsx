@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useGetDonorDashboardSummary, type DonorRecentSnapshot } from "@/services/donor.service";
+import { useGetDonorDashboardSummary, useListImpactSnapshots, type DonorRecentSnapshot } from "@/services/donor.service";
 import { useGetRecurringStatus, useToggleRecurring } from "@/services/donations.service";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -187,6 +187,7 @@ function ImpactReportsSection({ snapshots, fmtDate }: { snapshots: DonorRecentSn
 export default function DonorDashboard() {
   const { user } = useAuth();
   const { data, isLoading, error } = useGetDonorDashboardSummary();
+  const { data: snapshotsRes } = useListImpactSnapshots();
   const { data: recurringData } = useGetRecurringStatus();
   const { mutate: toggleRecurring, isPending: togglingRecurring } = useToggleRecurring();
   const [donateOpen, setDonateOpen] = useState(false);
@@ -211,7 +212,14 @@ export default function DonorDashboard() {
     );
   }
 
-  const snapshots = data.recentSnapshots ?? [];
+  const snapshots = snapshotsRes?.data?.map((s) => ({
+    snapshotId: s.snapshotId ?? s.id ?? null,
+    snapshotDate: s.snapshotDate ?? null,
+    headline: s.headline ?? s.title ?? null,
+    summaryText: s.summaryText ?? s.summary ?? null,
+    metricPayloadJson: s.metricPayloadJson ?? null,
+    publishedAt: s.publishedAt ?? null,
+  })) ?? data.recentSnapshots ?? [];
   const givingTrend = (data.givingTrend ?? []).filter(p => p.amount > 0 || true);
   const allocation = data.allocationBreakdown ?? [];
   const recent = data.recentDonations ?? [];
