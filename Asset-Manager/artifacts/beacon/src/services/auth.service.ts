@@ -87,33 +87,6 @@ export async function startGoogleLogin(): Promise<void> {
   const callbackUrl = new URL("/auth/callback", window.location.origin);
   const loginUrl = new URL("/api/auth/oauth/google/start", window.location.origin);
   loginUrl.searchParams.set("returnUrl", callbackUrl.toString());
-
-  const response = await fetch(loginUrl.toString(), {
-    method: "GET",
-    redirect: "manual",
-  });
-
-  if (response.status >= 300 && response.status < 400) {
-    const redirectLocation = response.headers.get("Location");
-    if (redirectLocation) {
-      window.location.assign(redirectLocation);
-      return;
-    }
-
-    window.location.assign(loginUrl.toString());
-    return;
-  }
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({ error: "Request failed" }));
-    const message = body.error ?? "Request failed";
-    if (message === "Google authentication is not configured") {
-      return;
-    }
-
-    throw new ApiError(response.status, message);
-  }
-
   window.location.assign(loginUrl.toString());
 }
 
