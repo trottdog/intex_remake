@@ -38,6 +38,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { isActiveResident, isHighOrCriticalRisk } from "@/lib/residents";
 
 const ACCENT = "#2a9d72";
 const DARK = "#0e2118";
@@ -185,14 +186,22 @@ export default function SuperAdminDashboard() {
   const months = 12;
 
   const { data, isLoading, error, refetch } = useGetExecutiveDashboardSummary({ safehouseId, months });
-  const { data: residentsData } = useListResidents({ pageSize: 200, safehouseId: safehouseId ?? undefined, caseStatus: "active" });
+  const { data: residentsData, isLoading: isResidentsLoading } = useListResidents({
+    page: 1,
+    pageSize: 2000,
+    safehouseId: safehouseId ?? undefined,
+  });
   const { data: socialPostsData } = useListSocialMediaPosts({ pageSize: 200 });
   const { data: recordingsData } = useQuery<{ data: ProcessRecordingItem[]; total: number }>({
     queryKey: ["process-recordings", "dashboard", safehouseId ?? "all"],
     queryFn: () => apiFetch(`/api/process-recordings?pageSize=500${safehouseId ? `&safehouseId=${safehouseId}` : ""}`),
   });
 
-  const activeResidents = residentsData?.data ?? [];
+  const allResidents = residentsData?.data ?? [];
+  const activeResidents = useMemo(
+    () => allResidents.filter(isActiveResident),
+    [allResidents],
+  );
   const socialPosts = socialPostsData?.data ?? [];
   const processRecordings = recordingsData?.data ?? [];
 
@@ -237,13 +246,8 @@ export default function SuperAdminDashboard() {
   }, [activeResidents, data?.safehouseBreakdown, latestRecordingByResident]);
 
   const dashboardKpis = useMemo(() => {
-    const survivorsInCare = data?.activeResidents ?? data?.totalActiveResidents ?? activeResidents.length;
-    const casesAtRisk = data?.riskDistribution
-      ? (data.riskDistribution.high ?? 0) + (data.riskDistribution.critical ?? 0)
-      : activeResidents.filter((resident) => {
-          const risk = (resident.currentRiskLevel ?? resident.riskLevel ?? "").trim().toLowerCase();
-          return risk === "high" || risk === "critical";
-        }).length;
+    const survivorsInCare = activeResidents.length;
+    const casesAtRisk = allResidents.filter(isHighOrCriticalRisk).length;
     const totalDonations = data?.totalDonations ?? data?.donationsYtd ?? null;
     const returningDonorsPct = data?.orgRetentionEstimate ?? null;
 
@@ -253,7 +257,7 @@ export default function SuperAdminDashboard() {
       totalDonations,
       returningDonorsPct,
     };
-  }, [activeResidents, data?.activeResidents, data?.orgRetentionEstimate, data?.donationsYtd, data?.riskDistribution, data?.totalActiveResidents, data?.totalDonations]);
+  }, [activeResidents, allResidents, data?.donationsYtd, data?.orgRetentionEstimate, data?.totalDonations]);
 
   const reintegrationData = useMemo(() => {
     const breakdown = data?.reintegrationBreakdown;
@@ -290,7 +294,7 @@ export default function SuperAdminDashboard() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isResidentsLoading) {
     return (
       <div className="flex h-72 flex-col items-center justify-center gap-3 text-gray-400">
         <Loader2 className="h-8 w-8 animate-spin text-[#2a9d72]" />

@@ -7,6 +7,7 @@ import { Users, Plus, Search, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ResidentProfileFormModal } from "@/components/residents/ResidentProfileFormModal";
+import { isActiveResident, isHighOrCriticalRisk } from "@/lib/residents";
 
 const RISK_BADGE: Record<string, { pill: string; dot: string }> = {
   Low:      { pill: "bg-green-50  text-green-700  border border-green-200",  dot: "bg-green-500"  },
@@ -88,17 +89,14 @@ export default function ResidentsPage() {
   const rows = filteredResidents.slice((safePage - 1) * pageSize, safePage * pageSize);
   const hasActiveFilters = Boolean(search || filterStatus || filterRisk || filterSafehouse !== null);
   const derivedStats = {
-    totalActive: filteredResidents.filter((resident) => resident.caseStatus === "Active").length,
+    totalActive: filteredResidents.filter(isActiveResident).length,
     newAdmissions: filteredResidents.filter((resident) => {
       const rawDate = resident.dateOfAdmission ?? resident.admissionDate;
       if (!rawDate) return false;
       const parsed = new Date(rawDate);
       return !Number.isNaN(parsed.getTime()) && parsed >= thirtyDaysAgo;
     }).length,
-    highRiskResidents: filteredResidents.filter((resident) => {
-      const risk = resident.currentRiskLevel ?? resident.riskLevel;
-      return risk === "High" || risk === "Critical";
-    }).length,
+    highRiskResidents: filteredResidents.filter(isHighOrCriticalRisk).length,
     total: totalFilteredResidents,
   };
 
