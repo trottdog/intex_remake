@@ -82,6 +82,11 @@ def encode_features(
             test_features = test_features.astype(categorical_casts)
 
     if numeric_columns:
+        numeric_columns = [
+            column
+            for column in numeric_columns
+            if column in train_features.columns and train_features[column].notna().any()
+        ]
         for column in numeric_columns:
             train_features[column] = pd.to_numeric(train_features[column], errors="coerce")
         if test_features is not None:

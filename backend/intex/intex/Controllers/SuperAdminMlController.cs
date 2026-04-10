@@ -655,16 +655,18 @@ public sealed class SuperAdminMlController(BeaconDbContext dbContext) : ApiContr
                     from safehouse in safehouseGroup.DefaultIfEmpty()
                     select new { metric, safehouse };
 
-        if (!string.IsNullOrWhiteSpace(monthStart) && DateOnly.TryParse(monthStart, out var parsedMonth))
+        var hasMonthFilter = !string.IsNullOrWhiteSpace(monthStart) && DateOnly.TryParse(monthStart, out var parsedMonth);
+
+        if (hasMonthFilter)
         {
             query = query.Where(item => item.metric.MonthStart == parsedMonth);
         }
 
         var rows = await query
-            .OrderByDescending(item => item.metric.MonthStart)
-            .ThenBy(item => item.safehouse.Name)
             .Select(item => new
             {
+                metricId = item.metric.MetricId,
+                monthStart = item.metric.MonthStart,
                 safehouseId = item.metric.SafehouseId ?? 0,
                 safehouseName = item.safehouse.Name ?? $"Safehouse-{item.metric.SafehouseId}",
                 region = item.safehouse.Region,
@@ -679,7 +681,37 @@ public sealed class SuperAdminMlController(BeaconDbContext dbContext) : ApiContr
             })
             .ToListAsync(cancellationToken);
 
-        return Ok(new { data = rows });
+        if (!hasMonthFilter)
+        {
+            rows = rows
+                .GroupBy(item => item.safehouseId)
+                .Select(group => group
+                    .OrderByDescending(item => item.monthStart)
+                    .ThenByDescending(item => item.metricId)
+                    .First())
+                .ToList();
+        }
+
+        var orderedRows = rows
+            .OrderByDescending(item => item.monthStart)
+            .ThenBy(item => item.safehouseName)
+            .Select(item => new
+            {
+                item.safehouseId,
+                item.safehouseName,
+                item.region,
+                item.compositeHealthScore,
+                item.peerRank,
+                item.healthBand,
+                item.trendDirection,
+                item.healthScoreDrivers,
+                item.incidentSeverityDistribution,
+                item.healthScoreComputedAt,
+                item.metricMonth
+            })
+            .ToList();
+
+        return Ok(new { data = orderedRows });
     }
 
     [HttpGet("safehouses/{safehouseId:long}/health-history")]

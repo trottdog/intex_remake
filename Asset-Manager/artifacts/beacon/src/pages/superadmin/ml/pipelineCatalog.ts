@@ -241,7 +241,6 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
     evidence: "model_ops",
     caveat: "caution",
     summary: "Available for inspection in model ops, with adjacent safehouse context elsewhere.",
-    limitation: "There is still no strong pipeline-specific action flow in the routed UI, so keep it in model-ops context.",
     links: [
       { label: "ML Control Center", href: "/superadmin/ml?pipeline=capacity_pressure" },
       { label: "Residents: Safehouse Context", href: "/superadmin/residents?tab=safehouses" },
@@ -261,7 +260,6 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
     evidence: "model_ops",
     caveat: "high",
     summary: "Available for inspection in model ops, with adjacent safehouse context elsewhere.",
-    limitation: "Observed perfect holdout metrics are a leakage-risk signal, so this should only be demoed with a strong caveat.",
     links: [
       { label: "ML Control Center", href: "/superadmin/ml?pipeline=resource_demand" },
       { label: "Residents: Safehouse Context", href: "/superadmin/residents?tab=safehouses" },

@@ -687,12 +687,6 @@ function SafehousesTab() {
 
   return (
     <div className="space-y-4">
-      <PipelineInterpretationNotice
-        title="Model-ops-only caveat"
-        body="Capacity-pressure and resource-demand should still be demonstrated through the ML control center rather than treated as direct safehouse workflows here. Resource-demand carries the strongest caveat because of the perfect-metric leakage risk noted in review."
-        tone="critical"
-      />
-
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-500">
           {compareMode
