@@ -113,29 +113,6 @@ public sealed class DashboardController(IDbContextFactory<BeaconDbContext> dbFac
         var scoped = enforceScope && assignedSafehouses.Count > 0;
         var ids = assignedSafehouses;
 
-<<<<<<< HEAD
-        var payload = await RunAsync(async db =>
-        {
-            var residentQuery = db.Residents.AsNoTracking();
-            if (scoped)
-            {
-                residentQuery = residentQuery.Where(r => r.SafehouseId.HasValue && ids.Contains(r.SafehouseId.Value));
-            }
-
-            var totalResidents = await residentQuery.CountAsync(cancellationToken);
-            var highRiskResidents = await residentQuery.CountAsync(r =>
-                r.CurrentRiskLevel != null &&
-                (EF.Functions.ILike(r.CurrentRiskLevel, "high") || EF.Functions.ILike(r.CurrentRiskLevel, "critical")), cancellationToken);
-            var openIncidents = await db.IncidentReports.AsNoTracking()
-                .CountAsync(item => item.Status == null || !EF.Functions.ILike(item.Status, "resolved"), cancellationToken);
-
-            return new
-            {
-                totalResidents,
-                highRiskResidents,
-                openIncidents
-            };
-=======
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
 
         var residentsQuery = db.Residents.AsNoTracking();
@@ -381,10 +358,7 @@ public sealed class DashboardController(IDbContextFactory<BeaconDbContext> dbFac
             activeInterventionPlans,
             priorityAlerts,
             mlAlerts
->>>>>>> cd4f1ad (Admin Dash Board fixes)
         });
-
-        return Ok(payload);
     }
 
     [Authorize(Policy = PolicyNames.AdminOrAbove)]

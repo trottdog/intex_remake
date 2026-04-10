@@ -624,26 +624,41 @@ public sealed class SuperAdminMlController(BeaconDbContext dbContext) : ApiContr
     [HttpGet("interventions/effectiveness/{category}/plans")]
     public async Task<IActionResult> GetInterventionPlansByCategory(string category, CancellationToken cancellationToken)
     {
-        var rows = await (from plan in dbContext.InterventionPlans.AsNoTracking()
-                          join resident in dbContext.Residents.AsNoTracking() on plan.ResidentId equals (long?)resident.ResidentId into residentGroup
-                          from resident in residentGroup.DefaultIfEmpty()
-                          join safehouse in dbContext.Safehouses.AsNoTracking() on resident.SafehouseId equals (long?)safehouse.SafehouseId into safehouseGroup
-                          from safehouse in safehouseGroup.DefaultIfEmpty()
-                          where plan.PlanCategory != null && EF.Functions.ILike(plan.PlanCategory, category)
-                          select new
-                          {
-                              planId = plan.PlanId,
-                              planCategory = plan.PlanCategory,
-                              safehouseName = safehouse.Name,
-                              status = plan.Status ?? string.Empty,
-                              startDate = plan.CreatedAt,
-                              endDate = plan.TargetDate.HasValue ? plan.TargetDate.Value.ToString("yyyy-MM-dd") : null,
-                              effectivenessOutcomeScore = plan.EffectivenessOutcomeScore,
-                              effectivenessBand = plan.EffectivenessBand,
-                              effectivenessOutcomeDrivers = plan.EffectivenessOutcomeDrivers != null ? plan.EffectivenessOutcomeDrivers.RootElement : (object?)null,
-                              effectivenessScoreUpdatedAt = plan.EffectivenessScoreUpdatedAt
-                          })
+        var planRows = await (from plan in dbContext.InterventionPlans.AsNoTracking()
+                              join resident in dbContext.Residents.AsNoTracking() on plan.ResidentId equals (long?)resident.ResidentId into residentGroup
+                              from resident in residentGroup.DefaultIfEmpty()
+                              join safehouse in dbContext.Safehouses.AsNoTracking() on resident.SafehouseId equals (long?)safehouse.SafehouseId into safehouseGroup
+                              from safehouse in safehouseGroup.DefaultIfEmpty()
+                              where plan.PlanCategory != null && EF.Functions.ILike(plan.PlanCategory!, category)
+                              select new
+                              {
+                                  planId = plan.PlanId,
+                                  planCategory = plan.PlanCategory,
+                                  safehouseName = safehouse != null ? safehouse.Name : null,
+                                  status = plan.Status,
+                                  startDate = plan.CreatedAt,
+                                  targetDate = plan.TargetDate,
+                                  effectivenessOutcomeScore = plan.EffectivenessOutcomeScore,
+                                  effectivenessBand = plan.EffectivenessBand,
+                                  effectivenessOutcomeDrivers = plan.EffectivenessOutcomeDrivers,
+                                  effectivenessScoreUpdatedAt = plan.EffectivenessScoreUpdatedAt
+                              })
             .ToListAsync(cancellationToken);
+
+        var rows = planRows.Select(row => new
+        {
+            row.planId,
+            row.planCategory,
+            row.safehouseName,
+            status = row.status ?? string.Empty,
+            row.startDate,
+            endDate = row.targetDate?.ToString("yyyy-MM-dd"),
+            row.effectivenessOutcomeScore,
+            row.effectivenessBand,
+            effectivenessOutcomeDrivers = row.effectivenessOutcomeDrivers?.RootElement,
+            row.effectivenessScoreUpdatedAt
+        });
+
         return Ok(new { data = rows });
     }
 
