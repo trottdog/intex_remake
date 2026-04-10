@@ -10,12 +10,15 @@
         "dependencies": {
           "BCrypt.Net-Next": "4.0.3",
           "Microsoft.ApplicationInsights.AspNetCore": "2.23.0",
+          "Microsoft.AspNetCore.Authentication.Google": "10.0.1",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "10.0.1",
           "Microsoft.AspNetCore.OpenApi": "10.0.1",
           "Microsoft.EntityFrameworkCore": "9.0.8",
           "Microsoft.EntityFrameworkCore.Relational": "9.0.8",
           "Npgsql": "9.0.3",
-          "Npgsql.EntityFrameworkCore.PostgreSQL": "9.0.4"
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "9.0.4",
+          "Otp.NET": "1.4.0",
+          "QRCoder": "1.6.0"
         },
         "runtime": {
           "intex.dll": {}
@@ -110,6 +113,14 @@
           "lib/netstandard2.0/Microsoft.AI.ServerTelemetryChannel.dll": {
             "assemblyVersion": "2.23.0.29",
             "fileVersion": "2.23.0.29"
+          }
+        }
+      },
+      "Microsoft.AspNetCore.Authentication.Google/10.0.1": {
+        "runtime": {
+          "lib/net10.0/Microsoft.AspNetCore.Authentication.Google.dll": {
+            "assemblyVersion": "10.0.1.0",
+            "fileVersion": "10.0.125.57005"
           }
         }
       },
@@ -282,6 +293,22 @@
           "lib/net8.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll": {
             "assemblyVersion": "9.0.4.0",
             "fileVersion": "9.0.4.0"
+          }
+        }
+      },
+      "Otp.NET/1.4.0": {
+        "runtime": {
+          "lib/net8.0/Otp.NET.dll": {
+            "assemblyVersion": "1.4.0.0",
+            "fileVersion": "1.4.0.0"
+          }
+        }
+      },
+      "QRCoder/1.6.0": {
+        "runtime": {
+          "lib/net6.0/QRCoder.dll": {
+            "assemblyVersion": "1.6.0.0",
+            "fileVersion": "1.6.0.0"
           }
         }
       },
@@ -463,6 +490,13 @@
       "path": "microsoft.applicationinsights.windowsserver.telemetrychannel/2.23.0",
       "hashPath": "microsoft.applicationinsights.windowsserver.telemetrychannel.2.23.0.nupkg.sha512"
     },
+    "Microsoft.AspNetCore.Authentication.Google/10.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-49T+gn1LyNDxme5HBnoEUFTFnpG8R9h2JFuaQp8+/EQFSZybIv4WMXdrQ1rbCU65NKG/jxVBsUU8/G8jKImJ2Q==",
+      "path": "microsoft.aspnetcore.authentication.google/10.0.1",
+      "hashPath": "microsoft.aspnetcore.authentication.google.10.0.1.nupkg.sha512"
+    },
     "Microsoft.AspNetCore.Authentication.JwtBearer/10.0.1": {
       "type": "package",
       "serviceable": true,
@@ -574,6 +608,20 @@
       "sha512": "sha512-mw5vcY2IEc7L+IeGrxpp/J5OSnCcjkjAgJYCm/eD52wpZze8zsSifdqV7zXslSMmfJG2iIUGZyo3KuDtEFKwMQ==",
       "path": "npgsql.entityframeworkcore.postgresql/9.0.4",
       "hashPath": "npgsql.entityframeworkcore.postgresql.9.0.4.nupkg.sha512"
+    },
+    "Otp.NET/1.4.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Fk1NKc0lWmlo6LAFYpFJInRgFKt72knRNEvxndDYoQHFwYOPXav+WEUBvQA0k4lxq5xt0SymrZ+oi0F/G40bPQ==",
+      "path": "otp.net/1.4.0",
+      "hashPath": "otp.net.1.4.0.nupkg.sha512"
+    },
+    "QRCoder/1.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-XmPA81eo+oRxBuyVdswsSkTGTE1d3thfF11Z1PdD7oB56A6HU4G4AAOdySmGRMb/cljwlFTMWUtosGEnwpS6GA==",
+      "path": "qrcoder/1.6.0",
+      "hashPath": "qrcoder.1.6.0.nupkg.sha512"
     },
     "System.Configuration.ConfigurationManager/6.0.0": {
       "type": "package",

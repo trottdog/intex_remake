@@ -218,19 +218,26 @@ public sealed class AuthController(
     [ProducesResponseType<ErrorResponse>(StatusCodes.Status503ServiceUnavailable)]
     public IActionResult StartGoogleLogin([FromQuery] string? returnUrl)
     {
+        var frontendCallbackUrl = ResolveFrontendCallbackUrl(returnUrl);
+
         if (!googleAuthOptions.Value.IsConfigured)
         {
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, new ErrorResponse("Google authentication is not configured"));
+            return Redirect(BuildFrontendRedirect(frontendCallbackUrl, new Dictionary<string, string>
+            {
+                ["error"] = "Google authentication is not configured"
+            }));
         }
 
-        var frontendCallbackUrl = ResolveFrontendCallbackUrl(returnUrl);
         var completionUrl = Url.ActionLink(
             nameof(CompleteGoogleLogin),
             values: new { returnUrl = frontendCallbackUrl });
 
         if (string.IsNullOrWhiteSpace(completionUrl))
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse("Failed to start Google authentication"));
+            return Redirect(BuildFrontendRedirect(frontendCallbackUrl, new Dictionary<string, string>
+            {
+                ["error"] = "Failed to start Google authentication"
+            }));
         }
 
         var properties = new AuthenticationProperties
