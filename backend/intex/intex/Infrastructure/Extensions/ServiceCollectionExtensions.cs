@@ -42,6 +42,7 @@ public static class ServiceCollectionExtensions
                 }
             });
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.Configure<MfaOptions>(configuration.GetSection(MfaOptions.SectionName));
         services.Configure<SupabaseOptions>(configuration.GetSection(SupabaseOptions.SectionName));
         return services;
     }
@@ -223,9 +224,11 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
+        services.AddMemoryCache();
         services.AddScoped<IPasswordService, BcryptPasswordService>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IJwtTokenReader, JwtTokenReader>();
+        services.AddScoped<IMfaChallengeService, MfaChallengeService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICaseManagementService, CaseManagementService>();
         services.AddScoped<IUserScopeService, UserScopeService>();

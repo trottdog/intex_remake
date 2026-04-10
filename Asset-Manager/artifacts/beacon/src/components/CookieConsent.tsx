@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getCookie, setCookie } from "@/lib/cookies";
+import { getConsentLevel, applyConsent } from "@/lib/consent";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
@@ -7,19 +7,19 @@ export function CookieConsent() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    const consent = getCookie("beacon_consent");
+    const consent = getConsentLevel();
     if (!consent) {
       setShow(true);
     }
   }, []);
 
   const handleAcceptAll = () => {
-    setCookie("beacon_consent", "all");
+    applyConsent("all");
     setShow(false);
   };
 
   const handleReject = () => {
-    setCookie("beacon_consent", "essential");
+    applyConsent("essential");
     setShow(false);
   };
 
@@ -33,7 +33,7 @@ export function CookieConsent() {
           <p className="mt-1 leading-relaxed">
             Beacon only stores essential on-device preferences such as your theme, sidebar state, and cookie-consent choice.
             Choosing <span className="font-medium text-[#214636]">Accept All</span> opts you into optional analytics or personalization
-            if those features are enabled later. Authentication does not rely on cookies.
+            and enables the non-essential <code>beacon_personalization</code> cookie. Authentication does not rely on cookies.
           </p>
           <div className="mt-2 flex flex-wrap gap-4 text-xs font-medium">
             <Link href="/privacy" className="text-[#2a9d72] hover:text-[#214636] hover:underline">

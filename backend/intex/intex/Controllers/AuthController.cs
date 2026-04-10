@@ -29,6 +29,18 @@ public sealed class AuthController(IAuthService authService) : ApiControllerBase
             : Ok(response);
     }
 
+    [AllowAnonymous]
+    [HttpPost("mfa/verify")]
+    [ProducesResponseType<LoginResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<LoginResponse>> VerifyMfa([FromBody] MfaVerifyRequest request, CancellationToken cancellationToken)
+    {
+        var response = await authService.VerifyMfaAsync(request, cancellationToken);
+        return response is null
+            ? Unauthorized(new ErrorResponse("Invalid MFA challenge or code"))
+            : Ok(response);
+    }
+
     [Authorize]
     [HttpPost("change-password")]
     [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
