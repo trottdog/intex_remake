@@ -37,8 +37,8 @@ export default function LoginPage() {
     { label: "Residents Served", value: fmtCount(publicImpact?.residentsServedTotal) },
     { label: "Safe Homes", value: fmtCount(publicImpact?.safehouseCount) },
     { label: "Donations Raised", value: fmtPeso(publicImpact?.totalDonationsRaised) },
-    { label: "Unique Donors", value: fmtCount(publicImpact?.uniqueDonors) },
-  ]), [publicImpact?.residentsServedTotal, publicImpact?.safehouseCount, publicImpact?.totalDonationsRaised, publicImpact?.uniqueDonors]);
+    { label: "Unique Donors", value: "60+" },
+  ]), [publicImpact?.residentsServedTotal, publicImpact?.safehouseCount, publicImpact?.totalDonationsRaised]);
 
   const completeLogin = (token: string, role: string, user: Parameters<typeof login>[1]) => {
     flushSync(() => {

@@ -63,7 +63,7 @@ export default function PublicImpactPage() {
     { ...STAT_CARDS[0], value: fmtCount(data?.residentsServedTotal) },
     { ...STAT_CARDS[1], value: fmtCount(data?.safehouseCount) },
     { ...STAT_CARDS[2], value: fmtPeso(data?.totalDonationsRaised ?? 0) },
-    { ...STAT_CARDS[3], value: fmtCount(data?.uniqueDonors) },
+    { ...STAT_CARDS[3], value: "60+" },
   ];
 
   return (
