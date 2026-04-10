@@ -1,4 +1,4 @@
-import { useListImpactSnapshots } from "@/services/donor.service";
+import { useGetDonorDashboardSummary, useListImpactSnapshots } from "@/services/donor.service";
 import { useGetPublicImpact } from "@/services/public.service";
 import {
   Heart, Users, Home, TrendingUp, Award, BookOpen, Activity,
@@ -47,15 +47,16 @@ function RadialMetric({ value, max, label, color }: { value: number; max: number
 
 export default function ImpactPage() {
   const { data: publicImpact, isLoading: loadingPublic } = useGetPublicImpact();
+  const { data: donorSummary, isLoading: loadingDonor } = useGetDonorDashboardSummary();
   const { data: snapshotsRes, isLoading: loadingSnaps } = useListImpactSnapshots({ pageSize: 10 });
 
   const snapshots = snapshotsRes?.data ?? [];
-  const isLoading = loadingPublic || loadingSnaps;
+  const isLoading = loadingPublic || loadingDonor || loadingSnaps;
 
   const residentsTotal = publicImpact?.residentsServedTotal ?? 0;
   const safehouses = publicImpact?.safehouseCount ?? 0;
   const reintegrations = publicImpact?.reintegrationCount ?? 0;
-  const donationsRaised = publicImpact?.totalDonationsRaised ?? 0;
+  const donationsRaised = donorSummary?.lifetimeGiving ?? donorSummary?.totalGiven ?? 0;
 
   return (
     <div className="space-y-8">
