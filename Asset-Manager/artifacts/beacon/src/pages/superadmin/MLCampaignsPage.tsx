@@ -15,7 +15,7 @@ import {
   FilterSelect, SideDrawer, Pagination, ActionButton,
   fmtPeso, fmtDate, fmtRelativeDate, ACCENT, DARK, MINT,
 } from "./ml/Shared";
-import { PipelineCoveragePanel, PipelineInterpretationNotice } from "./ml/PipelineCoveragePanel";
+import { PipelineCoveragePanel } from "./ml/PipelineCoveragePanel";
 
 type Tab = "campaigns" | "social";
 
@@ -63,6 +63,16 @@ function toPercentValue(value: unknown): number {
   }
 
   return 0;
+}
+
+function toNullableNumber(value: unknown): number | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
 }
 
 function CampaignEffectivenessTab() {
@@ -185,7 +195,7 @@ function CampaignEffectivenessTab() {
                       </td>
                       <td className="py-2.5 pr-4 w-32">
                         {c.conversionRatio != null ? (
-                          <ScoreBar score={c.conversionRatio} />
+                          <ScoreBar score={c.conversionRatio} invertColors />
                         ) : "—"}
                       </td>
                       <td className="py-2.5 pr-4">
@@ -287,6 +297,29 @@ const HOUR_LABELS: Record<number, string> = {
   14: "2pm", 16: "4pm", 18: "6pm", 20: "8pm", 22: "10pm",
 };
 
+function normalizeDayOfWeek(value: unknown): number | null {
+  if (typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 6) {
+    return value;
+  }
+
+  if (typeof value !== "string") return null;
+  const raw = value.trim().toLowerCase();
+
+  if (/^[0-6]$/.test(raw)) return Number(raw);
+
+  const map: Record<string, number> = {
+    sun: 0, sunday: 0,
+    mon: 1, monday: 1,
+    tue: 2, tues: 2, tuesday: 2,
+    wed: 3, wednesday: 3,
+    thu: 4, thur: 4, thurs: 4, thursday: 4,
+    fri: 5, friday: 5,
+    sat: 6, saturday: 6,
+  };
+
+  return map[raw] ?? null;
+}
+
 function SocialPlannerTab() {
   const [dateRange, setDateRange] = useState("90d");
   const [platform, setPlatform] = useState("");
@@ -310,7 +343,9 @@ function SocialPlannerTab() {
   const heatmapMatrix: Record<string, number> = {};
   if (heatmap?.cells) {
     heatmap.cells.forEach(c => {
-      heatmapMatrix[`${c.dayOfWeek}-${c.postHour}`] = c.avgDonationReferrals;
+      const dayIndex = normalizeDayOfWeek(c.dayOfWeek);
+      if (dayIndex === null) return;
+      heatmapMatrix[`${dayIndex}-${c.postHour}`] = c.avgDonationReferrals;
     });
   }
 
@@ -320,12 +355,6 @@ function SocialPlannerTab() {
 
   return (
     <div className="space-y-4">
-      <PipelineInterpretationNotice
-        title="Planning signal, not final proof"
-        body="Best-posting-time and social-conversion outputs are routed here and are useful for planning, but notebook execution proof is still missing, so treat them as operational guidance rather than finalized evidence."
-        tone="caution"
-      />
-
       <div className="flex items-center gap-2 flex-wrap">
         <DateRangeSelector value={dateRange} onChange={v => { setDateRange(v); setPage(1); }} />
         <FilterSelect value={platform} onChange={v => { setPlatform(v); setPage(1); }} options={PLATFORM_OPTS} placeholder="All platforms" />
@@ -449,7 +478,13 @@ function SocialPlannerTab() {
                   </tr>
                 </thead>
                 <tbody>
-                  {posts.map(p => (
+                  {posts.map(p => {
+                    const deltaFromApi = toNullableNumber(p.predictedVsActualDelta);
+                    const predicted = toNullableNumber(p.predictedReferralCount);
+                    const actual = toNullableNumber(p.donationReferrals);
+                    const delta = deltaFromApi ?? (predicted !== null && actual !== null ? +(actual - predicted).toFixed(2) : null);
+
+                    return (
                     <tr key={p.postId} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                       <td className="py-2.5 pr-4 max-w-xs">
                         <div className="text-xs text-gray-700 line-clamp-2">{p.caption ?? "—"}</div>
@@ -457,7 +492,7 @@ function SocialPlannerTab() {
                       </td>
                       <td className="py-2.5 pr-4 text-xs capitalize text-gray-600">{p.platform ?? "—"}</td>
                       <td className="py-2.5 pr-4 w-28">
-                        <ScoreBar score={p.conversionPredictionScore} />
+                        <ScoreBar score={p.conversionPredictionScore} invertColors />
                       </td>
                       <td className="py-2.5 pr-4">
                         <BandBadge band={p.conversionBand} size="xs" />
@@ -469,9 +504,9 @@ function SocialPlannerTab() {
                         {fmtPeso(p.predictedDonationValuePhp)}
                       </td>
                       <td className="py-2.5 pr-4 text-xs">
-                        {p.predictedVsActualDelta != null ? (
-                          <span className={p.predictedVsActualDelta >= 0 ? "text-green-600" : "text-red-500"}>
-                            {p.predictedVsActualDelta >= 0 ? "+" : ""}{p.predictedVsActualDelta}
+                        {delta != null ? (
+                          <span className={delta >= 0 ? "text-green-600" : "text-red-500"}>
+                            {delta >= 0 ? "+" : ""}{delta}
                           </span>
                         ) : "—"}
                       </td>
@@ -484,7 +519,8 @@ function SocialPlannerTab() {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

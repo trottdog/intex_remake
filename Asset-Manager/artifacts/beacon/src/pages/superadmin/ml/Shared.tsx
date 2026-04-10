@@ -91,10 +91,20 @@ export function BandBadge({ band, size = "sm" }: { band: string | null | undefin
   );
 }
 
-export function ScoreBar({ score, max = 1 }: { score: number | null | undefined; max?: number }) {
+export function ScoreBar({
+  score,
+  max = 1,
+  invertColors = false,
+}: {
+  score: number | null | undefined;
+  max?: number;
+  invertColors?: boolean;
+}) {
   if (score == null) return <span className="text-gray-300 text-xs">—</span>;
   const pct = Math.min(100, (score / max) * 100);
-  const color = score >= 0.7 * max ? "#ef4444" : score >= 0.4 * max ? "#f59e0b" : "#22c55e";
+  const color = invertColors
+    ? score >= 0.7 * max ? "#22c55e" : score >= 0.4 * max ? "#f59e0b" : "#ef4444"
+    : score >= 0.7 * max ? "#ef4444" : score >= 0.4 * max ? "#f59e0b" : "#22c55e";
   return (
     <div className="flex items-center gap-2 min-w-0">
       <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
