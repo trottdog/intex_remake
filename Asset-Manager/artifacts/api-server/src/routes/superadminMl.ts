@@ -81,6 +81,30 @@ function freshnessStatus(daysSince: number | null, pipelineName: string): "ok" |
   return daysSince > threshold ? "stale" : "ok";
 }
 
+let ensureSocialPostMlColumnsPromise: Promise<void> | null = null;
+
+async function ensureSocialPostMlColumns(): Promise<void> {
+  if (!ensureSocialPostMlColumnsPromise) {
+    ensureSocialPostMlColumnsPromise = (async () => {
+      await db.execute(sql`
+        ALTER TABLE social_media_posts
+          ADD COLUMN IF NOT EXISTS conversion_prediction_score DOUBLE PRECISION,
+          ADD COLUMN IF NOT EXISTS predicted_referral_count NUMERIC,
+          ADD COLUMN IF NOT EXISTS predicted_donation_value_php NUMERIC,
+          ADD COLUMN IF NOT EXISTS conversion_band TEXT,
+          ADD COLUMN IF NOT EXISTS conversion_top_drivers JSONB,
+          ADD COLUMN IF NOT EXISTS conversion_comparable_post_ids JSONB,
+          ADD COLUMN IF NOT EXISTS conversion_score_updated_at TIMESTAMP WITH TIME ZONE
+      `);
+    })().catch((error) => {
+      ensureSocialPostMlColumnsPromise = null;
+      throw error;
+    });
+  }
+
+  await ensureSocialPostMlColumnsPromise;
+}
+
 // ── OVERVIEW PAGE ─────────────────────────────────────────────────────────────
 
 /**
@@ -659,6 +683,7 @@ router.get(
   async (req, res) => {
     try {
       const q = req.query as Record<string, string>;
+      await ensureSocialPostMlColumns();
       const { dateStart, dateEnd } = resolveDateBounds(q);
 
       const dateFilter = dateStart && dateEnd
@@ -1165,34 +1190,7 @@ router.get(
       const pageNum  = Math.max(1, parseInt(q.page ?? "1"));
       const limitNum = resolveLimit(q.pageSize ?? q.limit, undefined, 20);
       const offset   = (pageNum - 1) * limitNum;
-
-      // Some environments may not yet have the additive ML columns on social_media_posts.
-      // Probe once per request and fall back to NULL projections instead of throwing SQL errors.
-      const mlColumnRows = await db.execute<{ column_name: string }>(sql`
-        SELECT column_name
-        FROM information_schema.columns
-        WHERE table_schema = 'public'
-          AND table_name = 'social_media_posts'
-          AND column_name = ANY(
-            ARRAY[
-              'conversion_prediction_score',
-              'conversion_band',
-              'predicted_referral_count',
-              'predicted_donation_value_php',
-              'conversion_comparable_post_ids',
-              'conversion_top_drivers',
-              'conversion_score_updated_at'
-            ]::text[]
-          )
-      `);
-      const mlColumns = new Set(mlColumnRows.rows.map((r) => r.column_name));
-      const hasConversionPredictionScore = mlColumns.has("conversion_prediction_score");
-      const hasConversionBand = mlColumns.has("conversion_band");
-      const hasPredictedReferralCount = mlColumns.has("predicted_referral_count");
-      const hasPredictedDonationValuePhp = mlColumns.has("predicted_donation_value_php");
-      const hasConversionComparablePostIds = mlColumns.has("conversion_comparable_post_ids");
-      const hasConversionTopDrivers = mlColumns.has("conversion_top_drivers");
-      const hasConversionScoreUpdatedAt = mlColumns.has("conversion_score_updated_at");
+      await ensureSocialPostMlColumns();
 
       const { dateStart, dateEnd } = resolveDateBounds(q);
       const conditions: ReturnType<typeof sql>[] = [];
@@ -1219,7 +1217,7 @@ router.get(
       if (q.isBoosted !== undefined) {
         conditions.push(sql`sp.is_boosted = ${q.isBoosted === "true"}`);
       }
-      if (q.conversionBand && hasConversionBand) {
+      if (q.conversionBand) {
         const vals = q.conversionBand.split(",").map(v => v.trim());
         conditions.push(sql`sp.conversion_band = ANY(ARRAY[${sql.join(vals.map(v => sql`${v}`), sql`, `)}]::text[])`);
       }
@@ -1230,9 +1228,7 @@ router.get(
 
       const where = conditions.length > 0 ? sql`WHERE ${sql.join(conditions, sql` AND `)}` : sql``;
 
-      const orderBy = hasConversionPredictionScore
-        ? sql`ORDER BY sp.conversion_prediction_score DESC NULLS LAST, sp.created_at DESC NULLS LAST`
-        : sql`ORDER BY sp.created_at DESC NULLS LAST`;
+      const orderBy = sql`ORDER BY sp.conversion_prediction_score DESC NULLS LAST, sp.created_at DESC NULLS LAST`;
 
       const rows = await db.execute<{
         post_id: string;
@@ -1261,14 +1257,14 @@ router.get(
           sp.day_of_week, sp.post_hour,
           sp.media_type, sp.content_topic,
           sp.impressions, sp.engagement_rate,
-          ${hasConversionPredictionScore ? sql`sp.conversion_prediction_score` : sql`NULL::double precision`} AS conversion_prediction_score,
-          ${hasConversionBand ? sql`sp.conversion_band` : sql`NULL::text`} AS conversion_band,
-          ${hasPredictedReferralCount ? sql`sp.predicted_referral_count` : sql`NULL::numeric`} AS predicted_referral_count,
-          ${hasPredictedDonationValuePhp ? sql`sp.predicted_donation_value_php` : sql`NULL::numeric`} AS predicted_donation_value_php,
+          sp.conversion_prediction_score,
+          sp.conversion_band,
+          sp.predicted_referral_count,
+          sp.predicted_donation_value_php,
           sp.donation_referrals,
-          ${hasConversionComparablePostIds ? sql`sp.conversion_comparable_post_ids` : sql`NULL::jsonb`} AS conversion_comparable_post_ids,
-          ${hasConversionTopDrivers ? sql`sp.conversion_top_drivers` : sql`NULL::jsonb`} AS conversion_top_drivers,
-          ${hasConversionScoreUpdatedAt ? sql`sp.conversion_score_updated_at` : sql`NULL::timestamptz`} AS conversion_score_updated_at,
+          sp.conversion_comparable_post_ids,
+          sp.conversion_top_drivers,
+          sp.conversion_score_updated_at,
           sp.is_boosted, sp.created_at
         FROM social_media_posts sp
         ${where}

@@ -353,6 +353,16 @@ function SocialPlannerTab() {
     ? Math.max(1, ...heatmap.cells.map(c => c.avgDonationReferrals))
     : 1;
 
+  const visibleHours = (() => {
+    const fromData = (heatmap?.cells ?? [])
+      .map((c) => Number(c.postHour))
+      .filter((h) => Number.isFinite(h) && h >= 0 && h <= 23);
+
+    const uniqueSorted = Array.from(new Set(fromData)).sort((a, b) => a - b);
+    if (uniqueSorted.length > 0) return uniqueSorted.slice(0, 8);
+    return [6, 8, 10, 12, 14, 16, 18, 20];
+  })();
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 flex-wrap">
@@ -373,15 +383,15 @@ function SocialPlannerTab() {
           ) : (
             <div className="overflow-x-auto">
               <div className="min-w-[320px]">
-                <div className="grid" style={{ gridTemplateColumns: "40px repeat(8, 1fr)" }}>
+                <div className="grid" style={{ gridTemplateColumns: `40px repeat(${visibleHours.length}, 1fr)` }}>
                   <div />
-                  {[6, 8, 10, 12, 14, 16, 18, 20].map(h => (
+                  {visibleHours.map(h => (
                     <div key={h} className="text-[9px] text-gray-400 text-center pb-1">{HOUR_LABELS[h] ?? `${h}h`}</div>
                   ))}
                   {DAY_LABELS.map((day, dayIdx) => (
                     <div key={day} className="contents">
                       <div className="text-[9px] text-gray-400 flex items-center pr-2">{day}</div>
-                      {[6, 8, 10, 12, 14, 16, 18, 20].map(hour => {
+                      {visibleHours.map(hour => {
                         const val = heatmapMatrix[`${dayIdx}-${hour}`] ?? 0;
                         const intensity = val / maxReferrals;
                         return (
