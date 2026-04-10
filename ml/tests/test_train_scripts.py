@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 from ml.src.modeling.train import encode_features, make_baseline_models, time_split_data
@@ -57,3 +58,25 @@ def test_make_baseline_models_returns_expected_estimators() -> None:
         "ridge_regression",
         "random_forest_regressor",
     }
+
+
+def test_encode_features_drops_all_null_numeric_columns() -> None:
+    train_df = pd.DataFrame(
+        {
+            "category": ["a", "b", "a"],
+            "all_null_numeric": pd.Series([np.nan, np.nan, np.nan], dtype="float64"),
+            "value": [1.0, 2.0, 3.0],
+        }
+    )
+    test_df = pd.DataFrame(
+        {
+            "category": ["b"],
+            "all_null_numeric": pd.Series([np.nan], dtype="float64"),
+            "value": [4.0],
+        }
+    )
+
+    encoded = encode_features(train_df, test_df)
+
+    assert encoded.test_features is not None
+    assert all("all_null_numeric" not in name for name in encoded.feature_names)
