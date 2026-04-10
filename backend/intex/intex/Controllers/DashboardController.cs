@@ -71,33 +71,188 @@ public sealed class DashboardController(IDbContextFactory<BeaconDbContext> dbFac
         var sid = supporterId.Value;
         var payload = await RunAsync(async db =>
         {
-            var donorDonations = db.Donations.AsNoTracking().Where(d => d.SupporterId == sid);
-            var lifetimeGiving = await donorDonations.SumAsync(d => (decimal?)d.Amount, cancellationToken) ?? 0m;
-            var donationCount = await donorDonations.CountAsync(cancellationToken);
-            var lastDonation = await donorDonations.OrderByDescending(d => d.DonationDate).FirstOrDefaultAsync(cancellationToken);
-            var trendRows = await donorDonations
-                .Where(d => d.DonationDate.HasValue)
-                .Select(d => new { d.DonationDate, d.Amount })
+            var donorDonations = await db.Donations.AsNoTracking()
+                .Where(item => item.SupporterId == sid)
                 .ToListAsync(cancellationToken);
 
-            var givingTrend = trendRows
-                .GroupBy(item => new { item.DonationDate!.Value.Year, item.DonationDate!.Value.Month })
-                .OrderBy(group => group.Key.Year).ThenBy(group => group.Key.Month)
+            var sortedDonations = donorDonations
+                .OrderByDescending(item => item.DonationDate ?? DateOnly.MinValue)
+                .ThenByDescending(item => item.DonationId)
+                .ToList();
+
+            var lifetimeGiving = donorDonations.Sum(item => item.Amount ?? 0m);
+            var donationCount = donorDonations.Count;
+            var lastDonation = sortedDonations.FirstOrDefault();
+
+            var now = DateTime.UtcNow;
+            var currentYear = now.Year;
+            var givingThisYear = donorDonations
+                .Where(item => item.DonationDate.HasValue && item.DonationDate.Value.Year == currentYear)
+                .Sum(item => item.Amount ?? 0m);
+
+            var campaignsSupported = donorDonations
+                .Select(item => item.CampaignName)
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .Select(item => item!.Trim().ToLowerInvariant())
+                .Distinct()
+                .Count();
+
+            var monthStart = new DateTime(now.Year, now.Month, 1);
+            var givingTrend = Enumerable.Range(0, 12)
+                .Select(offset =>
+                {
+                    var d = monthStart.AddMonths(-(11 - offset));
+                    var total = donorDonations
+                        .Where(item => item.DonationDate.HasValue
+                                       && item.DonationDate.Value.Year == d.Year
+                                       && item.DonationDate.Value.Month == d.Month)
+                        .Sum(item => item.Amount ?? 0m);
+
+                    return new
+                    {
+                        month = $"{d.Year:D4}-{d.Month:D2}",
+                        year = d.Year,
+                        amount = decimal.Round(total, 2)
+                    };
+                })
+                .ToList();
+
+            var donationIds = donorDonations.Select(item => item.DonationId).ToList();
+            var allocations = donationIds.Count > 0
+                ? await db.DonationAllocations.AsNoTracking()
+                    .Where(item => item.DonationId.HasValue && donationIds.Contains(item.DonationId.Value))
+                    .ToListAsync(cancellationToken)
+                : new List<Entities.Database.DonationAllocation>();
+
+            var allocationRows = allocations
+                .Select(item => new
+                {
+                    ProgramArea = string.IsNullOrWhiteSpace(item.ProgramArea) ? "general fund" : item.ProgramArea!.Trim().ToLowerInvariant(),
+                    Amount = item.AmountAllocated ?? 0m
+                })
+                .ToList();
+
+            var groupedAllocations = allocationRows
+                .GroupBy(item => item.ProgramArea)
                 .Select(group => new
                 {
-                    month = $"{group.Key.Year:D4}-{group.Key.Month:D2}",
-                    year = group.Key.Year,
-                    amount = decimal.Round(group.Sum(item => item.Amount ?? 0m), 2)
+                    ProgramArea = group.Key,
+                    Amount = group.Sum(item => item.Amount)
+                })
+                .Where(item => item.Amount > 0m)
+                .OrderByDescending(item => item.Amount)
+                .ToList();
+
+            var totalAllocated = groupedAllocations.Sum(item => item.Amount);
+            var allocationDenominator = totalAllocated > 0m ? totalAllocated : lifetimeGiving;
+
+            var allocationBreakdown = groupedAllocations
+                .Select(item => new
+                {
+                    programArea = ToTitleCase(item.ProgramArea.Replace("_", " ")),
+                    amount = decimal.Round(item.Amount, 2),
+                    percentage = allocationDenominator > 0m ? decimal.Round((item.Amount / allocationDenominator) * 100m, 1) : 0m
+                })
+                .ToList();
+
+            if (allocationBreakdown.Count == 0 && lifetimeGiving > 0m)
+            {
+                allocationBreakdown.Add(new
+                {
+                    programArea = "General Fund",
+                    amount = decimal.Round(lifetimeGiving, 2),
+                    percentage = 100m
+                });
+            }
+
+            var residents = await db.Residents.AsNoTracking().ToListAsync(cancellationToken);
+            var activeResidents = residents.Count(item => string.Equals(item.CaseStatus, "active", StringComparison.OrdinalIgnoreCase));
+            var reintegrations = residents.Count(item => string.Equals(item.ReintegrationStatus, "completed", StringComparison.OrdinalIgnoreCase));
+            var safehouseCount = await db.Safehouses.AsNoTracking().CountAsync(cancellationToken);
+
+            var healthScores = await db.HealthWellbeingRecords.AsNoTracking()
+                .Where(item => item.GeneralHealthScore.HasValue)
+                .Select(item => item.GeneralHealthScore!.Value)
+                .ToListAsync(cancellationToken);
+
+            var educationProgress = await db.EducationRecords.AsNoTracking()
+                .Where(item => item.ProgressPercent.HasValue)
+                .Select(item => item.ProgressPercent!.Value)
+                .ToListAsync(cancellationToken);
+
+            var avgHealthScore = healthScores.Count > 0
+                ? (decimal?)decimal.Round(healthScores.Average(), 1)
+                : null;
+
+            var avgEducationProgress = educationProgress.Count > 0
+                ? (decimal?)decimal.Round(educationProgress.Average(), 1)
+                : null;
+
+            var recentSnapshots = await db.PublicImpactSnapshots.AsNoTracking()
+                .Where(item => item.IsPublished == true)
+                .OrderByDescending(item => item.SnapshotDate)
+                .ThenByDescending(item => item.SnapshotId)
+                .Take(3)
+                .Select(item => new
+                {
+                    snapshotId = item.SnapshotId,
+                    snapshotDate = item.SnapshotDate.HasValue ? item.SnapshotDate.Value.ToString("yyyy-MM-dd") : null,
+                    headline = item.Headline,
+                    summaryText = item.SummaryText,
+                    metricPayloadJson = item.MetricPayloadJson,
+                    publishedAt = item.PublishedAt
+                })
+                .ToListAsync(cancellationToken);
+
+            var mlReintegrationReadiness = await db.MlPredictionSnapshots.AsNoTracking()
+                .Where(item => EF.Functions.ILike(item.PipelineName, "reintegration_predictor_v1"))
+                .OrderByDescending(item => item.PredictionScore)
+                .Take(3)
+                .Select(item => new
+                {
+                    predictionId = item.PredictionId,
+                    entityLabel = item.EntityLabel,
+                    predictionScore = item.PredictionScore,
+                    contextJson = item.ContextJson
+                })
+                .ToListAsync(cancellationToken);
+
+            var recentDonations = sortedDonations
+                .Take(5)
+                .Select(item => new
+                {
+                    donationId = item.DonationId,
+                    donationType = item.DonationType,
+                    donationDate = item.DonationDate.HasValue ? item.DonationDate.Value.ToString("yyyy-MM-dd") : null,
+                    campaignName = item.CampaignName,
+                    currencyCode = item.CurrencyCode,
+                    amount = item.Amount.HasValue ? decimal.Round(item.Amount.Value, 2) : (decimal?)null,
+                    channelSource = item.ChannelSource
                 })
                 .ToList();
 
             return new
             {
                 lifetimeGiving = decimal.Round(lifetimeGiving, 2),
+                givingThisYear = decimal.Round(givingThisYear, 2),
                 donationCount,
                 lastDonationDate = lastDonation?.DonationDate.HasValue == true ? lastDonation.DonationDate!.Value.ToString("yyyy-MM-dd") : null,
                 lastDonationAmount = lastDonation != null && lastDonation.Amount.HasValue ? (decimal?)decimal.Round(lastDonation.Amount.Value, 2) : null,
-                givingTrend
+                campaignsSupported,
+                givingTrend,
+                allocationBreakdown,
+                recentDonations,
+                impactStats = new
+                {
+                    activeResidents,
+                    totalResidentsServed = residents.Count,
+                    safehouses = safehouseCount,
+                    reintegrations,
+                    avgHealthScore,
+                    avgEducationProgress
+                },
+                recentSnapshots,
+                mlReintegrationReadiness
             };
         });
 
@@ -412,6 +567,18 @@ public sealed class DashboardController(IDbContextFactory<BeaconDbContext> dbFac
 
     private static bool EqualsIgnoreCase(string? left, string right) =>
         string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
+
+    private static string ToTitleCase(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        return string.Join(" ", value
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Select(part => char.ToUpperInvariant(part[0]) + part[1..].ToLowerInvariant()));
+    }
 
     private static string NormalizeReintegrationDashboardStage(string? value)
     {

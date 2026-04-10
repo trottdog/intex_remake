@@ -217,7 +217,6 @@ export default function DonorDashboard() {
   const givingTrend = (data.givingTrend ?? []).filter(p => p.amount > 0 || true);
   const allocation = data.allocationBreakdown ?? [];
   const recent = data.recentDonations ?? [];
-  const mlItems = data.mlReintegrationReadiness ?? [];
 
   const firstName = user?.firstName ?? "Donor";
 
@@ -456,8 +455,8 @@ export default function DonorDashboard() {
         </div>
       </div>
 
-      {/* ── RECENT DONATIONS + ML INSIGHTS ───────────────────────── */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      {/* ── RECENT DONATIONS ─────────────────────────────────────── */}
+      <div>
 
         {/* Recent donations */}
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
@@ -499,58 +498,6 @@ export default function DonorDashboard() {
           )}
         </div>
 
-        {/* ML Reintegration readiness */}
-        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wide">AI Reintegration Insights</h3>
-              <p className="text-xs text-gray-400 mt-0.5">ML-predicted readiness for residents — powered by our model</p>
-            </div>
-            <Sparkles className="w-4 h-4 text-[#2a9d72]" />
-          </div>
-          {mlItems.length > 0 ? (
-            <div className="divide-y divide-gray-50">
-              {mlItems.map((m, i) => {
-                const pct = Math.round((m.predictionScore ?? 0) * 100);
-                const color = pct >= 80 ? "#2a9d72" : pct >= 60 ? "#e9c46a" : "#f4a261";
-                return (
-                  <div key={m.predictionId ?? i} className="px-6 py-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: color }}
-                        />
-                        <span className="text-sm font-semibold text-gray-800">
-                          {m.entityLabel ?? `Case ${i + 1}`}
-                        </span>
-                      </div>
-                      <span
-                        className="text-sm font-black"
-                        style={{ color }}
-                      >
-                        {pct}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-1.5 mb-1.5">
-                      <div
-                        className="h-1.5 rounded-full transition-all"
-                        style={{ width: `${pct}%`, backgroundColor: color }}
-                      />
-                    </div>
-                    {Boolean(m.contextJson?.reason) && (
-                      <div className="text-xs text-gray-400">{String((m.contextJson as Record<string, unknown>).reason)}</div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="px-6 py-10 text-center text-gray-300 text-sm">
-              ML pipeline results appear here as predictions are generated
-            </div>
-          )}
-        </div>
       </div>
 
       {/* ── IMPACT REPORTS ───────────────────────────────────────── */}
