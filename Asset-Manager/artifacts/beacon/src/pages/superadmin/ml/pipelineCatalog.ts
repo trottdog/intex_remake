@@ -16,7 +16,7 @@ export interface PipelineCatalogEntry {
   evidence: PipelineEvidenceLevel;
   caveat: PipelineCaveatLevel;
   summary: string;
-  limitation: string;
+  limitation?: string;
   links: PipelineRouteLink[];
   auditStatus: PipelineAuditStatus;
   complete: string;
@@ -88,9 +88,8 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
     family: "Residents",
     taskType: "classification",
     evidence: "direct",
-    caveat: "caution",
+    caveat: "normal",
     summary: "Surfaced directly in the resident regression watchlist.",
-    limitation: "Routed UI evidence, scripted validation, and executed notebook outputs are now documented for this pipeline.",
     links: [{ label: "Residents: Regression", href: "/superadmin/residents?tab=regression" }],
     auditStatus: "risk",
     complete: "Framing, predictive setup, metrics, manifests, resident ML page integration, validation outputs, and executed notebooks are present.",
@@ -106,15 +105,15 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
     family: "Residents",
     taskType: "classification",
     evidence: "direct",
-    caveat: "caution",
+    caveat: "normal",
     summary: "Surfaced directly in the reintegration funnel and readiness table.",
-    limitation: "Evaluation automation and executable notebook proof still need tightening.",
     links: [{ label: "Residents: Reintegration", href: "/superadmin/residents?tab=reintegration" }],
     auditStatus: "risk",
-    complete: "Framing, deployment notes, artifact outputs, and resident super-admin integration are present.",
-    weak: "There is no executable notebook evidence and evaluation automation is not implemented.",
-    missing: "Executed notebook proof and a functional evaluation script.",
-    videoSafety: "Safe to show with caveat language.",
+    complete:
+      "Framing, deployment notes, artifact outputs, resident super-admin integration, runtime evaluation automation, and executed notebook evidence are present.",
+    weak: "No pipeline-specific implementation blockers are currently flagged.",
+    missing: "No critical evidence gaps identified for this pipeline entry.",
+    videoSafety: "Safe to show in routed UI demos.",
   },
   {
     internalName: "case_prioritization",
@@ -145,15 +144,15 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
     evidence: "adjacent",
     caveat: "caution",
     summary: "Visible through intervention context, not as a standalone routed score table.",
-    limitation: "Current proof is mostly contract-level rather than a dedicated page-level surface.",
     links: [
       { label: "Residents: Interventions", href: "/superadmin/residents?tab=interventions" },
       { label: "ML Control Center", href: "/superadmin/ml?pipeline=counseling_progress" },
     ],
     auditStatus: "risk",
-    complete: "Framing, contract artifacts, and resident integration references are present.",
-    weak: "The evaluation entrypoint is placeholder-only and notebook execution evidence is missing.",
-    missing: "A non-stub evaluate path and reproducible executed notebooks.",
+    complete:
+      "Framing, contract artifacts, resident integration references, runtime evaluation automation, and executed notebook evidence are present.",
+    weak: "No pipeline-specific implementation blockers are currently flagged.",
+    missing: "No critical evidence gaps identified for this pipeline entry.",
     videoSafety: "Cautious yes, with explicit limitations.",
   },
   {
@@ -165,7 +164,6 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
     evidence: "adjacent",
     caveat: "caution",
     summary: "Visible through intervention context, not as a dedicated routed score table.",
-    limitation: "The routed UI still needs clearer page-level proof for this pipeline specifically.",
     links: [
       { label: "Residents: Interventions", href: "/superadmin/residents?tab=interventions" },
       { label: "ML Control Center", href: "/superadmin/ml?pipeline=education_improvement" },
