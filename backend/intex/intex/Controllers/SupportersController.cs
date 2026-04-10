@@ -114,6 +114,16 @@ public sealed class SupportersController(ISupporterService supporterService) : A
         => Ok(await supporterService.GetGivingStatsAsync(id, cancellationToken));
 
     [Authorize(Policy = PolicyNames.StaffOrAbove)]
+    [HttpGet("{id:long}/profile")]
+    [ProducesResponseType<SupporterProfileResponseDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<SupporterProfileResponseDto>> GetSupporterProfile(long id, CancellationToken cancellationToken)
+    {
+        var profile = await supporterService.GetSupporterProfileAsync(id, cancellationToken);
+        return profile is null ? NotFound(new ErrorResponse("Not found")) : Ok(profile);
+    }
+
+    [Authorize(Policy = PolicyNames.StaffOrAbove)]
     [HttpGet]
     [ProducesResponseType<StandardPagedResponse<SupporterResponseDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<StandardPagedResponse<SupporterResponseDto>>> ListSupporters([FromQuery] ListSupportersQuery query, CancellationToken cancellationToken)

@@ -17,10 +17,12 @@ import {
   fmtPeso, fmtDate, fmtRelativeDate, fmtScore, ACCENT,
 } from "./ml/Shared";
 import { PipelineCoveragePanel, PipelineInterpretationNotice } from "./ml/PipelineCoveragePanel";
+import { SupporterManagementPanel } from "@/components/supporters/SupporterManagementPanel";
 
-type Tab = "churn" | "upgrade" | "attribution";
+type Tab = "supporters" | "churn" | "upgrade" | "attribution";
 
 const TABS: { id: Tab; label: string }[] = [
+  { id: "supporters", label: "Supporters" },
   { id: "churn", label: "Churn Risk" },
   { id: "upgrade", label: "Upgrade Potential" },
   { id: "attribution", label: "Donation Attribution" },
@@ -602,8 +604,8 @@ function AttributionTab() {
 
 export default function MLDonorsPage() {
   const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
-  const defaultTab = (params.get("tab") as Tab) || "churn";
-  const [tab, setTab] = useState<Tab>(["churn", "upgrade", "attribution"].includes(defaultTab) ? defaultTab : "churn");
+  const defaultTab = (params.get("tab") as Tab) || "supporters";
+  const [tab, setTab] = useState<Tab>(["supporters", "churn", "upgrade", "attribution"].includes(defaultTab) ? defaultTab : "supporters");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -613,6 +615,11 @@ export default function MLDonorsPage() {
   }, [tab]);
 
   const coverageByTab: Record<Tab, { title: string; subtitle: string; pipelines: string[] }> = {
+    supporters: {
+      title: "Supporter Management",
+      subtitle: "View complete supporter profiles, donation history, and maintain supporter records from this route.",
+      pipelines: [],
+    },
     churn: {
       title: "Churn Coverage",
       subtitle: "This route is the direct UI surface for donor retention scoring.",
@@ -633,20 +640,23 @@ export default function MLDonorsPage() {
   return (
     <div className="space-y-6 pb-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Supporter Intelligence</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Supporters & Intelligence</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          Direct routed views for donor retention and donor upgrade, with attribution context and adjacent forecast support
+          Manage supporter records and donation history, with routed ML views for retention, upgrade, and attribution context
         </p>
       </div>
 
       <TabBar tabs={TABS} active={tab} onChange={setTab} />
 
-      <PipelineCoveragePanel
-        title={coverageByTab[tab].title}
-        subtitle={coverageByTab[tab].subtitle}
-        pipelineNames={coverageByTab[tab].pipelines}
-      />
+      {tab !== "supporters" && (
+        <PipelineCoveragePanel
+          title={coverageByTab[tab].title}
+          subtitle={coverageByTab[tab].subtitle}
+          pipelineNames={coverageByTab[tab].pipelines}
+        />
+      )}
 
+      {tab === "supporters" && <SupporterManagementPanel />}
       {tab === "churn" && <ChurnTab />}
       {tab === "upgrade" && <UpgradeTab />}
       {tab === "attribution" && <AttributionTab />}

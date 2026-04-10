@@ -3,9 +3,10 @@ import { useLocation } from "wouter";
 import { useListResidents, useCreateResident, type Resident } from "@/services/residents.service";
 import { useListSafehouses } from "@/services/superadmin.service";
 import { useQueryPagination } from "@/hooks/useQueryPagination";
-import { Users, Plus, Search, Eye, AlertTriangle, X, Loader2 } from "lucide-react";
+import { Users, Plus, Search, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ResidentProfileFormModal } from "@/components/residents/ResidentProfileFormModal";
 
 const RISK_BADGE: Record<string, { pill: string; dot: string }> = {
   Low:      { pill: "bg-green-50  text-green-700  border border-green-200",  dot: "bg-green-500"  },
@@ -24,7 +25,6 @@ const REINTEGRATION_BADGE: Record<string, { pill: string; dot: string }> = {
   "Not Started": { pill: "bg-gray-100   text-gray-500   border border-gray-200",   dot: "bg-gray-400"   },
   "In Progress": { pill: "bg-blue-50    text-blue-700   border border-blue-200",   dot: "bg-blue-500"   },
   "On Hold":     { pill: "bg-amber-50   text-amber-700  border border-amber-200",  dot: "bg-amber-400"  },
-  Ready:         { pill: "bg-teal-50    text-teal-700   border border-teal-200",   dot: "bg-teal-500"   },
   Completed:     { pill: "bg-[#e6f4ee]  text-[#0e6641]  border border-[#b3deca]", dot: "bg-[#2a9d72]"  },
 };
 
@@ -41,178 +41,6 @@ const SUBCATS: { key: keyof Resident; label: string; color: string }[] = [
   { key: "subCatChildWithHiv", label: "Child w/ HIV", color: "bg-purple-50 text-purple-700 border border-purple-200" },
 ];
 
-const CASE_CATEGORIES = [
-  "Surrendered", "Abandoned", "Neglected", "Abused",
-  "Exploited", "Trafficked", "CICL", "At Risk", "Other",
-];
-
-function AddResidentModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
-  const { data: safehousesData, isLoading: loadingSafehouses } = useListSafehouses({ pageSize: 100 });
-  const createResident = useCreateResident();
-  const safehouses = safehousesData?.data ?? [];
-
-  const [form, setForm] = useState({
-    caseCategory: "",
-    sex: "",
-    dateOfBirth: "",
-    dateOfAdmission: new Date().toISOString().slice(0, 10),
-    safehouseId: "" as string | number,
-    caseStatus: "Active",
-    initialRiskLevel: "Low",
-    referralSource: "",
-    assignedSocialWorker: "",
-  });
-  const [error, setError] = useState<string | null>(null);
-
-  function set(key: string, value: string | number) {
-    setForm(prev => ({ ...prev, [key]: value }));
-  }
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (createResident.isPending) return;
-    setError(null);
-    if (!form.safehouseId) { setError("Please assign a safehouse."); return; }
-
-    const body: Record<string, unknown> = {
-      caseCategory: form.caseCategory || null,
-      sex: form.sex || null,
-      dateOfBirth: form.dateOfBirth || null,
-      dateOfAdmission: form.dateOfAdmission || null,
-      safehouseId: Number(form.safehouseId),
-      caseStatus: form.caseStatus,
-      initialRiskLevel: form.initialRiskLevel,
-      currentRiskLevel: form.initialRiskLevel,
-      referralSource: form.referralSource || null,
-      assignedSocialWorker: form.assignedSocialWorker || null,
-    };
-
-    createResident.mutate(body, {
-      onSuccess: () => { onCreated(); onClose(); },
-      onError: (err) => setError((err as { message?: string })?.message ?? "Failed to create resident."),
-    });
-  }
-
-  const fieldCls = "w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 focus:border-[#2a9d72] bg-white";
-  const labelCls = "block text-xs font-semibold text-gray-500 mb-1";
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <form onSubmit={handleSubmit} className="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden max-h-[90vh] flex flex-col">
-        <div className="bg-[#0e2118] px-6 pt-5 pb-4 shrink-0">
-          <button type="button" onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 transition-colors">
-            <X className="w-4 h-4" />
-          </button>
-          <div className="flex items-center gap-2 mb-1">
-            <Plus className="w-4 h-4 text-[#2a9d72]" />
-            <span className="text-[#2a9d72] text-xs font-semibold uppercase tracking-wide">New Resident</span>
-          </div>
-          <h2 className="text-lg font-bold text-white">Add Resident</h2>
-        </div>
-
-        <div className="overflow-y-auto flex-1 px-6 py-5 space-y-4">
-          <div className="rounded-xl border border-[#cfe7dc] bg-[#f5fbf8] px-4 py-3 text-sm text-[#245844]">
-            Internal code is generated automatically after the resident is created.
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Safehouse <span className="text-red-400">*</span></label>
-              {loadingSafehouses ? (
-                <div className="flex items-center gap-2 text-gray-400 text-sm py-2"><Loader2 className="w-4 h-4 animate-spin" /> Loading...</div>
-              ) : (
-                <select className={fieldCls} value={form.safehouseId} onChange={e => set("safehouseId", e.target.value)}>
-                  <option value="">Select safehouse...</option>
-                  {safehouses.map(s => (
-                    <option key={s.safehouseId ?? s.id} value={s.safehouseId ?? s.id ?? ""}>{s.name ?? `Safehouse #${s.safehouseId ?? s.id}`}</option>
-                  ))}
-                </select>
-              )}
-            </div>
-            <div>
-              <label className={labelCls}>Case Category</label>
-              <select className={fieldCls} value={form.caseCategory} onChange={e => set("caseCategory", e.target.value)}>
-                <option value="">Select...</option>
-                {CASE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Sex</label>
-              <select className={fieldCls} value={form.sex} onChange={e => set("sex", e.target.value)}>
-                <option value="">Select...</option>
-                <option value="female">Female</option>
-                <option value="male">Male</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelCls}>Case Status</label>
-              <select className={fieldCls} value={form.caseStatus} onChange={e => set("caseStatus", e.target.value)}>
-                <option value="Active">Active</option>
-                <option value="Closed">Closed</option>
-                <option value="Transferred">Transferred</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Date of Birth</label>
-              <input type="date" className={fieldCls} value={form.dateOfBirth} onChange={e => set("dateOfBirth", e.target.value)} />
-            </div>
-            <div>
-              <label className={labelCls}>Date of Admission</label>
-              <input type="date" className={fieldCls} value={form.dateOfAdmission} onChange={e => set("dateOfAdmission", e.target.value)} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Initial Risk Level</label>
-              <select className={fieldCls} value={form.initialRiskLevel} onChange={e => set("initialRiskLevel", e.target.value)}>
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-                <option value="Critical">Critical</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Referral Source</label>
-              <input className={fieldCls} value={form.referralSource} onChange={e => set("referralSource", e.target.value)} placeholder="e.g. DSWD, NGO..." />
-            </div>
-            <div>
-              <label className={labelCls}>Assigned Social Worker</label>
-              <input className={fieldCls} value={form.assignedSocialWorker} onChange={e => set("assignedSocialWorker", e.target.value)} placeholder="Worker name" />
-            </div>
-          </div>
-
-          {error && (
-            <div className="flex items-center gap-2 text-red-600 text-xs bg-red-50 border border-red-100 rounded-xl px-3 py-2">
-              <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> {error}
-            </div>
-          )}
-        </div>
-
-        <div className="px-6 py-4 border-t border-gray-100 shrink-0 flex gap-3">
-          <button type="button" onClick={onClose} className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors">
-            Cancel
-          </button>
-          <button type="submit" disabled={createResident.isPending}
-            className="flex-1 py-2.5 bg-[#2a9d72] text-white rounded-xl font-bold text-sm hover:bg-[#23856a] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2">
-            {createResident.isPending ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : <><Plus className="w-4 h-4" /> Add Resident</>}
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-}
-
 export default function ResidentsPage() {
   const [location, navigate] = useLocation();
   const isSuperAdmin = location.startsWith("/superadmin");
@@ -222,8 +50,10 @@ export default function ResidentsPage() {
   const [filterRisk, setFilterRisk] = useState("");
   const [filterSafehouse, setFilterSafehouse] = useState<number | null>(null);
   const [showAdd, setShowAdd] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const { page, pageSize, setPage } = useQueryPagination();
   const { data: safehousesData } = useListSafehouses({ pageSize: 100 });
+  const createResident = useCreateResident();
   const safehouses = safehousesData?.data ?? [];
 
   useEffect(() => {
@@ -274,7 +104,30 @@ export default function ResidentsPage() {
 
   return (
     <div className="space-y-6">
-      {showAdd && <AddResidentModal onClose={() => setShowAdd(false)} onCreated={() => setPage(1)} />}
+      <ResidentProfileFormModal
+        open={showAdd}
+        mode="create"
+        safehouses={safehouses}
+        isPending={createResident.isPending}
+        error={createError}
+        onClose={() => {
+          if (createResident.isPending) return;
+          setCreateError(null);
+          setShowAdd(false);
+        }}
+        onSubmit={(payload) => {
+          setCreateError(null);
+          createResident.mutate(payload, {
+            onSuccess: () => {
+              setPage(1);
+              setShowAdd(false);
+            },
+            onError: (error) => {
+              setCreateError((error as { message?: string })?.message ?? "Failed to create resident.");
+            },
+          });
+        }}
+      />
 
       <div className="flex items-center justify-between">
         <div>

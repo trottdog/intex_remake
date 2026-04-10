@@ -90,8 +90,39 @@ public sealed class ResidentRepository(BeaconDbContext dbContext) : IResidentRep
             return false;
         }
 
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        await dbContext.CaseConferences
+            .Where(conference => conference.ResidentId == residentId)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        await dbContext.EducationRecords
+            .Where(record => record.ResidentId == residentId)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        await dbContext.HealthWellbeingRecords
+            .Where(record => record.ResidentId == residentId)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        await dbContext.HomeVisitations
+            .Where(visit => visit.ResidentId == residentId)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        await dbContext.IncidentReports
+            .Where(report => report.ResidentId == residentId)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        await dbContext.InterventionPlans
+            .Where(plan => plan.ResidentId == residentId)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        await dbContext.ProcessRecordings
+            .Where(recording => recording.ResidentId == residentId)
+            .ExecuteDeleteAsync(cancellationToken);
+
         dbContext.Residents.Remove(entity);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
         return true;
     }
 

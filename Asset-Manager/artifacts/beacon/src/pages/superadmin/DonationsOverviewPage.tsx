@@ -4,11 +4,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, apiPost, apiDelete } from "@/services/api";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
+import { AdminDonationEntryModal } from "@/components/donations/AdminDonationEntryModal";
 import {
   DollarSign, TrendingUp, Users, Search, Layers,
   X, Plus, Trash2, CheckCircle2, AlertCircle, Loader2, RefreshCw,
   Globe, Building2,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const PROGRAM_AREAS = ["Outreach", "Education", "Wellbeing", "Maintenance", "Operations", "Transport"];
 
@@ -311,6 +313,7 @@ export default function DonationsOverviewPage() {
   const [allocFilter, setAllocFilter] = useState<"all" | "unallocated" | "allocated">("all");
   const [fundType, setFundType] = useState<"all" | "general" | "directed">("all");
   const [page, setPage] = useState(1);
+  const [showCreate, setShowCreate] = useState(false);
 
   const { data: donationsData, isLoading } = useQuery({
     queryKey: ["admin-donations", fundType, page],
@@ -372,10 +375,17 @@ export default function DonationsOverviewPage() {
       {selectedDonation && (
         <AllocateModal donation={selectedDonation} safehouses={safehouses} onClose={() => setSelectedDonation(null)} />
       )}
+      {showCreate && <AdminDonationEntryModal mode="superadmin" onClose={() => setShowCreate(false)} />}
 
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Fundraising & Donations</h1>
-        <p className="text-sm text-gray-500 mt-1">Allocate donated funds to safehouses and program areas</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Fundraising & Donations</h1>
+          <p className="text-sm text-gray-500 mt-1">Allocate donated funds to safehouses and program areas</p>
+        </div>
+        <Button onClick={() => setShowCreate(true)} className="bg-[#2a9d72] hover:bg-[#23856a]">
+          <Plus className="w-4 h-4 mr-2" />
+          Add Donation
+        </Button>
       </div>
 
       {/* KPI cards */}

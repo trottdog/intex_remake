@@ -11,6 +11,7 @@ public interface ISupporterService
     Task<(RecurringStatusResponse? Response, string? ErrorMessage)> UpdateRecurringStatusAsync(long supporterId, UpdateRecurringRequest request, CancellationToken cancellationToken = default);
     Task<SupporterStatsResponseDto> GetStatsAsync(CancellationToken cancellationToken = default);
     Task<SupporterGivingStatsDto> GetGivingStatsAsync(long supporterId, CancellationToken cancellationToken = default);
+    Task<SupporterProfileResponseDto?> GetSupporterProfileAsync(long supporterId, CancellationToken cancellationToken = default);
     Task<StandardPagedResponse<SupporterResponseDto>> ListSupportersAsync(ListSupportersQuery query, CancellationToken cancellationToken = default);
     Task<SupporterResponseDto> CreateSupporterAsync(CreateSupporterRequest request, CancellationToken cancellationToken = default);
     Task<SupporterResponseDto?> GetSupporterAsync(long supporterId, CancellationToken cancellationToken = default);

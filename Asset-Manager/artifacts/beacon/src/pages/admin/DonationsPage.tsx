@@ -4,10 +4,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, apiPost, apiDelete } from "@/services/api";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
+import { AdminDonationEntryModal } from "@/components/donations/AdminDonationEntryModal";
 import {
   DollarSign, TrendingUp, Search, Layers, Building2,
   X, Plus, Trash2, CheckCircle2, AlertCircle, Loader2, RefreshCw,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const PROGRAM_AREAS = ["Outreach", "Education", "Wellbeing", "Maintenance", "Operations", "Transport"];
 
@@ -266,6 +268,7 @@ export default function AdminDonationsPage() {
   const [search, setSearch] = useState("");
   const [allocFilter, setAllocFilter] = useState<"all" | "unallocated" | "allocated">("all");
   const [selectedDonation, setSelectedDonation] = useState<RichDonation | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
 
   const { data: donationsData, isLoading } = useQuery({
     queryKey: ["admin-safehouse-donations"],
@@ -297,10 +300,17 @@ export default function AdminDonationsPage() {
   return (
     <div className="p-6 space-y-6">
       {selectedDonation && <AllocateModal donation={selectedDonation} onClose={() => setSelectedDonation(null)} />}
+      {showCreate && <AdminDonationEntryModal mode="admin" onClose={() => setShowCreate(false)} />}
 
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Donations</h1>
-        <p className="text-sm text-gray-500 mt-1">Donations directed to your safehouse — allocate them to program areas</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Donations</h1>
+          <p className="text-sm text-gray-500 mt-1">Donations directed to your safehouse — allocate them to program areas</p>
+        </div>
+        <Button onClick={() => setShowCreate(true)} className="bg-[#2a9d72] hover:bg-[#23856a]">
+          <Plus className="w-4 h-4 mr-2" />
+          Add Donation
+        </Button>
       </div>
 
       <div className="flex items-center gap-2 bg-[#f0faf6] border border-[#c8e6d4] text-[#2a9d72] text-sm rounded-xl px-4 py-3">

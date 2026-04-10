@@ -1,17 +1,16 @@
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useQueryPagination } from "@/hooks/useQueryPagination";
-import { useListSupporters, useGetSupporterStats, type Supporter, type SupporterStatsSupportTypeMixItem } from "@/services/supporters.service";
+import { useGetSupporterStats, type SupporterStatsSupportTypeMixItem } from "@/services/supporters.service";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, apiPost, apiDelete } from "@/services/api";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
+import { SupporterManagementPanel } from "@/components/supporters/SupporterManagementPanel";
 import {
-  Search, Heart, Loader2, Users, DollarSign, TrendingUp,
+  Search, Loader2, Users, DollarSign, TrendingUp,
   Layers, Building2, X, Plus, Trash2, CheckCircle2, AlertCircle, RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const PROGRAM_AREAS = ["Outreach", "Education", "Wellbeing", "Maintenance", "Operations", "Transport"];
@@ -265,13 +264,9 @@ function AllocateModal({ donation, onClose }: { donation: RichDonation; onClose:
 export default function DonorsPage() {
   const { token } = useAuth();
   const [tab, setTab] = useState<"supporters" | "donations">("supporters");
-  const [search, setSearch] = useState("");
   const [donorSearch, setDonorSearch] = useState("");
   const [allocFilter, setAllocFilter] = useState<"all" | "unallocated" | "allocated">("all");
   const [selectedDonation, setSelectedDonation] = useState<RichDonation | null>(null);
-  const { page, pageSize, setPage } = useQueryPagination();
-
-  const { data, isLoading: loadingSupps } = useListSupporters({ page, pageSize });
   const { data: stats } = useGetSupporterStats();
 
   const { data: donationsData, isLoading: loadingDonations } = useQuery({
@@ -311,10 +306,6 @@ export default function DonorsPage() {
   const totalReceived = allDonations.reduce((s, d) => s + d.amount, 0);
   const totalAllocated = allDonations.reduce((s, d) => s + d.totalAllocated, 0);
   const pendingCount = allDonations.filter(d => d.unallocated > 0.005).length;
-
-  const filteredSupps = (data?.data ?? []).filter((s: Supporter) =>
-    !search || `${s.firstName} ${s.lastName} ${s.email}`.toLowerCase().includes(search.toLowerCase())
-  );
 
   return (
     <div className="space-y-6">
@@ -396,83 +387,7 @@ export default function DonorsPage() {
             </div>
           )}
 
-          <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100">
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <Input placeholder="Search supporters by name or email..." className="pl-9"
-                  value={search} onChange={e => setSearch(e.target.value)} />
-              </div>
-            </div>
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Name</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Type</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Channel</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Lifetime Giving</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Gifts</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Last Gift</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Status</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Recurring</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {loadingSupps ? (
-                  Array.from({ length: 5 }, (_, i) => (
-                    <tr key={`skel-${i}`}><td colSpan={8} className="px-4 py-3"><div className="h-6 bg-gray-100 rounded animate-pulse" /></td></tr>
-                  ))
-                ) : filteredSupps.length === 0 ? (
-                  <tr><td colSpan={8} className="px-4 py-12 text-center text-gray-400 text-sm">No supporters found</td></tr>
-                ) : filteredSupps.map((s: Supporter) => {
-                  const name = s.displayName || `${s.firstName ?? ""} ${s.lastName ?? ""}`.trim() || s.organizationName || "—";
-                  const isRecurring = s.recurringEnabled || s.hasRecurring;
-                  const statusColor = s.status === "active" || !s.status
-                    ? "bg-green-100 text-green-700"
-                    : s.status === "inactive" ? "bg-gray-100 text-gray-500" : "bg-amber-100 text-amber-700";
-                  return (
-                    <tr key={s.supporterId ?? s.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="font-medium text-gray-900">{name}</div>
-                        <div className="text-xs text-gray-500">{s.email ?? "—"}</div>
-                        {s.region && <div className="text-xs text-gray-400">{s.region}{s.country ? `, ${s.country}` : ""}</div>}
-                      </td>
-                      <td className="px-4 py-3 capitalize text-gray-600 text-xs">{s.supporterType ?? "—"}</td>
-                      <td className="px-4 py-3 capitalize text-gray-500 text-xs">{s.acquisitionChannel ?? "—"}</td>
-                      <td className="px-4 py-3 font-semibold text-[#0e2118]">
-                        ₱{Number(s.lifetimeGiving || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="px-4 py-3 text-gray-500 text-xs text-center">{s.donationCount ?? 0}</td>
-                      <td className="px-4 py-3 text-gray-500 text-xs">
-                        {s.lastGiftDate ? new Date(s.lastGiftDate).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }) : "—"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColor}`}>
-                          {s.status ?? "active"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        {isRecurring ? (
-                          <span className="inline-flex items-center gap-1 text-xs text-[#2a9d72] font-medium">
-                            <Heart className="w-3 h-3" /> Yes
-                          </span>
-                        ) : <span className="text-gray-300 text-xs">—</span>}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            {(data?.total ?? 0) > pageSize && (
-              <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
-                <span>Total: {data?.total ?? 0} supporters</span>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</Button>
-                  <Button variant="outline" size="sm" disabled={page >= Math.ceil((data?.total ?? 1) / pageSize)} onClick={() => setPage(page + 1)}>Next</Button>
-                </div>
-              </div>
-            )}
-          </div>
+          <SupporterManagementPanel />
         </>
       )}
 

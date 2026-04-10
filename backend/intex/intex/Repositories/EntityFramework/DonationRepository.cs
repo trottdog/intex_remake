@@ -1,13 +1,67 @@
 using System.Text.Json;
 using backend.intex.Entities.Database;
+using backend.intex.Infrastructure.Data;
 using backend.intex.Infrastructure.Data.EntityFramework;
 using backend.intex.Repositories.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using Npgsql;
 
 namespace backend.intex.Repositories.EntityFramework;
 
-public sealed class DonationRepository(BeaconDbContext dbContext) : IDonationRepository
+public sealed class DonationRepository(BeaconDbContext dbContext, IPostgresConnectionFactory connectionFactory) : IDonationRepository
 {
+    public async Task<IReadOnlyList<PriorDonorSupporterOptionRecord>> SearchPriorDonorSupportersAsync(string? search, int limit, CancellationToken cancellationToken = default)
+    {
+        var donorAggregates = await dbContext.Donations.AsNoTracking()
+            .Where(item => item.SupporterId.HasValue)
+            .GroupBy(item => item.SupporterId!.Value)
+            .Select(group => new
+            {
+                SupporterId = group.Key,
+                DonationCount = group.Count(),
+                LifetimeGiving = group.Sum(item => item.Amount) ?? 0m
+            })
+            .ToListAsync(cancellationToken);
+
+        if (donorAggregates.Count == 0)
+        {
+            return [];
+        }
+
+        var supporterIds = donorAggregates.Select(item => item.SupporterId).ToList();
+        var supporters = await dbContext.Supporters.AsNoTracking()
+            .Where(item => supporterIds.Contains(item.SupporterId))
+            .ToListAsync(cancellationToken);
+
+        var normalizedSearch = search?.Trim();
+        return supporters
+            .Join(
+                donorAggregates,
+                supporter => supporter.SupporterId,
+                aggregate => aggregate.SupporterId,
+                (supporter, aggregate) => new PriorDonorSupporterOptionRecord(
+                    supporter.SupporterId,
+                    ResolveSupporterDisplayName(supporter),
+                    supporter.Email,
+                    aggregate.DonationCount,
+                    decimal.Round(aggregate.LifetimeGiving, 2)))
+            .Where(item =>
+                string.IsNullOrWhiteSpace(normalizedSearch)
+                || item.DisplayName.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase)
+                || (!string.IsNullOrWhiteSpace(item.Email) && item.Email.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase)))
+            .OrderByDescending(item => item.DonationCount)
+            .ThenBy(item => item.DisplayName, StringComparer.OrdinalIgnoreCase)
+            .Take(limit)
+            .ToList();
+    }
+
+    public Task<bool> SupporterExistsAsync(long supporterId, CancellationToken cancellationToken = default) =>
+        dbContext.Supporters.AsNoTracking().AnyAsync(item => item.SupporterId == supporterId, cancellationToken);
+
+    public Task<bool> SafehouseExistsAsync(long safehouseId, CancellationToken cancellationToken = default) =>
+        dbContext.Safehouses.AsNoTracking().AnyAsync(item => item.SafehouseId == safehouseId, cancellationToken);
+
     public async Task<(IReadOnlyList<DonationLedgerRecord> Donations, int Total)> ListMyLedgerAsync(long supporterId, int page, int pageSize, CancellationToken cancellationToken = default)
     {
         var query = dbContext.Donations.AsNoTracking().Where(donation => donation.SupporterId == supporterId);
@@ -97,6 +151,123 @@ public sealed class DonationRepository(BeaconDbContext dbContext) : IDonationRep
         dbContext.Donations.Add(donation);
         await dbContext.SaveChangesAsync(cancellationToken);
         return donation;
+    }
+
+    public async Task<DonationSummaryRecord?> CreateAdministrativeDonationAsync(AdminDonationCreateCommand command, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        long supporterId;
+        if (command.ExistingSupporterId.HasValue)
+        {
+            supporterId = command.ExistingSupporterId.Value;
+            var supporter = await dbContext.Supporters.FirstOrDefaultAsync(item => item.SupporterId == supporterId, cancellationToken);
+            if (supporter is null)
+            {
+                return null;
+            }
+
+            ApplySupporterDonationSideEffects(supporter, command.DonationDate, command.IsRecurring);
+        }
+        else if (command.Supporter is not null)
+        {
+            var supporter = new Supporter
+            {
+                SupporterType = command.Supporter.SupporterType,
+                DisplayName = command.Supporter.DisplayName,
+                OrganizationName = command.Supporter.OrganizationName,
+                FirstName = command.Supporter.FirstName,
+                LastName = command.Supporter.LastName,
+                RelationshipType = command.Supporter.RelationshipType,
+                Region = command.Supporter.Region,
+                Country = command.Supporter.Country,
+                Email = command.Supporter.Email,
+                Phone = command.Supporter.Phone,
+                Status = command.Supporter.Status,
+                CreatedAt = command.Supporter.CreatedAt,
+                FirstDonationDate = command.Supporter.FirstDonationDate ?? command.DonationDate,
+                AcquisitionChannel = command.Supporter.AcquisitionChannel,
+                CanLogin = false,
+                RecurringEnabled = command.IsRecurring
+            };
+
+            dbContext.Supporters.Add(supporter);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            supporterId = supporter.SupporterId;
+        }
+        else
+        {
+            return null;
+        }
+
+        var donation = new Donation
+        {
+            SupporterId = supporterId,
+            CampaignId = command.CampaignId,
+            DonationType = command.DonationType,
+            DonationDate = command.DonationDate,
+            IsRecurring = command.IsRecurring,
+            CampaignName = command.CampaignName,
+            ChannelSource = command.ChannelSource,
+            CurrencyCode = command.CurrencyCode,
+            Amount = command.Amount,
+            EstimatedValue = command.EstimatedValue,
+            ImpactUnit = command.ImpactUnit,
+            Notes = command.Notes,
+            ReferralPostId = command.ReferralPostId,
+            SafehouseId = command.SafehouseId
+        };
+
+        dbContext.Donations.Add(donation);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (command.InKindItems.Count > 0)
+        {
+            var nextItemId = await GetNextTableIdAsync(
+                "in_kind_donation_items",
+                "item_id",
+                transaction,
+                cancellationToken);
+            var items = command.InKindItems.Select(item => new InKindDonationItem
+            {
+                ItemId = nextItemId++,
+                DonationId = donation.DonationId,
+                ItemName = item.ItemName,
+                ItemCategory = item.ItemCategory,
+                Quantity = item.Quantity,
+                UnitOfMeasure = item.UnitOfMeasure,
+                EstimatedUnitValue = item.EstimatedUnitValue,
+                IntendedUse = item.IntendedUse,
+                ReceivedCondition = item.ReceivedCondition
+            }).ToList();
+
+            dbContext.InKindDonationItems.AddRange(items);
+        }
+
+        if (command.Allocations.Count > 0)
+        {
+            var nextAllocationId = await GetNextTableIdAsync(
+                "donation_allocations",
+                "allocation_id",
+                transaction,
+                cancellationToken);
+            var allocations = command.Allocations.Select(item => new DonationAllocation
+            {
+                AllocationId = nextAllocationId++,
+                DonationId = donation.DonationId,
+                SafehouseId = item.SafehouseId ?? command.SafehouseId,
+                ProgramArea = item.ProgramArea,
+                AmountAllocated = item.AmountAllocated,
+                AllocationDate = item.AllocationDate,
+                AllocationNotes = item.AllocationNotes
+            }).ToList();
+
+            dbContext.DonationAllocations.AddRange(allocations);
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return await GetDonationAsync(donation.DonationId, cancellationToken);
     }
 
     public async Task<Donation?> UpdateDonationAsync(long donationId, IReadOnlyDictionary<string, JsonElement> fields, CancellationToken cancellationToken = default)
@@ -203,9 +374,55 @@ public sealed class DonationRepository(BeaconDbContext dbContext) : IDonationRep
 
     public async Task<DonationAllocationRecord?> CreateDonationAllocationAsync(DonationAllocation allocation, CancellationToken cancellationToken = default)
     {
-        dbContext.DonationAllocations.Add(allocation);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return await GetDonationAllocationAsync(allocation.AllocationId, cancellationToken);
+        await using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+        var nextAllocationId = await GetNextTableIdAsync(
+            connection,
+            transaction,
+            "donation_allocations",
+            "allocation_id",
+            cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            INSERT INTO donation_allocations (
+                allocation_id,
+                donation_id,
+                safehouse_id,
+                program_area,
+                amount_allocated,
+                allocation_date,
+                allocation_notes
+            )
+            VALUES (
+                @allocation_id,
+                @donation_id,
+                @safehouse_id,
+                @program_area,
+                @amount_allocated,
+                @allocation_date,
+                @allocation_notes
+            )
+            RETURNING allocation_id;
+            """;
+
+        AddParameter(command, "allocation_id", nextAllocationId);
+        AddParameter(command, "donation_id", allocation.DonationId);
+        AddParameter(command, "safehouse_id", allocation.SafehouseId);
+        AddParameter(command, "program_area", allocation.ProgramArea);
+        AddParameter(command, "amount_allocated", allocation.AmountAllocated);
+        AddParameter(command, "allocation_date", allocation.AllocationDate);
+        AddParameter(command, "allocation_notes", allocation.AllocationNotes);
+
+        var insertedId = await command.ExecuteScalarAsync(cancellationToken);
+        if (insertedId is null || insertedId is DBNull)
+        {
+            return null;
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+        var allocationId = Convert.ToInt64(insertedId);
+        return await GetDonationAllocationAsync(allocationId, cancellationToken);
     }
 
     public async Task<DonationAllocationRecord?> GetDonationAllocationAsync(long allocationId, CancellationToken cancellationToken = default)
@@ -379,6 +596,87 @@ public sealed class DonationRepository(BeaconDbContext dbContext) : IDonationRep
         }
 
         return supporterNamesById;
+    }
+
+    private static string ResolveSupporterDisplayName(Supporter supporter)
+    {
+        if (!string.IsNullOrWhiteSpace(supporter.DisplayName))
+        {
+            return supporter.DisplayName;
+        }
+
+        var fullName = string.Join(" ", new[] { supporter.FirstName, supporter.LastName }
+            .Where(part => !string.IsNullOrWhiteSpace(part))).Trim();
+        if (!string.IsNullOrWhiteSpace(fullName))
+        {
+            return fullName;
+        }
+
+        if (!string.IsNullOrWhiteSpace(supporter.OrganizationName))
+        {
+            return supporter.OrganizationName;
+        }
+
+        return supporter.Email ?? $"Supporter #{supporter.SupporterId}";
+    }
+
+    private void ApplySupporterDonationSideEffects(Supporter supporter, DateOnly donationDate, bool isRecurring)
+    {
+        var values = dbContext.Entry(supporter).CurrentValues;
+        var existingFirstDonationDate = supporter.FirstDonationDate;
+        if (!existingFirstDonationDate.HasValue || donationDate < existingFirstDonationDate.Value)
+        {
+            values[nameof(Supporter.FirstDonationDate)] = donationDate;
+        }
+
+        if (isRecurring && !supporter.RecurringEnabled)
+        {
+            values[nameof(Supporter.RecurringEnabled)] = true;
+        }
+    }
+
+    private async Task<long> GetNextTableIdAsync(
+        string tableName,
+        string columnName,
+        IDbContextTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        var connection = (NpgsqlConnection)dbContext.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+        {
+            await connection.OpenAsync(cancellationToken);
+        }
+
+        return await GetNextTableIdAsync(
+            connection,
+            (NpgsqlTransaction)transaction.GetDbTransaction(),
+            tableName,
+            columnName,
+            cancellationToken);
+    }
+
+    private static async Task<long> GetNextTableIdAsync(
+        NpgsqlConnection connection,
+        NpgsqlTransaction transaction,
+        string tableName,
+        string columnName,
+        CancellationToken cancellationToken)
+    {
+        await using var lockCommand = connection.CreateCommand();
+        lockCommand.Transaction = transaction;
+        lockCommand.CommandText = $"LOCK TABLE {tableName} IN EXCLUSIVE MODE;";
+        await lockCommand.ExecuteNonQueryAsync(cancellationToken);
+
+        await using var nextIdCommand = connection.CreateCommand();
+        nextIdCommand.Transaction = transaction;
+        nextIdCommand.CommandText = $"SELECT COALESCE(MAX({columnName}), 0) + 1 FROM {tableName};";
+        var nextId = await nextIdCommand.ExecuteScalarAsync(cancellationToken);
+        return Convert.ToInt64(nextId);
+    }
+
+    private static void AddParameter(NpgsqlCommand command, string name, object? value)
+    {
+        command.Parameters.AddWithValue(name, value ?? DBNull.Value);
     }
 
     private static bool TryMapField(string key, JsonElement value, out string propertyName, out object? parsedValue)
