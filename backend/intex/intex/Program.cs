@@ -236,6 +236,75 @@ static async Task EnsureRuntimeSchemaAsync(WebApplication app)
                 END IF;
             END $$;
             """);
+
+        await dbContext.Database.ExecuteSqlRawAsync("""
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_schema = 'public'
+                      AND table_name = 'safehouses'
+                      AND column_name = 'safehouse_id'
+                      AND is_identity = 'NO'
+                      AND column_default IS NULL
+                ) THEN
+                    CREATE SEQUENCE IF NOT EXISTS public.safehouses_safehouse_id_seq;
+                    PERFORM setval(
+                        'public.safehouses_safehouse_id_seq',
+                        COALESCE((SELECT MAX(safehouse_id) FROM public.safehouses), 0) + 1,
+                        false);
+                    ALTER TABLE public.safehouses
+                        ALTER COLUMN safehouse_id SET DEFAULT nextval('public.safehouses_safehouse_id_seq');
+                END IF;
+            END $$;
+            """);
+
+        await dbContext.Database.ExecuteSqlRawAsync("""
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_schema = 'public'
+                      AND table_name = 'partners'
+                      AND column_name = 'partner_id'
+                      AND is_identity = 'NO'
+                      AND column_default IS NULL
+                ) THEN
+                    CREATE SEQUENCE IF NOT EXISTS public.partners_partner_id_seq;
+                    PERFORM setval(
+                        'public.partners_partner_id_seq',
+                        COALESCE((SELECT MAX(partner_id) FROM public.partners), 0) + 1,
+                        false);
+                    ALTER TABLE public.partners
+                        ALTER COLUMN partner_id SET DEFAULT nextval('public.partners_partner_id_seq');
+                END IF;
+            END $$;
+            """);
+
+        await dbContext.Database.ExecuteSqlRawAsync("""
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_schema = 'public'
+                      AND table_name = 'partner_assignments'
+                      AND column_name = 'assignment_id'
+                      AND is_identity = 'NO'
+                      AND column_default IS NULL
+                ) THEN
+                    CREATE SEQUENCE IF NOT EXISTS public.partner_assignments_assignment_id_seq;
+                    PERFORM setval(
+                        'public.partner_assignments_assignment_id_seq',
+                        COALESCE((SELECT MAX(assignment_id) FROM public.partner_assignments), 0) + 1,
+                        false);
+                    ALTER TABLE public.partner_assignments
+                        ALTER COLUMN assignment_id SET DEFAULT nextval('public.partner_assignments_assignment_id_seq');
+                END IF;
+            END $$;
+            """);
     }
     catch (Exception ex)
     {
