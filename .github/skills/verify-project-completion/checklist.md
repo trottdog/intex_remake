@@ -462,6 +462,8 @@ Mark only what was actually completed and can be proved.
 
 Audit note (2026-04-09): ML grading-readiness proof is now consolidated in `IS455_GRADING_READINESS.md`. Focused proof command passed locally: `py -3 -m pytest ml/tests/test_is455_grading_readiness.py` -> `13 passed in 72.31s`. Direct headless notebook execution proof also passed via `py -3 ml/scripts/verify_notebook_execution.py`.
 
+Audit note (2026-04-10 ML-only recheck): Scope limited to IS 455 checklist quality and inventory items, explicitly excluding video evidence. ML runtime/tests/docs prove reproducibility, CSV fallback, and app integration routes, but several interpretation-first claims remain partial unless they are shown directly from executed notebook outputs.
+
 ## 7.1 Minimum ML Standard
 
 - [x] At least one complete ML pipeline exists
@@ -486,36 +488,36 @@ Audit note (2026-04-09): ML grading-readiness proof is now consolidated in `IS45
 - [x] Notebook explains why both predictive and explanatory / causal-style analysis were included
 
 ### Data Acquisition, Preparation & Exploration
-- [ ] Relevant tables are identified
-- [ ] Joins are explained
-- [ ] Missing values handled appropriately
+- [x] Relevant tables are identified
+- [x] Joins are explained
+- [~] Missing values handled appropriately
 - [ ] Outliers explored/handled appropriately
-- [ ] Feature engineering is explained
+- [x] Feature engineering is explained
 - [x] Data prep is reproducible
-- [ ] Exploration includes distributions/relationships/anomalies
+- [x] Exploration includes distributions/relationships/anomalies
 - [x] Data paths work relative to the repository structure
 - [x] CSV fallback data is documented clearly enough for TAs to run locally
 
 ### Modeling & Feature Selection
-- [ ] Model choice fits the problem
-- [ ] More than one approach is considered or compared where appropriate
-- [ ] Feature selection is justified
-- [ ] Hyperparameter tuning is included if relevant
-- [ ] Explanatory model discusses relationships clearly
-- [ ] Predictive model focuses on out-of-sample performance
+- [~] Model choice fits the problem
+- [x] More than one approach is considered or compared where appropriate
+- [~] Feature selection is justified
+- [~] Hyperparameter tuning is included if relevant
+- [~] Explanatory model discusses relationships clearly
+- [x] Predictive model focuses on out-of-sample performance
 
 ### Evaluation & Interpretation
-- [ ] Proper train/test split or cross-validation is used
-- [ ] Appropriate metrics are used
-- [ ] Results are interpreted in business language
+- [x] Proper train/test split or cross-validation is used
+- [x] Appropriate metrics are used
+- [~] Results are interpreted in business language
 - [ ] False positives / false negatives are discussed where relevant
-- [ ] Limitations are admitted honestly
+- [x] Limitations are admitted honestly
 
 ### Causal and Relationship Analysis
-- [ ] Most important features are discussed
-- [ ] Team distinguishes correlation from causation
-- [ ] Team explains what claims are defensible vs not defensible
-- [ ] Recommendations are tied to feature findings
+- [~] Most important features are discussed
+- [~] Team distinguishes correlation from causation
+- [~] Team explains what claims are defensible vs not defensible
+- [~] Recommendations are tied to feature findings
 
 ### Deployment Notes
 - [x] Notebook explains where deployment lives in repo/app
@@ -530,31 +532,31 @@ Audit note (2026-04-09): ML grading-readiness proof is now consolidated in `IS45
 
 ## 7.3 Multi-Pipeline Inventory
 
-### Pipeline 1: ______________________
-- [ ] Distinct business problem
-- [ ] Notebook file named clearly
-- [ ] Executable top-to-bottom
-- [ ] CSV fallback path included
-- [ ] Outputs saved in notebook
-- [ ] Integrated into app
+### Pipeline 1: Resident Risk
+- [x] Distinct business problem
+- [x] Notebook file named clearly
+- [x] Executable top-to-bottom
+- [x] CSV fallback path included
+- [x] Outputs saved in notebook
+- [x] Integrated into app
 - [ ] Included in final submission URLs
 
-### Pipeline 2: ______________________
-- [ ] Distinct business problem
-- [ ] Notebook file named clearly
-- [ ] Executable top-to-bottom
-- [ ] CSV fallback path included
-- [ ] Outputs saved in notebook
-- [ ] Integrated into app
+### Pipeline 2: Reintegration Readiness
+- [x] Distinct business problem
+- [x] Notebook file named clearly
+- [x] Executable top-to-bottom
+- [x] CSV fallback path included
+- [x] Outputs saved in notebook
+- [x] Integrated into app
 - [ ] Included in final submission URLs
 
-### Pipeline 3: ______________________
-- [ ] Distinct business problem
-- [ ] Notebook file named clearly
-- [ ] Executable top-to-bottom
-- [ ] CSV fallback path included
-- [ ] Outputs saved in notebook
-- [ ] Integrated into app
+### Pipeline 3: Social Media Conversion
+- [x] Distinct business problem
+- [x] Notebook file named clearly
+- [x] Executable top-to-bottom
+- [x] CSV fallback path included
+- [~] Outputs saved in notebook
+- [x] Integrated into app
 - [ ] Included in final submission URLs
 
 ---
