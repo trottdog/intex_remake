@@ -53,22 +53,13 @@ public sealed class ResidentRepository(BeaconDbContext dbContext) : IResidentRep
         {
             fieldMap["createdAt"] = JsonSerializer.SerializeToElement(DateTime.UtcNow);
         }
+        fieldMap["internalCode"] = JsonSerializer.SerializeToElement(
+            await GenerateInternalCodeAsync(ReadNullableLong(fieldMap, "safehouseId"), cancellationToken));
 
         var resident = JsonSerializer.Deserialize<Resident>(JsonSerializer.Serialize(fieldMap, JsonOptions), JsonOptions)
             ?? throw new InvalidOperationException("The request body is invalid.");
 
         dbContext.Residents.Add(resident);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        var generatedInternalCode = await GenerateInternalCodeAsync(resident.SafehouseId, resident.ResidentId, cancellationToken);
-        var merged = MergeResidentFields(resident, new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["internalCode"] = JsonSerializer.SerializeToElement(generatedInternalCode)
-        });
-        var updated = JsonSerializer.Deserialize<Resident>(JsonSerializer.Serialize(merged, JsonOptions), JsonOptions)
-            ?? throw new InvalidOperationException("Failed to generate the resident internal code.");
-
-        dbContext.Entry(resident).CurrentValues.SetValues(updated);
         await dbContext.SaveChangesAsync(cancellationToken);
         return resident;
     }
@@ -216,11 +207,14 @@ public sealed class ResidentRepository(BeaconDbContext dbContext) : IResidentRep
         return merged;
     }
 
-    private async Task<string> GenerateInternalCodeAsync(long? safehouseId, long residentId, CancellationToken cancellationToken)
+    private async Task<string> GenerateInternalCodeAsync(long? safehouseId, CancellationToken cancellationToken)
     {
+        var nextResidentNumber = (await dbContext.Residents.AsNoTracking()
+            .MaxAsync(resident => (long?)resident.ResidentId, cancellationToken) ?? 0) + 1;
+
         if (!safehouseId.HasValue)
         {
-            return $"RES-R{residentId:D4}";
+            return $"RES-R{nextResidentNumber:D4}";
         }
 
         var safehouseCode = await dbContext.Safehouses.AsNoTracking()
@@ -232,6 +226,18 @@ public sealed class ResidentRepository(BeaconDbContext dbContext) : IResidentRep
             ? $"SH{safehouseId.Value}"
             : safehouseCode.Trim();
 
-        return $"{prefix}-R{residentId:D4}";
+        return $"{prefix}-R{nextResidentNumber:D4}";
+    }
+
+    private static long? ReadNullableLong(IReadOnlyDictionary<string, JsonElement> fields, string key)
+    {
+        if (!fields.TryGetValue(key, out var value) || value.ValueKind == JsonValueKind.Null)
+        {
+            return null;
+        }
+
+        return value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var number)
+            ? number
+            : null;
     }
 }

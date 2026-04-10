@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { useListResidents, useGetResidentStats, useCreateResident, type Resident } from "@/services/residents.service";
+import { useListResidents, useCreateResident, type Resident } from "@/services/residents.service";
 import { useListSafehouses } from "@/services/superadmin.service";
 import { useQueryPagination } from "@/hooks/useQueryPagination";
 import { Users, Plus, Search, Eye, AlertTriangle, X, Loader2 } from "lucide-react";
@@ -70,6 +70,7 @@ function AddResidentModal({ onClose, onCreated }: { onClose: () => void; onCreat
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (createResident.isPending) return;
     setError(null);
     if (!form.safehouseId) { setError("Please assign a safehouse."); return; }
 
@@ -221,23 +222,25 @@ export default function ResidentsPage() {
   const [filterRisk, setFilterRisk] = useState("");
   const [filterSafehouse, setFilterSafehouse] = useState<number | null>(null);
   const [showAdd, setShowAdd] = useState(false);
-  const { page, setPage } = useQueryPagination();
+  const { page, pageSize, setPage } = useQueryPagination();
   const { data: safehousesData } = useListSafehouses({ pageSize: 100 });
   const safehouses = safehousesData?.data ?? [];
 
   useEffect(() => {
     setPage(1);
-  }, [filterSafehouse, filterStatus, setPage]);
+  }, [filterSafehouse, filterStatus, filterRisk, search, setPage]);
 
-  const { data, isLoading } = useListResidents({
-    page,
-    pageSize: 20,
+  const { data: allResidentsData, isLoading } = useListResidents({
+    page: 1,
+    pageSize: 2000,
     safehouseId: filterSafehouse ?? undefined,
     caseStatus: filterStatus || undefined,
   });
-  const { data: stats } = useGetResidentStats({ safehouseId: filterSafehouse ?? undefined });
+  const allResidents = allResidentsData?.data ?? [];
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const rows = (data?.data ?? []).filter((r: Resident) => {
+  const filteredResidents = allResidents.filter((r: Resident) => {
     const q = search.toLowerCase();
     if (q) {
       const searchable = [
@@ -250,6 +253,24 @@ export default function ResidentsPage() {
     if (filterRisk && (r.currentRiskLevel ?? r.riskLevel) !== filterRisk) return false;
     return true;
   });
+  const totalFilteredResidents = filteredResidents.length;
+  const totalPages = totalFilteredResidents === 0 ? 1 : Math.ceil(totalFilteredResidents / pageSize);
+  const safePage = Math.min(page, totalPages);
+  const rows = filteredResidents.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const derivedStats = {
+    totalActive: filteredResidents.filter((resident) => resident.caseStatus === "Active").length,
+    newAdmissions: filteredResidents.filter((resident) => {
+      const rawDate = resident.dateOfAdmission ?? resident.admissionDate;
+      if (!rawDate) return false;
+      const parsed = new Date(rawDate);
+      return !Number.isNaN(parsed.getTime()) && parsed >= thirtyDaysAgo;
+    }).length,
+    highRiskResidents: filteredResidents.filter((resident) => {
+      const risk = resident.currentRiskLevel ?? resident.riskLevel;
+      return risk === "High" || risk === "Critical";
+    }).length,
+    total: totalFilteredResidents,
+  };
 
   return (
     <div className="space-y-6">
@@ -266,23 +287,23 @@ export default function ResidentsPage() {
       </div>
 
       {/* Stats Bar */}
-      {stats && (
+      {(
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white border border-gray-100 rounded-xl p-4">
             <div className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Active Cases</div>
-            <div className="text-2xl font-bold text-gray-900">{stats.totalActive ?? stats.active ?? 0}</div>
+            <div className="text-2xl font-bold text-gray-900">{derivedStats.totalActive}</div>
           </div>
           <div className="bg-white border border-gray-100 rounded-xl p-4">
             <div className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">New This Month</div>
-            <div className="text-2xl font-bold text-[#2a9d72]">{stats.newAdmissions ?? 0}</div>
+            <div className="text-2xl font-bold text-[#2a9d72]">{derivedStats.newAdmissions}</div>
           </div>
           <div className="bg-white border border-gray-100 rounded-xl p-4">
             <div className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">High / Critical Risk</div>
-            <div className="text-2xl font-bold text-red-600">{stats.highRiskResidents ?? 0}</div>
+            <div className="text-2xl font-bold text-red-600">{derivedStats.highRiskResidents}</div>
           </div>
           <div className="bg-white border border-gray-100 rounded-xl p-4">
             <div className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Total Records</div>
-            <div className="text-2xl font-bold text-gray-700">{data?.total ?? 0}</div>
+            <div className="text-2xl font-bold text-gray-700">{derivedStats.total}</div>
           </div>
         </div>
       )}
@@ -369,6 +390,7 @@ export default function ResidentsPage() {
             ) : rows.map((r: Resident) => {
               const resId = r.residentId ?? r.id;
               const risk = r.currentRiskLevel ?? r.riskLevel;
+              const displayCode = r.internalCode ?? r.residentCode ?? r.caseControlNo ?? (resId ? `CASE-${resId}` : "—");
               const activeSubs = SUBCATS.filter(s => r[s.key]);
               return (
                 <tr
@@ -378,7 +400,7 @@ export default function ResidentsPage() {
                 >
                   <td className="px-4 py-3">
                     <div className="font-mono font-semibold text-gray-900 text-sm">
-                      {r.internalCode ?? "—"}
+                      {displayCode}
                     </div>
                     {activeSubs.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-1">
@@ -455,13 +477,13 @@ export default function ResidentsPage() {
           </tbody>
         </table>
 
-        {(data?.total ?? 0) > 20 && (
+        {totalFilteredResidents > pageSize && (
           <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
-            <span>Showing {Math.min(page * 20, data?.total ?? 0)} of {data?.total ?? 0} residents</span>
+            <span>Showing {rows.length === 0 ? 0 : ((safePage - 1) * pageSize) + 1}-{Math.min(safePage * pageSize, totalFilteredResidents)} of {totalFilteredResidents} residents</span>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</Button>
-              <span className="self-center text-xs">Page {page} of {Math.ceil((data?.total ?? 1) / 20)}</span>
-              <Button variant="outline" size="sm" disabled={page >= Math.ceil((data?.total ?? 1) / 20)} onClick={() => setPage(page + 1)}>Next</Button>
+              <Button variant="outline" size="sm" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>Previous</Button>
+              <span className="self-center text-xs">Page {safePage} of {totalPages}</span>
+              <Button variant="outline" size="sm" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>Next</Button>
             </div>
           </div>
         )}

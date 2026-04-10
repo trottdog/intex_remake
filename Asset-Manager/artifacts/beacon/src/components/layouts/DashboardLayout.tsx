@@ -28,17 +28,21 @@ interface DashboardLayoutProps {
   portalName: string;
   brandLogoSrc?: string;
   safehouseLabel?: string;
+  /** Tighter nav spacing so sectioned sidebars fit without scrolling on typical desktop heights */
+  compactSidebar?: boolean;
   bellBadge?: number;
   bellItems?: NotificationItem[];
   onBellOpen?: () => void;
 }
 
 export function DashboardLayout({
-  children, navItems, portalName, brandLogoSrc, safehouseLabel, bellBadge = 0, bellItems = [], onBellOpen,
+  children, navItems, portalName, brandLogoSrc, safehouseLabel, compactSidebar = false,
+  bellBadge = 0, bellItems = [], onBellOpen,
 }: DashboardLayoutProps) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const [bellOpen, setBellOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
 
   const toggleTheme = () => {
@@ -62,6 +66,19 @@ export function DashboardLayout({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [bellOpen]);
 
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileNavOpen]);
+
   function handleBellClick() {
     const next = !bellOpen;
     setBellOpen(next);
@@ -74,8 +91,19 @@ export function DashboardLayout({
   }
 
   const hasSections = navItems.some(item => item.section);
+  const c = compactSidebar;
+  const navPadX = c ? "px-2" : "px-3";
+  const linkGap = c ? "gap-2.5" : "gap-3";
+  const linkPad = c ? "px-2 py-1.5" : "px-3 py-2";
+  const linkText = c ? "text-[13px] leading-snug" : "text-sm";
+  const iconSz = "w-4 h-4";
+  const sectionWrap = c ? "pt-2 pb-0.5 px-2" : "pt-4 pb-1 px-3";
+  const sectionText = c ? "text-[10px] tracking-wider" : "text-[10px] tracking-widest";
 
-  function renderNavItems() {
+  function renderNavItems(onNavigate?: () => void) {
+    const linkCls = (isActive: boolean) =>
+      `flex items-center ${linkGap} ${linkPad} rounded-md transition-colors ${linkText} font-medium ${isActive ? "bg-sidebar-accent text-white" : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-white"}`;
+
     if (!hasSections) {
       return navItems.map((item) => {
         const isActive = location === item.href || (item.href !== "/" && location.startsWith(`${item.href}/`));
@@ -83,9 +111,10 @@ export function DashboardLayout({
           <Link
             key={item.href}
             href={item.href}
-            className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-sm font-medium ${isActive ? "bg-sidebar-accent text-white" : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-white"}`}
+            onClick={() => onNavigate?.()}
+            className={linkCls(isActive)}
           >
-            <item.icon className={`w-4 h-4 shrink-0 ${isActive ? "text-primary" : ""}`} />
+            <item.icon className={`${iconSz} shrink-0 ${isActive ? "text-primary" : ""}`} />
             <span className="flex-1">{item.label}</span>
             {(item.badge ?? 0) > 0 && (
               <span className="min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
@@ -105,8 +134,8 @@ export function DashboardLayout({
         lastSection = section;
         if (section) {
           rendered.push(
-            <div key={`section-${section}`} className="pt-4 pb-1 px-3">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/40 select-none">{section}</span>
+            <div key={`section-${section}`} className={sectionWrap}>
+              <span className={`${sectionText} font-bold uppercase text-sidebar-foreground/40 select-none`}>{section}</span>
             </div>
           );
         }
@@ -116,9 +145,10 @@ export function DashboardLayout({
         <Link
           key={item.href}
           href={item.href}
-          className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-sm font-medium ${isActive ? "bg-sidebar-accent text-white" : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-white"}`}
+          onClick={() => onNavigate?.()}
+          className={linkCls(isActive)}
         >
-          <item.icon className={`w-4 h-4 shrink-0 ${isActive ? "text-primary" : ""}`} />
+          <item.icon className={`${iconSz} shrink-0 ${isActive ? "text-primary" : ""}`} />
           <span className="flex-1">{item.label}</span>
           {(item.badge ?? 0) > 0 && (
             <span className="min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
@@ -131,16 +161,29 @@ export function DashboardLayout({
     return rendered;
   }
 
+  const asideHeaderClass =
+    c && safehouseLabel
+      ? "flex items-center px-4 py-2 border-b border-sidebar-border shrink-0"
+      : c
+        ? "flex items-center h-14 px-4 border-b border-sidebar-border shrink-0"
+        : safehouseLabel
+          ? "flex items-center px-6 py-4 border-b border-sidebar-border shrink-0"
+          : "flex items-center h-16 px-6 border-b border-sidebar-border shrink-0";
+
+  const navScrollClass = c
+    ? "overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+    : "overflow-y-auto";
+
   return (
     <div className="min-h-screen flex bg-background">
       <aside className="w-64 bg-sidebar text-sidebar-foreground hidden md:flex flex-col border-r border-sidebar-border shrink-0 fixed h-full z-10">
-        <div className={`flex items-center px-6 border-b border-sidebar-border ${safehouseLabel ? "py-4" : "h-16"}`}>
+        <div className={asideHeaderClass}>
           {brandLogoSrc ? (
-            <div className="mr-3 flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/10 shrink-0">
-              <img src={brandLogoSrc} alt="Beacon" className="h-8 w-8 object-contain shrink-0" />
+            <div className={`mr-3 flex items-center justify-center overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/10 shrink-0 ${c ? "h-9 w-9 rounded-xl" : "h-10 w-10"}`}>
+              <img src={brandLogoSrc} alt="Beacon" className={`object-contain shrink-0 ${c ? "h-7 w-7" : "h-8 w-8"}`} />
             </div>
           ) : (
-            <div className="w-8 h-8 bg-primary rounded flex items-center justify-center text-white font-bold mr-3 shrink-0">B</div>
+            <div className={`bg-primary rounded flex items-center justify-center text-white font-bold mr-3 shrink-0 ${c ? "w-7 h-7 text-xs" : "w-8 h-8"}`}>B</div>
           )}
           <div className="flex flex-col min-w-0">
             <span className="font-bold text-lg leading-tight">Beacon</span>
@@ -154,11 +197,11 @@ export function DashboardLayout({
           </div>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-2 px-3 space-y-0.5">
+        <nav className={`flex-1 min-h-0 py-1.5 ${navPadX} space-y-0 ${navScrollClass}`}>
           {renderNavItems()}
         </nav>
 
-        <div className="p-4 border-t border-sidebar-border">
+        <div className={`border-t border-sidebar-border ${c ? "p-3" : "p-4"}`}>
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-bold shrink-0">
               {user?.firstName?.[0] || user?.username?.[0] || "U"}
@@ -174,7 +217,16 @@ export function DashboardLayout({
       <div className="flex-1 flex flex-col md:ml-64 min-w-0">
         <header className="h-16 bg-white dark:bg-gray-900 border-b border-border flex items-center justify-between px-6 sticky top-0 z-10">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="md:hidden">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              aria-label="Open navigation menu"
+              aria-expanded={mobileNavOpen}
+              aria-controls="mobile-dashboard-nav"
+              onClick={() => setMobileNavOpen(true)}
+            >
               <Menu className="w-5 h-5" />
             </Button>
             <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500">
@@ -288,6 +340,67 @@ export function DashboardLayout({
           <Link href="/privacy" className="hover:underline">Privacy Policy</Link>
         </footer>
       </div>
+
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/50"
+            aria-label="Close navigation menu"
+            onClick={() => setMobileNavOpen(false)}
+          />
+          <div
+            id="mobile-dashboard-nav"
+            className="absolute left-0 top-0 bottom-0 w-[min(18rem,100vw)] flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border shadow-xl animate-in slide-in-from-left duration-200"
+          >
+            <div className={`${asideHeaderClass} justify-between gap-2`}>
+              <div className="flex items-center min-w-0 flex-1">
+                {brandLogoSrc ? (
+                  <div className={`mr-3 flex items-center justify-center overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/10 shrink-0 ${c ? "h-9 w-9 rounded-xl" : "h-10 w-10"}`}>
+                    <img src={brandLogoSrc} alt="Beacon" className={`object-contain shrink-0 ${c ? "h-7 w-7" : "h-8 w-8"}`} />
+                  </div>
+                ) : (
+                  <div className={`bg-primary rounded flex items-center justify-center text-white font-bold mr-3 shrink-0 ${c ? "w-7 h-7 text-xs" : "w-8 h-8"}`}>B</div>
+                )}
+                <div className="flex flex-col min-w-0">
+                  <span className="font-bold text-lg leading-tight">Beacon</span>
+                  <span className="text-xs text-sidebar-accent-foreground/70 uppercase tracking-wider">{portalName}</span>
+                  {safehouseLabel && (
+                    <div className="flex items-center gap-1.5 mt-2 px-2 py-1 rounded-md bg-[#2a9d72]/20 border border-[#2a9d72]/30 max-w-full">
+                      <Building2 className="w-3 h-3 text-[#7bc5a6] shrink-0" />
+                      <span className="text-xs font-semibold text-[#7bc5a6] truncate leading-none">{safehouseLabel}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="shrink-0 text-sidebar-foreground hover:bg-sidebar-accent/50"
+                aria-label="Close menu"
+                onClick={() => setMobileNavOpen(false)}
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            <nav className={`flex-1 min-h-0 py-2 ${navPadX} space-y-0 overflow-y-auto`}>
+              {renderNavItems(() => setMobileNavOpen(false))}
+            </nav>
+            <div className={`border-t border-sidebar-border ${c ? "p-3" : "p-4"}`}>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-bold shrink-0">
+                  {user?.firstName?.[0] || user?.username?.[0] || "U"}
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-sm font-medium truncate">{user?.firstName} {user?.lastName}</p>
+                  <p className="text-xs text-sidebar-foreground/60 truncate">{user?.email}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
