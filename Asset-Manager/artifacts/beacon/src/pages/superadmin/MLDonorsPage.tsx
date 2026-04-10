@@ -7,11 +7,10 @@ import {
 } from "@/services/superadminMl.service";
 import {
   BandBadge, ScoreBar, LoadingState, ErrorState, EmptyState,
-  PrivacyBanner, SectionHeader, Card, TabBar, DateRangeSelector,
+  PrivacyBanner, Card, TabBar, DateRangeSelector,
   FilterSelect, SideDrawer, Pagination, ActionButton,
   fmtPeso, fmtDate, fmtRelativeDate, fmtScore,
 } from "./ml/Shared";
-import { PipelineCoveragePanel, PipelineInterpretationNotice } from "./ml/PipelineCoveragePanel";
 import { SupporterManagementPanel } from "@/components/supporters/SupporterManagementPanel";
 
 type Tab = "supporters" | "churn" | "upgrade";
@@ -71,21 +70,15 @@ function ChurnTab() {
   return (
     <div className="space-y-4">
       <Card>
-        <SectionHeader
-          title="Donor Churn Risk"
-          sub="Supporters identified by the churn risk model as at-risk of lapsing"
-          action={
-            <div className="flex items-center gap-2 flex-wrap">
-              <DateRangeSelector value={dateRange} onChange={v => { setDateRange(v); setPage(1); }} />
-              <FilterSelect
-                value={churnBand}
-                onChange={v => { setChurnBand(v); setPage(1); }}
-                options={CHURN_BAND_OPTS}
-                placeholder="All bands"
-              />
-            </div>
-          }
-        />
+        <div className="mb-4 flex items-center justify-end gap-2 flex-wrap">
+          <DateRangeSelector value={dateRange} onChange={v => { setDateRange(v); setPage(1); }} />
+          <FilterSelect
+            value={churnBand}
+            onChange={v => { setChurnBand(v); setPage(1); }}
+            options={CHURN_BAND_OPTS}
+            placeholder="All bands"
+          />
+        </div>
 
         {meta && <PrivacyBanner count={meta.totalRestricted} />}
 
@@ -334,28 +327,16 @@ function UpgradeTab() {
 
   return (
     <div className="space-y-4">
-      <PipelineInterpretationNotice
-        title="Directional ask guidance"
-        body="Recommended ask bands are useful for prioritization, but any adjacent next-donation forecasting context should still be treated as directional until regression validation and leakage checks are stronger."
-        tone="critical"
-      />
-
       <Card>
-        <SectionHeader
-          title="Upgrade Potential Board"
-          sub="Supporters with high likelihood of increasing their giving tier"
-          action={
-            <div className="flex items-center gap-2">
-              <DateRangeSelector value={dateRange} onChange={v => { setDateRange(v); setPage(1); }} />
-              <FilterSelect
-                value={upgradeBand}
-                onChange={v => { setUpgradeBand(v); setPage(1); }}
-                options={UPGRADE_BAND_OPTS}
-                placeholder="All bands"
-              />
-            </div>
-          }
-        />
+        <div className="mb-4 flex items-center justify-end gap-2 flex-wrap">
+          <DateRangeSelector value={dateRange} onChange={v => { setDateRange(v); setPage(1); }} />
+          <FilterSelect
+            value={upgradeBand}
+            onChange={v => { setUpgradeBand(v); setPage(1); }}
+            options={UPGRADE_BAND_OPTS}
+            placeholder="All bands"
+          />
+        </div>
 
         {isLoading ? (
           <LoadingState />
@@ -490,24 +471,6 @@ export default function MLDonorsPage() {
     window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
   }, [tab]);
 
-  const coverageByTab: Record<Tab, { title: string; subtitle: string; pipelines: string[] }> = {
-    supporters: {
-      title: "Supporter Management",
-      subtitle: "View complete supporter profiles, donation history, and maintain supporter records from this route.",
-      pipelines: [],
-    },
-    churn: {
-      title: "Churn Coverage",
-      subtitle: "This route is the direct UI surface for donor retention scoring.",
-      pipelines: ["donor_retention"],
-    },
-    upgrade: {
-      title: "Upgrade Coverage",
-      subtitle: "This route is the direct UI surface for donor upgrade, with next-donation forecasting used as adjacent context.",
-      pipelines: ["donor_upgrade", "next_donation_amount"],
-    },
-  };
-
   return (
     <div className="space-y-6 pb-8">
       <div>
@@ -518,14 +481,6 @@ export default function MLDonorsPage() {
       </div>
 
       <TabBar<Tab> tabs={TABS} active={tab} onChange={(next) => setTab(next)} />
-
-      {tab !== "supporters" && (
-        <PipelineCoveragePanel
-          title={coverageByTab[tab].title}
-          subtitle={coverageByTab[tab].subtitle}
-          pipelineNames={coverageByTab[tab].pipelines}
-        />
-      )}
 
       {tab === "supporters" && <SupporterManagementPanel />}
       {tab === "churn" && <ChurnTab />}
