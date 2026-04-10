@@ -374,7 +374,26 @@ public sealed class CaseManagementRepository(BeaconDbContext dbContext) : ICaseM
 
         if (!string.IsNullOrWhiteSpace(status))
         {
-            query = query.Where(item => item.Plan.Status != null && EF.Functions.ILike(item.Plan.Status, status));
+            if (string.Equals(status, "active", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(item =>
+                    item.Plan.Status != null
+                    && !EF.Functions.ILike(item.Plan.Status, "completed")
+                    && !EF.Functions.ILike(item.Plan.Status, "discontinued")
+                    && !EF.Functions.ILike(item.Plan.Status, "cancelled"));
+            }
+            else
+            {
+                var normalizedStatus = status.Trim();
+                var underscoredStatus = normalizedStatus.Replace(" ", "_");
+                var spacedStatus = normalizedStatus.Replace("_", " ");
+
+                query = query.Where(item =>
+                    item.Plan.Status != null
+                    && (EF.Functions.ILike(item.Plan.Status, normalizedStatus)
+                        || EF.Functions.ILike(item.Plan.Status, underscoredStatus)
+                        || EF.Functions.ILike(item.Plan.Status, spacedStatus)));
+            }
         }
 
         if (enforceSafehouseScope && allowedSafehouses.Count > 0)

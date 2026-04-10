@@ -12,8 +12,8 @@ const RISK_LABELS = { low: "Low", medium: "Medium", high: "High", critical: "Cri
 
 const REIN_STAGES = [
   { key: "notStarted",  label: "Not Started",  color: "#e2e8f0" },
+  { key: "onHold",      label: "On Hold",      color: "#f4a261" },
   { key: "inProgress",  label: "In Progress",  color: "#93c5fd" },
-  { key: "ready",       label: "Ready",        color: "#6ee7b7" },
   { key: "completed",   label: "Completed",    color: "#2a9d72" },
 ];
 
@@ -54,7 +54,13 @@ export default function AdminDashboard() {
   }).filter(d => d.value > 0);
 
   const reintegrationBreakdown = (data as { reintegrationBreakdown?: Record<string, number> }).reintegrationBreakdown ?? {};
-  const totalInPipeline = REIN_STAGES.reduce((s, st) => s + (reintegrationBreakdown[st.key] ?? 0), 0) || 1;
+  const reintegrationDisplayBreakdown = {
+    notStarted: reintegrationBreakdown.notStarted ?? 0,
+    onHold: reintegrationBreakdown.ready ?? 0,
+    inProgress: reintegrationBreakdown.inProgress ?? 0,
+    completed: reintegrationBreakdown.completed ?? 0,
+  };
+  const totalInPipeline = REIN_STAGES.reduce((s, st) => s + (reintegrationDisplayBreakdown[st.key as keyof typeof reintegrationDisplayBreakdown] ?? 0), 0) || 1;
 
   const openIncidents = (data as { openIncidents?: number }).openIncidents ?? data.incidentsThisWeek ?? 0;
   const activeInterventionPlans = (data as { activeInterventionPlans?: number }).activeInterventionPlans ?? 0;
@@ -244,7 +250,7 @@ export default function AdminDashboard() {
             {/* Horizontal pipeline bar */}
             <div className="flex h-6 rounded-full overflow-hidden mb-4 gap-0.5">
               {REIN_STAGES.map(stage => {
-                const count = reintegrationBreakdown[stage.key] ?? 0;
+                const count = reintegrationDisplayBreakdown[stage.key as keyof typeof reintegrationDisplayBreakdown] ?? 0;
                 const pct = (count / totalInPipeline) * 100;
                 if (count === 0) return null;
                 return (
@@ -261,7 +267,7 @@ export default function AdminDashboard() {
             {/* Stage legend */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {REIN_STAGES.map(stage => {
-                const count = reintegrationBreakdown[stage.key] ?? 0;
+                const count = reintegrationDisplayBreakdown[stage.key as keyof typeof reintegrationDisplayBreakdown] ?? 0;
                 return (
                   <div key={stage.key} className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded shrink-0" style={{ backgroundColor: stage.color === "#e2e8f0" ? "#cbd5e1" : stage.color }} />
