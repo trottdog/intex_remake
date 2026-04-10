@@ -122,8 +122,11 @@ export interface SocialMediaPost {
 export interface DonorProfileUpdate {
   firstName?: string;
   lastName?: string;
+  email?: string;
   phone?: string;
   organizationName?: string;
+  organization?: string;
+  communicationPreference?: string;
 }
 
 export function useGetDonorDashboardSummary() {

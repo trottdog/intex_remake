@@ -50,6 +50,7 @@ export default function ProfilePage() {
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
+    email: "",
     phone: "",
     organization: "",
     communicationPreference: "",
@@ -60,6 +61,7 @@ export default function ProfilePage() {
       setForm({
         firstName: String(donor.firstName ?? user?.firstName ?? ""),
         lastName: String(donor.lastName ?? user?.lastName ?? ""),
+        email: String(donor.email ?? user?.email ?? ""),
         phone: String(donor.phone ?? ""),
         organization: String(donor.organization ?? ""),
         communicationPreference: String(donor.communicationPreference ?? ""),
@@ -73,7 +75,7 @@ export default function ProfilePage() {
     setSaveError(null);
     try {
       await updateMyDonorProfile(form);
-      await queryClient.invalidateQueries({ queryKey: ["GetMyDonorProfile"] });
+      await queryClient.invalidateQueries({ queryKey: ["donor", "profile"] });
       setSaveSuccess(true);
       setEditing(false);
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -89,6 +91,7 @@ export default function ProfilePage() {
       setForm({
         firstName: String(donor.firstName ?? user?.firstName ?? ""),
         lastName: String(donor.lastName ?? user?.lastName ?? ""),
+        email: String(donor.email ?? user?.email ?? ""),
         phone: String(donor.phone ?? ""),
         organization: String(donor.organization ?? ""),
         communicationPreference: String(donor.communicationPreference ?? ""),
@@ -122,12 +125,12 @@ export default function ProfilePage() {
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-[#2a9d72] rounded-full flex items-center justify-center">
               <span className="text-2xl font-bold text-white">
-                {user?.firstName?.[0]}{user?.lastName?.[0]}
+                {form.firstName?.[0] ?? user?.firstName?.[0]}{form.lastName?.[0] ?? user?.lastName?.[0]}
               </span>
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">
-                {isLoading ? "Loading..." : (donor ? `${donor.firstName} ${donor.lastName}` : `${user?.firstName} ${user?.lastName}`)}
+                {isLoading ? "Loading..." : `${form.firstName} ${form.lastName}`.trim() || `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() || "Donor"}
               </h2>
               <p className="text-white/60 text-sm">
                 {isLoading ? "" : (donor?.supportType ? String(donor.supportType) : "Donor")} — Beacon Supporter
@@ -175,7 +178,11 @@ export default function ProfilePage() {
               </div>
               <div>
                 <div className="text-xs text-gray-400 mb-1 flex items-center gap-1"><Mail className="w-3 h-3" /> Email</div>
-                <div className="text-sm text-gray-500">{String(donor?.email ?? user?.email ?? "—")} <span className="text-xs text-gray-400">(contact admin to update)</span></div>
+                {editing ? (
+                  <input {...field("email")} type="email" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30" />
+                ) : (
+                  <div className="text-sm text-gray-800">{form.email || "Not provided"}</div>
+                )}
               </div>
               <div>
                 <div className="text-xs text-gray-400 mb-1 flex items-center gap-1"><Phone className="w-3 h-3" /> Phone</div>
