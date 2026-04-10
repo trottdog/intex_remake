@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiFetch, apiPost } from "./api";
+import { apiDelete, apiFetch, apiPatch, apiPost } from "./api";
 
 export interface Resident {
   residentId?: number | null;
@@ -164,6 +164,31 @@ export function useCreateResident() {
       apiPost<Resident>("/api/residents", body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["residents"] });
+    },
+  });
+}
+
+export function useUpdateResident() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: Record<string, unknown> }) =>
+      apiPatch<Resident>(`/api/residents/${id}`, body),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ["residents"] });
+      qc.invalidateQueries({ queryKey: ["residents", variables.id] });
+      qc.invalidateQueries({ queryKey: ["residents", "stats"] });
+    },
+  });
+}
+
+export function useDeleteResident() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => apiDelete(`/api/residents/${id}`),
+    onSuccess: (_, id) => {
+      qc.invalidateQueries({ queryKey: ["residents"] });
+      qc.invalidateQueries({ queryKey: ["residents", id] });
+      qc.invalidateQueries({ queryKey: ["residents", "stats"] });
     },
   });
 }

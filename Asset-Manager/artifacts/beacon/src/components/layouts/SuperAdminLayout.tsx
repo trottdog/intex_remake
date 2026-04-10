@@ -1,6 +1,6 @@
 import {
-  LayoutDashboard, Users, Server, Shield, Activity, Settings,
-  Database, Share2, Target, Newspaper, PersonStanding, AlertCircle,
+  LayoutDashboard, Users, Server, Activity, Settings,
+  Share2, Target, Newspaper, PersonStanding, AlertCircle,
   Briefcase, DollarSign, Heart, Layers,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
@@ -31,20 +31,13 @@ const SUPERADMIN_NAV = [
   { section: "Administration", label: "Safehouses",        href: "/superadmin/safehouses",           icon: Server },
   { section: "Administration", label: "Partners",          href: "/superadmin/partners",             icon: Share2 },
 
-  // ── Intelligence ─────────────────────────────────────────────────────────────
-  { section: "Intelligence", label: "ML Control Center",   href: "/superadmin/ml",                   icon: Activity },
-
-  // ── Security ────────────────────────────────────────────────────────────────
-  { section: "Security",     label: "Security & Compliance", href: "/superadmin/security",           icon: Shield },
-  { section: "Security",     label: "Audit Logs",          href: "/superadmin/audit",                icon: Database },
-
   // ── System ──────────────────────────────────────────────────────────────────
   { section: "System",       label: "Settings",            href: "/superadmin/settings",             icon: Settings },
 ];
 
 export function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <DashboardLayout navItems={SUPERADMIN_NAV} portalName="Super Admin" brandLogoSrc={lighthouseLogo}>
+    <DashboardLayout navItems={SUPERADMIN_NAV} portalName="Super Admin" brandLogoSrc={lighthouseLogo} compactSidebar>
       {children}
     </DashboardLayout>
   );
