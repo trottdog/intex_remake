@@ -4,6 +4,7 @@ import { apiFetch } from "./api";
 export interface PublicImpactData {
   residentsServedTotal?: number;
   totalDonationsRaised?: number;
+  donationCount?: number;
   reintegrationCount?: number;
   safehouseCount?: number;
   programAreasActive?: number;

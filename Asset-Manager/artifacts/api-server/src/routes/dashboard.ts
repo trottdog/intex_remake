@@ -506,6 +506,7 @@ router.get("/dashboard/public-impact", async (_req, res) => {
     return res.json({
       residentsServedTotal: residents.length,
       totalDonationsRaised: parseFloat(totalDonations.toFixed(2)),
+      donationCount: donations.length,
       reintegrationCount: reintegrated,
       safehouseCount: safehouses.length,
       programAreasActive: 8,
