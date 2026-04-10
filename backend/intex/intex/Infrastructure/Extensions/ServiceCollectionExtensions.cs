@@ -270,6 +270,19 @@ public static class ServiceCollectionExtensions
                             query!);
                         context.Response.Redirect(rewrittenUri);
                         return Task.CompletedTask;
+                    },
+                    OnRemoteFailure = context =>
+                    {
+                        context.HandleResponse();
+
+                        var callbackBase = string.IsNullOrWhiteSpace(googleOptions.PublicOrigin)
+                            ? "/auth/callback"
+                            : $"{googleOptions.PublicOrigin.TrimEnd('/')}/auth/callback";
+                        var message = string.IsNullOrWhiteSpace(context.Failure?.Message)
+                            ? "Google sign-in could not be completed"
+                            : "Google sign-in could not be completed";
+                        context.Response.Redirect($"{callbackBase}#error={Uri.EscapeDataString(message)}");
+                        return Task.CompletedTask;
                     }
                 };
             });

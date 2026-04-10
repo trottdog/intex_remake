@@ -310,13 +310,14 @@ public sealed class AuthService(
         var now = DateTimeOffset.UtcNow;
         var supporter = new Supporter
         {
-            SupporterType = "individual",
+            SupporterType = "MonetaryDonor",
             DisplayName = $"{firstName} {lastName}",
             FirstName = firstName,
             LastName = lastName,
             Email = email,
-            Status = "active",
+            Status = "Active",
             CreatedAt = now.ToString("O"),
+            AcquisitionChannel = "Website",
             CanLogin = true,
             RecurringEnabled = false,
         };
@@ -474,13 +475,14 @@ public sealed class AuthService(
         var now = DateTimeOffset.UtcNow;
         var supporter = new Supporter
         {
-            SupporterType = "individual",
+            SupporterType = "MonetaryDonor",
             DisplayName = string.IsNullOrWhiteSpace(displayName) ? $"{resolvedFirstName} {resolvedLastName}" : displayName.Trim(),
             FirstName = resolvedFirstName,
             LastName = resolvedLastName,
             Email = email,
-            Status = "active",
+            Status = "Active",
             CreatedAt = now.ToString("O"),
+            AcquisitionChannel = "Website",
             CanLogin = true,
             RecurringEnabled = false,
         };

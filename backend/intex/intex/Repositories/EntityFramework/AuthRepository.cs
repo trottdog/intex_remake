@@ -59,6 +59,10 @@ public sealed class AuthRepository(BeaconDbContext dbContext) : IAuthRepository
 
             dbContext.Users.Add(donorUser);
             await dbContext.SaveChangesAsync(cancellationToken);
+
+            dbContext.Entry(supporter).Property(item => item.IdentityUserId).CurrentValue = donorUser.Id.ToString();
+            await dbContext.SaveChangesAsync(cancellationToken);
+
             await transaction.CommitAsync(cancellationToken);
         });
 

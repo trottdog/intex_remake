@@ -253,64 +253,75 @@ public sealed class AuthController(
     [HttpGet("oauth/google/complete")]
     public async Task<IActionResult> CompleteGoogleLogin([FromQuery] string? returnUrl, CancellationToken cancellationToken)
     {
-        var authResult = await HttpContext.AuthenticateAsync(ExternalAuthSchemes.ExternalCookie);
-        var frontendCallbackUrl = authResult.Properties?.Items.TryGetValue("returnUrl", out var storedReturnUrl) == true
-            ? ResolveFrontendCallbackUrl(storedReturnUrl)
-            : ResolveFrontendCallbackUrl(returnUrl);
-
-        if (!authResult.Succeeded || authResult.Principal is null)
+        try
         {
+            var authResult = await HttpContext.AuthenticateAsync(ExternalAuthSchemes.ExternalCookie);
+            var frontendCallbackUrl = authResult.Properties?.Items.TryGetValue("returnUrl", out var storedReturnUrl) == true
+                ? ResolveFrontendCallbackUrl(storedReturnUrl)
+                : ResolveFrontendCallbackUrl(returnUrl);
+
+            if (!authResult.Succeeded || authResult.Principal is null)
+            {
+                await HttpContext.SignOutAsync(ExternalAuthSchemes.ExternalCookie);
+                return Redirect(BuildFrontendRedirect(frontendCallbackUrl, new Dictionary<string, string>
+                {
+                    ["error"] = "Google sign-in could not be completed"
+                }));
+            }
+
+            var subject = authResult.Principal.FindFirstValue(ClaimTypes.NameIdentifier);
+            var email = authResult.Principal.FindFirstValue(ClaimTypes.Email);
+            var firstName = authResult.Principal.FindFirstValue(ClaimTypes.GivenName);
+            var lastName = authResult.Principal.FindFirstValue(ClaimTypes.Surname);
+            var displayName = authResult.Principal.FindFirstValue(ClaimTypes.Name);
+
+            var response = string.IsNullOrWhiteSpace(subject)
+                ? null
+                : await authService.LoginWithGoogleAsync(subject, email, firstName, lastName, displayName, cancellationToken);
+
             await HttpContext.SignOutAsync(ExternalAuthSchemes.ExternalCookie);
+
+            if (response is null)
+            {
+                return Redirect(BuildFrontendRedirect(frontendCallbackUrl, new Dictionary<string, string>
+                {
+                    ["error"] = "This Google account is not authorized"
+                }));
+            }
+
+            if (response.MfaRequired && !string.IsNullOrWhiteSpace(response.ChallengeToken))
+            {
+                return Redirect(BuildFrontendRedirect(frontendCallbackUrl, new Dictionary<string, string>
+                {
+                    ["mfaRequired"] = "true",
+                    ["challengeToken"] = response.ChallengeToken
+                }));
+            }
+
+            if (string.IsNullOrWhiteSpace(response.Token) || response.User is null)
+            {
+                return Redirect(BuildFrontendRedirect(frontendCallbackUrl, new Dictionary<string, string>
+                {
+                    ["error"] = "Google sign-in returned an incomplete session"
+                }));
+            }
+
+            var serializedUser = JsonSerializer.Serialize(response.User);
+            var encodedUser = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(serializedUser));
+            return Redirect(BuildFrontendRedirect(frontendCallbackUrl, new Dictionary<string, string>
+            {
+                ["token"] = response.Token,
+                ["user"] = encodedUser
+            }));
+        }
+        catch
+        {
+            var frontendCallbackUrl = ResolveFrontendCallbackUrl(returnUrl);
             return Redirect(BuildFrontendRedirect(frontendCallbackUrl, new Dictionary<string, string>
             {
                 ["error"] = "Google sign-in could not be completed"
             }));
         }
-
-        var subject = authResult.Principal.FindFirstValue(ClaimTypes.NameIdentifier);
-        var email = authResult.Principal.FindFirstValue(ClaimTypes.Email);
-        var firstName = authResult.Principal.FindFirstValue(ClaimTypes.GivenName);
-        var lastName = authResult.Principal.FindFirstValue(ClaimTypes.Surname);
-        var displayName = authResult.Principal.FindFirstValue(ClaimTypes.Name);
-
-        var response = string.IsNullOrWhiteSpace(subject)
-            ? null
-            : await authService.LoginWithGoogleAsync(subject, email, firstName, lastName, displayName, cancellationToken);
-
-        await HttpContext.SignOutAsync(ExternalAuthSchemes.ExternalCookie);
-
-        if (response is null)
-        {
-            return Redirect(BuildFrontendRedirect(frontendCallbackUrl, new Dictionary<string, string>
-            {
-                ["error"] = "This Google account is not authorized"
-            }));
-        }
-
-        if (response.MfaRequired && !string.IsNullOrWhiteSpace(response.ChallengeToken))
-        {
-            return Redirect(BuildFrontendRedirect(frontendCallbackUrl, new Dictionary<string, string>
-            {
-                ["mfaRequired"] = "true",
-                ["challengeToken"] = response.ChallengeToken
-            }));
-        }
-
-        if (string.IsNullOrWhiteSpace(response.Token) || response.User is null)
-        {
-            return Redirect(BuildFrontendRedirect(frontendCallbackUrl, new Dictionary<string, string>
-            {
-                ["error"] = "Google sign-in returned an incomplete session"
-            }));
-        }
-
-        var serializedUser = JsonSerializer.Serialize(response.User);
-        var encodedUser = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(serializedUser));
-        return Redirect(BuildFrontendRedirect(frontendCallbackUrl, new Dictionary<string, string>
-        {
-            ["token"] = response.Token,
-            ["user"] = encodedUser
-        }));
     }
 
     private string ResolveFrontendCallbackUrl(string? returnUrl)
