@@ -15,7 +15,6 @@ import {
   FilterSelect, SideDrawer, Pagination, ActionButton,
   fmtPeso, fmtDate, fmtRelativeDate, ACCENT, DARK, MINT,
 } from "./ml/Shared";
-import { PipelineCoveragePanel } from "./ml/PipelineCoveragePanel";
 
 type Tab = "campaigns" | "social";
 
@@ -108,17 +107,11 @@ function CampaignEffectivenessTab() {
   return (
     <div className="space-y-4">
       <Card>
-        <SectionHeader
-          title="Campaign Movement vs. Noise"
-          sub="ML-scored campaigns by effectiveness classification — which are driving real fundraising vs. noise"
-          action={
-            <div className="flex items-center gap-2 flex-wrap">
-              <DateRangeSelector value={dateRange} onChange={setDateRange} />
-              <FilterSelect value={category} onChange={setCategory} options={CATEGORY_OPTS} placeholder="All categories" />
-              <FilterSelect value={status} onChange={setStatus} options={STATUS_OPTS} placeholder="All statuses" />
-            </div>
-          }
-        />
+        <div className="mb-4 flex items-center justify-end gap-2 flex-wrap">
+          <DateRangeSelector value={dateRange} onChange={setDateRange} />
+          <FilterSelect value={category} onChange={setCategory} options={CATEGORY_OPTS} placeholder="All categories" />
+          <FilterSelect value={status} onChange={setStatus} options={STATUS_OPTS} placeholder="All statuses" />
+        </div>
 
         {isLoading ? (
           <LoadingState />
@@ -613,19 +606,6 @@ export default function MLCampaignsPage() {
     window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
   }, [tab]);
 
-  const coverageByTab: Record<Tab, { title: string; subtitle: string; pipelines: string[] }> = {
-    campaigns: {
-      title: "Campaign Coverage",
-      subtitle: "Campaign effectiveness is an operational analysis surface; the reviewed predictive pipeline coverage on this page is primarily social.",
-      pipelines: ["social_media_conversion", "best_posting_time"],
-    },
-    social: {
-      title: "Social Planner Coverage",
-      subtitle: "This route is the direct UI surface for both social conversion scoring and best-posting-time guidance.",
-      pipelines: ["social_media_conversion", "best_posting_time"],
-    },
-  };
-
   return (
     <div className="space-y-6 pb-8">
       <div>
@@ -636,12 +616,6 @@ export default function MLCampaignsPage() {
       </div>
 
       <TabBar tabs={TABS} active={tab} onChange={setTab} />
-
-      <PipelineCoveragePanel
-        title={coverageByTab[tab].title}
-        subtitle={coverageByTab[tab].subtitle}
-        pipelineNames={coverageByTab[tab].pipelines}
-      />
 
       {tab === "campaigns" && <CampaignEffectivenessTab />}
       {tab === "social" && <SocialPlannerTab />}

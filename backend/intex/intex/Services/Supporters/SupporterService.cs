@@ -135,6 +135,75 @@ public sealed class SupporterService(ISupporterRepository supporterRepository) :
             stats.DonationTypesMap);
     }
 
+    public async Task<SupporterProfileResponseDto?> GetSupporterProfileAsync(long supporterId, CancellationToken cancellationToken = default)
+    {
+        var supporter = await supporterRepository.GetSupporterByIdAsync(supporterId, cancellationToken);
+        if (supporter is null)
+        {
+            return null;
+        }
+
+        var aggregate = await supporterRepository.GetDonationAggregateAsync(supporterId, cancellationToken);
+        var givingStats = await supporterRepository.GetGivingStatsAsync(supporterId, cancellationToken);
+        var donationHistory = await supporterRepository.GetDonationHistoryAsync(supporterId, cancellationToken);
+
+        return new SupporterProfileResponseDto(
+            Map(supporter, aggregate),
+            new SupporterGivingStatsDto(
+                supporterId,
+                givingStats.Total,
+                givingStats.Count,
+                givingStats.AvgGift,
+                givingStats.LastDonationDate?.ToString("yyyy-MM-dd"),
+                givingStats.DonationTypesMap,
+                givingStats.Total,
+                givingStats.Count,
+                givingStats.AvgGift,
+                givingStats.DonationTypesMap),
+            donationHistory.Select(item => new SupporterDonationHistoryItemDto(
+                item.DonationId,
+                item.SupporterId,
+                item.DonationType,
+                item.DonationDate?.ToString("yyyy-MM-dd"),
+                item.IsRecurring,
+                item.CampaignName,
+                item.ChannelSource,
+                item.CurrencyCode,
+                item.Amount,
+                item.EstimatedValue,
+                item.ImpactUnit,
+                item.Notes,
+                item.ReferralPostId,
+                item.CampaignId,
+                item.SafehouseId,
+                item.SafehouseName,
+                item.TotalAllocated,
+                item.Unallocated,
+                item.IsGeneralFund,
+                item.Allocations.Select(allocation => new SupporterDonationAllocationItemDto(
+                    allocation.AllocationId,
+                    allocation.DonationId,
+                    allocation.SafehouseId,
+                    allocation.SafehouseName,
+                    allocation.ProgramArea,
+                    allocation.AmountAllocated,
+                    allocation.AllocationDate?.ToString("yyyy-MM-dd"),
+                    allocation.AllocationNotes))
+                    .ToList(),
+                item.InKindItems.Select(inKindItem => new SupporterInKindDonationItemDto(
+                    inKindItem.ItemId,
+                    inKindItem.DonationId,
+                    inKindItem.ItemName,
+                    inKindItem.ItemCategory,
+                    inKindItem.Quantity,
+                    inKindItem.UnitOfMeasure,
+                    inKindItem.EstimatedUnitValue,
+                    inKindItem.IntendedUse,
+                    inKindItem.ReceivedCondition))
+                    .ToList()))
+                .ToList());
+    }
+
     public async Task<StandardPagedResponse<SupporterResponseDto>> ListSupportersAsync(ListSupportersQuery query, CancellationToken cancellationToken = default)
     {
         var page = query.Page <= 0 ? 1 : query.Page;

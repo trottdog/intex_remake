@@ -1,8 +1,8 @@
 import { ReactNode, useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import { setCookie } from "@/lib/cookies";
-import { LogOut, Sun, Moon, Bell, Shield, Menu, X, Target, FileText, Building2 } from "lucide-react";
+import { LogOut, Bell, Shield, Menu, X, Target, FileText, Building2, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 
 interface NavItem {
@@ -41,21 +41,11 @@ export function DashboardLayout({
   bellBadge = 0, bellItems = [], onBellOpen, showThemeToggle = true,
 }: DashboardLayoutProps) {
   const [location] = useLocation();
+  const { resolvedTheme, setTheme } = useTheme();
   const { user, logout } = useAuth();
   const [bellOpen, setBellOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
-
-  const toggleTheme = () => {
-    const isDark = document.documentElement.classList.contains("dark");
-    if (isDark) {
-      document.documentElement.classList.remove("dark");
-      setCookie("beacon_theme", "light");
-    } else {
-      document.documentElement.classList.add("dark");
-      setCookie("beacon_theme", "dark");
-    }
-  };
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -84,6 +74,10 @@ export function DashboardLayout({
     const next = !bellOpen;
     setBellOpen(next);
     if (next && onBellOpen) onBellOpen();
+  }
+
+  function toggleTheme() {
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
   }
 
   function fmtDate(d: string | null) {

@@ -67,7 +67,7 @@ function UpdateFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={!isPending ? onClose : undefined} />
+      <div className="absolute -inset-4 bg-black/40 backdrop-blur-sm" onClick={!isPending ? onClose : undefined} />
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
         <div className="bg-[#0e2118] px-6 pt-5 pb-4">
           <button onClick={onClose} disabled={isPending} className="absolute top-4 right-4 w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:text-white">

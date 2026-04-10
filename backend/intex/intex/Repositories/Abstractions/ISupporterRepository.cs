@@ -13,6 +13,7 @@ public interface ISupporterRepository
     Task<IReadOnlyDictionary<long, SupporterDonationAggregate>> GetDonationAggregatesAsync(IReadOnlyList<long> supporterIds, CancellationToken cancellationToken = default);
     Task<SupporterDonationAggregate> GetDonationAggregateAsync(long supporterId, CancellationToken cancellationToken = default);
     Task<SupporterGivingStatsRecord> GetGivingStatsAsync(long supporterId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SupporterDonationHistoryRecord>> GetDonationHistoryAsync(long supporterId, CancellationToken cancellationToken = default);
     Task<SupporterStatsRecord> GetSupporterStatsAsync(CancellationToken cancellationToken = default);
 }
 
@@ -31,6 +32,53 @@ public sealed record SupporterGivingStatsRecord(
     decimal AvgGift,
     DateOnly? LastDonationDate,
     IReadOnlyDictionary<string, int> DonationTypesMap
+);
+
+public sealed record SupporterDonationHistoryRecord(
+    long DonationId,
+    long? SupporterId,
+    string? DonationType,
+    DateOnly? DonationDate,
+    bool? IsRecurring,
+    string? CampaignName,
+    string? ChannelSource,
+    string? CurrencyCode,
+    decimal? Amount,
+    decimal? EstimatedValue,
+    string? ImpactUnit,
+    string? Notes,
+    long? ReferralPostId,
+    long? CampaignId,
+    long? SafehouseId,
+    string? SafehouseName,
+    decimal TotalAllocated,
+    decimal? Unallocated,
+    bool IsGeneralFund,
+    IReadOnlyList<SupporterDonationAllocationRecord> Allocations,
+    IReadOnlyList<SupporterInKindDonationItemRecord> InKindItems
+);
+
+public sealed record SupporterDonationAllocationRecord(
+    long AllocationId,
+    long? DonationId,
+    long? SafehouseId,
+    string? SafehouseName,
+    string? ProgramArea,
+    decimal? AmountAllocated,
+    DateOnly? AllocationDate,
+    string? AllocationNotes
+);
+
+public sealed record SupporterInKindDonationItemRecord(
+    long ItemId,
+    long? DonationId,
+    string? ItemName,
+    string? ItemCategory,
+    decimal? Quantity,
+    string? UnitOfMeasure,
+    decimal? EstimatedUnitValue,
+    string? IntendedUse,
+    string? ReceivedCondition
 );
 
 public sealed record SupporterStatsRecord(

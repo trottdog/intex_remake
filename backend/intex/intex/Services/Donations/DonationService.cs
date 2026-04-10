@@ -1,15 +1,79 @@
 using System.Globalization;
+using Microsoft.EntityFrameworkCore;
 using backend.intex.DTOs.Common;
 using backend.intex.DTOs.Donations;
 using backend.intex.Entities.Database;
 using backend.intex.Infrastructure.Auth;
+using backend.intex.Infrastructure.Data.EntityFramework;
 using backend.intex.Repositories.Abstractions;
 using backend.intex.Services.Abstractions;
 
 namespace backend.intex.Services.Donations;
 
-public sealed class DonationService(IDonationRepository donationRepository) : IDonationService
+public sealed class DonationService(IDonationRepository donationRepository, BeaconDbContext dbContext) : IDonationService
 {
+    private static readonly HashSet<string> SupporterTypes = new([
+        "MonetaryDonor", "InKindDonor", "Volunteer", "SkillsContributor", "SocialMediaAdvocate", "PartnerOrganization"
+    ], StringComparer.Ordinal);
+
+    private static readonly HashSet<string> RelationshipTypes = new([
+        "Local", "International", "PartnerOrganization"
+    ], StringComparer.Ordinal);
+
+    private static readonly HashSet<string> SupporterStatuses = new([
+        "Active", "Inactive"
+    ], StringComparer.Ordinal);
+
+    private static readonly HashSet<string> AcquisitionChannels = new([
+        "Website", "SocialMedia", "Event", "WordOfMouth", "PartnerReferral", "Church"
+    ], StringComparer.Ordinal);
+
+    private static readonly HashSet<string> DonationTypes = new([
+        "Monetary", "InKind", "Time", "Skills", "SocialMedia"
+    ], StringComparer.Ordinal);
+
+    private static readonly HashSet<string> ChannelSources = new([
+        "Campaign", "Event", "Direct", "SocialMedia", "PartnerReferral"
+    ], StringComparer.Ordinal);
+
+    private static readonly HashSet<string> ImpactUnits = new([
+        "pesos", "items", "hours", "campaigns"
+    ], StringComparer.Ordinal);
+
+    private static readonly HashSet<string> ItemCategories = new([
+        "Food", "Supplies", "Clothing", "SchoolMaterials", "Hygiene", "Furniture", "Medical"
+    ], StringComparer.Ordinal);
+
+    private static readonly HashSet<string> UnitOfMeasures = new([
+        "pcs", "boxes", "kg", "sets", "packs"
+    ], StringComparer.Ordinal);
+
+    private static readonly HashSet<string> IntendedUses = new([
+        "Meals", "Education", "Shelter", "Hygiene", "Health"
+    ], StringComparer.Ordinal);
+
+    private static readonly HashSet<string> ReceivedConditions = new([
+        "New", "Good", "Fair"
+    ], StringComparer.Ordinal);
+
+    private static readonly HashSet<string> ProgramAreas = new([
+        "Education", "Wellbeing", "Operations", "Transport", "Maintenance", "Outreach"
+    ], StringComparer.Ordinal);
+
+    public async Task<IReadOnlyList<PriorDonorSupporterOptionDto>> SearchPriorDonorSupportersAsync(string? search, int? limit, CancellationToken cancellationToken = default)
+    {
+        var resolvedLimit = Math.Clamp(limit ?? 20, 1, 50);
+        var supporters = await donationRepository.SearchPriorDonorSupportersAsync(search, resolvedLimit, cancellationToken);
+        return supporters
+            .Select(item => new PriorDonorSupporterOptionDto(
+                item.SupporterId,
+                item.DisplayName,
+                item.Email,
+                item.DonationCount,
+                decimal.Round(item.LifetimeGiving, 2)))
+            .ToList();
+    }
+
     public async Task<StandardPagedResponse<DonationResponseDto>> ListMyLedgerAsync(long? supporterId, ListDonationLedgerQuery query, CancellationToken cancellationToken = default)
     {
         var page = query.Page <= 0 ? 1 : query.Page;
@@ -41,6 +105,17 @@ public sealed class DonationService(IDonationRepository donationRepository) : ID
             item.DonationCount,
             item.DonationCount,
             item.AvgAmount)).ToList());
+    }
+
+    public async Task<DonationStatsResponse> GetDonationStatsAsync(string? fundType, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default)
+    {
+        var enforceScope = role is BeaconRoles.Staff or BeaconRoles.Admin;
+        var stats = await donationRepository.GetDonationStatsAsync(fundType, assignedSafehouses, enforceScope, cancellationToken);
+        return new DonationStatsResponse(
+            decimal.Round(stats.TotalReceived, 2),
+            decimal.Round(stats.TotalAllocated, 2),
+            stats.PendingAllocationCount,
+            stats.UniqueDonors);
     }
 
     public async Task<StandardPagedResponse<DonationResponseDto>> ListDonationsAsync(ListDonationsQuery query, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default)
@@ -97,6 +172,230 @@ public sealed class DonationService(IDonationRepository donationRepository) : ID
 
         var summary = await donationRepository.GetDonationAsync(created.DonationId, cancellationToken);
         return summary is null ? MapEntity(created) : MapSummary(summary);
+    }
+
+    public async Task<(DonationResponseDto? Response, string? ErrorMessage)> CreateAdminDonationEntryAsync(CreateAdminDonationRequest request, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default)
+    {
+        var supporterError = await ValidateSupporterSelectionAsync(request, cancellationToken);
+        if (supporterError is not null)
+        {
+            return (null, supporterError);
+        }
+
+        var donationType = request.DonationType?.Trim();
+        if (string.IsNullOrWhiteSpace(donationType) || !DonationTypes.Contains(donationType))
+        {
+            return (null, "donationType must be one of Monetary, InKind, Time, Skills, SocialMedia");
+        }
+
+        var channelSource = request.ChannelSource?.Trim();
+        if (string.IsNullOrWhiteSpace(channelSource) || !ChannelSources.Contains(channelSource))
+        {
+            return (null, "channelSource must be one of Campaign, Event, Direct, SocialMedia, PartnerReferral");
+        }
+
+        var donationDate = request.DonationDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var safehouseError = ValidateSafehouseScope(request.SafehouseId, role, assignedSafehouses);
+        if (safehouseError is not null)
+        {
+            return (null, safehouseError);
+        }
+
+        var inKindItems = request.InKindItems?
+            .Where(static item => item is not null)
+            .ToList() ?? [];
+        var allocations = request.Allocations?
+            .Where(static item => item is not null)
+            .ToList() ?? [];
+
+        if (allocations.Count == 0)
+        {
+            return (null, "At least one donation allocation is required");
+        }
+
+        var amount = request.Amount.HasValue ? decimal.Round(request.Amount.Value, 2) : (decimal?)null;
+        var estimatedValue = request.EstimatedValue.HasValue ? decimal.Round(request.EstimatedValue.Value, 2) : (decimal?)null;
+        string? currencyCode = request.CurrencyCode?.Trim();
+        string? impactUnit = request.ImpactUnit?.Trim();
+
+        switch (donationType)
+        {
+            case "Monetary":
+                if (!amount.HasValue || amount.Value <= 0)
+                {
+                    return (null, "amount is required for Monetary donations");
+                }
+
+                currencyCode = string.IsNullOrWhiteSpace(currencyCode) ? "PHP" : currencyCode;
+                if (!string.Equals(currencyCode, "PHP", StringComparison.Ordinal))
+                {
+                    return (null, "currencyCode must be PHP for Monetary donations");
+                }
+
+                impactUnit ??= "pesos";
+                estimatedValue = amount;
+                break;
+            case "InKind":
+                if (inKindItems.Count == 0)
+                {
+                    return (null, "At least one in-kind item is required for InKind donations");
+                }
+
+                currencyCode = null;
+                impactUnit ??= "items";
+                amount = null;
+                estimatedValue = decimal.Round(inKindItems.Sum(item =>
+                    (item.Quantity ?? 0m) * (item.EstimatedUnitValue ?? 0m)), 2);
+                break;
+            default:
+                currencyCode = null;
+                if (amount.HasValue)
+                {
+                    return (null, "amount is only allowed for Monetary donations");
+                }
+
+                if (!estimatedValue.HasValue || estimatedValue.Value <= 0)
+                {
+                    return (null, "estimatedValue is required for non-monetary donations");
+                }
+
+                if (string.IsNullOrWhiteSpace(impactUnit))
+                {
+                    impactUnit = donationType is "Time" or "Skills" ? "hours" : "campaigns";
+                }
+                break;
+        }
+
+        if (!string.IsNullOrWhiteSpace(impactUnit) && !ImpactUnits.Contains(impactUnit))
+        {
+            return (null, "impactUnit must be one of pesos, items, hours, campaigns");
+        }
+
+        var inKindCommands = new List<AdminDonationCreateInKindItemCommand>();
+        foreach (var item in inKindItems)
+        {
+            var itemName = item.ItemName?.Trim();
+            if (string.IsNullOrWhiteSpace(itemName))
+            {
+                return (null, "Each in-kind item requires itemName");
+            }
+
+            if (!item.Quantity.HasValue || item.Quantity.Value <= 0)
+            {
+                return (null, "Each in-kind item requires quantity greater than zero");
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.ItemCategory) && !ItemCategories.Contains(item.ItemCategory))
+            {
+                return (null, "itemCategory must be one of Food, Supplies, Clothing, SchoolMaterials, Hygiene, Furniture, Medical");
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.UnitOfMeasure) && !UnitOfMeasures.Contains(item.UnitOfMeasure))
+            {
+                return (null, "unitOfMeasure must be one of pcs, boxes, kg, sets, packs");
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.IntendedUse) && !IntendedUses.Contains(item.IntendedUse))
+            {
+                return (null, "intendedUse must be one of Meals, Education, Shelter, Hygiene, Health");
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.ReceivedCondition) && !ReceivedConditions.Contains(item.ReceivedCondition))
+            {
+                return (null, "receivedCondition must be one of New, Good, Fair");
+            }
+
+            inKindCommands.Add(new AdminDonationCreateInKindItemCommand(
+                itemName,
+                item.ItemCategory?.Trim(),
+                decimal.Round(item.Quantity.Value, 2),
+                item.UnitOfMeasure?.Trim(),
+                item.EstimatedUnitValue.HasValue ? decimal.Round(item.EstimatedUnitValue.Value, 2) : null,
+                item.IntendedUse?.Trim(),
+                item.ReceivedCondition?.Trim()));
+        }
+
+        var allocationCommands = new List<AdminDonationCreateAllocationCommand>();
+        foreach (var allocation in allocations)
+        {
+            var programArea = allocation.ProgramArea?.Trim();
+            if (string.IsNullOrWhiteSpace(programArea) || !ProgramAreas.Contains(programArea))
+            {
+                return (null, "programArea must be one of Education, Wellbeing, Operations, Transport, Maintenance, Outreach");
+            }
+
+            if (!allocation.AmountAllocated.HasValue || allocation.AmountAllocated.Value <= 0)
+            {
+                return (null, "Each allocation requires amountAllocated greater than zero");
+            }
+
+            var effectiveSafehouseId = request.SafehouseId ?? allocation.SafehouseId;
+            if (!effectiveSafehouseId.HasValue)
+            {
+                return (null, "Each allocation requires a safehouse when the donation is not directed to a specific safehouse");
+            }
+
+            if (request.SafehouseId.HasValue && allocation.SafehouseId.HasValue && allocation.SafehouseId.Value != request.SafehouseId.Value)
+            {
+                return (null, "Allocation safehouse must match the donation safehouse for directed donations");
+            }
+
+            if (role is BeaconRoles.Staff or BeaconRoles.Admin &&
+                assignedSafehouses.Count > 0 &&
+                !assignedSafehouses.Contains(effectiveSafehouseId.Value))
+            {
+                return (null, "Allocations must stay within your assigned safehouses");
+            }
+
+            allocationCommands.Add(new AdminDonationCreateAllocationCommand(
+                allocation.SafehouseId ?? request.SafehouseId,
+                programArea,
+                decimal.Round(allocation.AmountAllocated.Value, 2),
+                allocation.AllocationDate ?? donationDate,
+                allocation.AllocationNotes?.Trim()));
+        }
+
+        var allocatableTotal = amount ?? estimatedValue ?? 0m;
+        if (allocatableTotal > 0m)
+        {
+            var totalAllocated = allocationCommands.Sum(item => item.AmountAllocated);
+            if (totalAllocated > allocatableTotal + 0.01m)
+            {
+                return (null, "Allocated total cannot exceed the donation value");
+            }
+        }
+
+        string? supporterCommandError = null;
+        var supporterCommand = request.Supporter is null
+            ? null
+            : BuildSupporterCommand(request.Supporter, donationDate, request.IsRecurring ?? false, out supporterCommandError);
+        if (supporterCommandError is not null)
+        {
+            return (null, supporterCommandError);
+        }
+
+        var summary = await donationRepository.CreateAdministrativeDonationAsync(new AdminDonationCreateCommand(
+            request.ExistingSupporterId,
+            supporterCommand,
+            request.CampaignId,
+            donationType,
+            donationDate,
+            channelSource,
+            currencyCode,
+            amount,
+            estimatedValue,
+            impactUnit,
+            request.IsRecurring ?? false,
+            request.CampaignName?.Trim(),
+            request.Notes?.Trim(),
+            request.ReferralPostId,
+            request.SafehouseId,
+            inKindCommands,
+            allocationCommands), cancellationToken);
+
+        return summary is null
+            ? (null, "Failed to record donation")
+            : (MapSummary(summary), null);
     }
 
     public async Task<DonationResponseDto?> UpdateDonationAsync(long donationId, UpdateDonationRequest request, CancellationToken cancellationToken = default)
@@ -204,6 +503,73 @@ public sealed class DonationService(IDonationRepository donationRepository) : ID
         return (new PublicDonationResponse(created.DonationId, "Thank you for your donation!"), null);
     }
 
+    public async Task<(PublicDonationResponse? Response, string? ErrorMessage)> CreatePublicInKindDonationAsync(PublicInKindDonationRequest request, CancellationToken cancellationToken = default)
+    {
+        var items = request.Items?.Where(item => !string.IsNullOrWhiteSpace(item.ItemName)).ToList() ?? [];
+        if (items.Count == 0)
+        {
+            return (null, "At least one in-kind item is required");
+        }
+
+        foreach (var item in items)
+        {
+            if (!item.Quantity.HasValue || item.Quantity.Value <= 0)
+            {
+                return (null, $"Quantity must be greater than zero for item '{item.ItemName ?? "unknown"}'");
+            }
+        }
+
+        var estimatedValue = items
+            .Where(item => item.EstimatedUnitValue.HasValue && item.Quantity.HasValue)
+            .Sum(item => item.EstimatedUnitValue!.Value * item.Quantity!.Value);
+
+        var notes = string.Join(" | ", new[]
+        {
+            !string.IsNullOrWhiteSpace(request.Name) ? $"From: {request.Name}" : null,
+            !string.IsNullOrWhiteSpace(request.Email) ? $"Email: {request.Email}" : null,
+            !string.IsNullOrWhiteSpace(request.Notes) ? request.Notes : null
+        }.Where(static item => !string.IsNullOrWhiteSpace(item)));
+
+        var executionStrategy = dbContext.Database.CreateExecutionStrategy();
+        Donation? createdDonation = null;
+
+        await executionStrategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+            createdDonation = await donationRepository.CreateDonationAsync(new Donation
+            {
+                SupporterId = request.SupporterId,
+                DonationType = "in_kind",
+                DonationDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                CurrencyCode = "PHP",
+                ChannelSource = "in_kind",
+                Notes = string.IsNullOrWhiteSpace(notes) ? null : notes,
+                IsRecurring = false,
+                SafehouseId = request.SafehouseId,
+                EstimatedValue = estimatedValue > 0 ? decimal.Round(estimatedValue, 2) : null,
+                ImpactUnit = "items"
+            }, cancellationToken);
+
+            var mappedItems = items.Select(item => new InKindDonationItem
+            {
+                DonationId = createdDonation.DonationId,
+                ItemName = item.ItemName?.Trim(),
+                ItemCategory = item.ItemCategory?.Trim(),
+                Quantity = item.Quantity.HasValue ? decimal.Round(item.Quantity.Value, 2) : null,
+                UnitOfMeasure = item.UnitOfMeasure?.Trim(),
+                EstimatedUnitValue = item.EstimatedUnitValue.HasValue ? decimal.Round(item.EstimatedUnitValue.Value, 2) : null,
+                IntendedUse = item.IntendedUse?.Trim(),
+                ReceivedCondition = item.ReceivedCondition?.Trim()
+            }).ToList();
+
+            await donationRepository.CreateInKindDonationItemsAsync(mappedItems, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        });
+
+        return (new PublicDonationResponse(createdDonation!.DonationId, "Thank you for your in-kind donation!"), null);
+    }
+
     public async Task<DonationAllocationsResponse> ListDonationAllocationsAsync(ListDonationAllocationsQuery query, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default)
     {
         var enforceScope = role is BeaconRoles.Staff or BeaconRoles.Admin;
@@ -220,16 +586,37 @@ public sealed class DonationService(IDonationRepository donationRepository) : ID
             return (null, "donationId, programArea and amountAllocated (>0) are required");
         }
 
+        var donation = await donationRepository.GetDonationAsync(request.DonationId.Value, cancellationToken);
+        if (donation is null)
+        {
+            return (null, "Not found");
+        }
+
+        var effectiveSafehouseId = request.SafehouseId ?? donation.SafehouseId;
+        if (!effectiveSafehouseId.HasValue)
+        {
+            return (null, "safehouseId is required");
+        }
+
+        if (!await donationRepository.SafehouseExistsAsync(effectiveSafehouseId.Value, cancellationToken))
+        {
+            return (null, "safehouseId was not found");
+        }
+
+        var allocatableTotal = donation.Amount ?? donation.EstimatedValue;
+        if (request.AmountAllocated.Value > 0 && allocatableTotal.HasValue)
+        {
+            var existingAllocations = await donationRepository.ListDonationAllocationsAsync(request.DonationId.Value, [], false, cancellationToken);
+            var allocatedTotal = existingAllocations.Sum(item => item.AmountAllocated ?? 0m);
+            if (decimal.Round(allocatedTotal + request.AmountAllocated.Value, 2) > decimal.Round(allocatableTotal.Value, 2) + 0.01m)
+            {
+                return (null, "amountAllocated exceeds the remaining donation balance");
+            }
+        }
+
         if (role is BeaconRoles.Staff or BeaconRoles.Admin && assignedSafehouses.Count > 0)
         {
-            var donation = await donationRepository.GetDonationAsync(request.DonationId.Value, cancellationToken);
-            if (donation is null)
-            {
-                return (null, "Not found");
-            }
-
-            var effectiveSafehouseId = request.SafehouseId ?? donation.SafehouseId;
-            if (!effectiveSafehouseId.HasValue || !assignedSafehouses.Contains(effectiveSafehouseId.Value))
+            if (!assignedSafehouses.Contains(effectiveSafehouseId.Value))
             {
                 return (null, "Not found");
             }
@@ -238,8 +625,8 @@ public sealed class DonationService(IDonationRepository donationRepository) : ID
         var created = await donationRepository.CreateDonationAllocationAsync(new DonationAllocation
         {
             DonationId = request.DonationId,
-            SafehouseId = request.SafehouseId,
-            ProgramArea = request.ProgramArea,
+            SafehouseId = effectiveSafehouseId,
+            ProgramArea = request.ProgramArea.Trim(),
             AmountAllocated = decimal.Round(request.AmountAllocated.Value, 2),
             AllocationDate = DateOnly.FromDateTime(DateTime.UtcNow),
             AllocationNotes = request.AllocationNotes
@@ -372,5 +759,110 @@ public sealed class DonationService(IDonationRepository donationRepository) : ID
     {
         var resolved = pageSize ?? limit ?? 20;
         return Math.Clamp(resolved, 1, 100);
+    }
+
+    private async Task<string?> ValidateSupporterSelectionAsync(CreateAdminDonationRequest request, CancellationToken cancellationToken)
+    {
+        var hasExisting = request.ExistingSupporterId.HasValue;
+        var hasNew = request.Supporter is not null;
+
+        if (hasExisting == hasNew)
+        {
+            return "Provide either existingSupporterId or a new supporter payload";
+        }
+
+        if (hasExisting && !await donationRepository.SupporterExistsAsync(request.ExistingSupporterId!.Value, cancellationToken))
+        {
+            return "Selected supporter was not found";
+        }
+
+        return null;
+    }
+
+    private static string? ValidateSafehouseScope(long? safehouseId, string? role, IReadOnlyList<long> assignedSafehouses)
+    {
+        if (role is not BeaconRoles.Staff and not BeaconRoles.Admin)
+        {
+            return null;
+        }
+
+        if (!safehouseId.HasValue)
+        {
+            return "A directed safehouse is required for admin-entered donations";
+        }
+
+        if (assignedSafehouses.Count > 0 && !assignedSafehouses.Contains(safehouseId.Value))
+        {
+            return "Donations must be assigned to one of your safehouses";
+        }
+
+        return null;
+    }
+
+    private static AdminDonationCreateSupporterCommand? BuildSupporterCommand(
+        AdminDonationSupporterRequest request,
+        DateOnly donationDate,
+        bool recurringEnabled,
+        out string? errorMessage)
+    {
+        errorMessage = null;
+
+        if (!string.IsNullOrWhiteSpace(request.SupporterType) && !SupporterTypes.Contains(request.SupporterType))
+        {
+            errorMessage = "supporterType must be one of MonetaryDonor, InKindDonor, Volunteer, SkillsContributor, SocialMediaAdvocate, PartnerOrganization";
+            return null;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.RelationshipType) && !RelationshipTypes.Contains(request.RelationshipType))
+        {
+            errorMessage = "relationshipType must be one of Local, International, PartnerOrganization";
+            return null;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Status) && !SupporterStatuses.Contains(request.Status))
+        {
+            errorMessage = "status must be Active or Inactive";
+            return null;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.AcquisitionChannel) && !AcquisitionChannels.Contains(request.AcquisitionChannel))
+        {
+            errorMessage = "acquisitionChannel must be one of Website, SocialMedia, Event, WordOfMouth, PartnerReferral, Church";
+            return null;
+        }
+
+        var displayName = request.DisplayName?.Trim();
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            displayName = string.Join(" ", new[] { request.FirstName?.Trim(), request.LastName?.Trim() }
+                .Where(part => !string.IsNullOrWhiteSpace(part))).Trim();
+        }
+
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            displayName = request.OrganizationName?.Trim();
+        }
+
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            errorMessage = "displayName is required for new supporters";
+            return null;
+        }
+
+        return new AdminDonationCreateSupporterCommand(
+            request.SupporterType?.Trim(),
+            displayName,
+            request.OrganizationName?.Trim(),
+            request.FirstName?.Trim(),
+            request.LastName?.Trim(),
+            request.RelationshipType?.Trim(),
+            request.Region?.Trim(),
+            request.Country?.Trim(),
+            request.Email?.Trim(),
+            request.Phone?.Trim(),
+            string.IsNullOrWhiteSpace(request.Status) ? "Active" : request.Status.Trim(),
+            request.FirstDonationDate ?? donationDate,
+            request.AcquisitionChannel?.Trim(),
+            string.IsNullOrWhiteSpace(request.CreatedAt) ? DateTimeOffset.UtcNow.ToString("O") : request.CreatedAt.Trim());
     }
 }

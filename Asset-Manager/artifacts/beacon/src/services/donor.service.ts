@@ -81,7 +81,7 @@ export interface PublicImpactSnapshot {
   summary?: string | null;
 }
 
-export interface Donation {
+export interface DonorGivingRecord {
   donationId?: number | null;
   id?: number | null;
   supporterId?: number | null;
@@ -151,7 +151,7 @@ export function useListMyDonations(params?: { page?: number; pageSize?: number }
   if (params?.page) s.set("page", String(params.page));
   if (params?.pageSize) s.set("pageSize", String(params.pageSize));
   const qs = s.toString();
-  return useQuery<{ data: Donation[]; total: number }>({
+  return useQuery<{ data: DonorGivingRecord[]; total: number }>({
     queryKey: ["donations", "my-ledger", params],
     queryFn: () => apiFetch(`/api/donations/my-ledger${qs ? `?${qs}` : ""}`),
   });
