@@ -1,10 +1,23 @@
 # Resident Risk
 
-This folder contains the standardized predictive and explanatory notebook templates for `resident_risk`.
+This folder contains the paired submission notebooks for `resident_risk`.
 
-## Notebook Standard
+## Status
+
+- Artifact-backed pipeline with committed model and evaluation files in `ml/models/`.
+- Canonical predictive notebook: `resident-risk-predictive.ipynb`
+- Canonical explanatory notebook: `resident-risk-explanatory.ipynb`
+## Required Submission Sections
+
+- Problem Framing
+- Data Acquisition, Preparation & Exploration
+- Modeling & Feature Selection
+- Evaluation & Interpretation
+- Causal and Relationship Analysis
+- Deployment Notes
+
+## Deployment Anchor
 
 - Decision support: Trigger earlier staff intervention for residents with elevated short-term safety risk.
-- Target summary: Current predictive label: `label_incident_next_30d` from resident-monthly snapshots.
-- Recommended widgets: `risk_badge_widget`, `ranked_table_widget`, `explanation_chart_card`
 - Primary users: case managers, operations staff
+- Recommended widgets: `risk_badge_widget`, `ranked_table_widget`, `explanation_chart_card`

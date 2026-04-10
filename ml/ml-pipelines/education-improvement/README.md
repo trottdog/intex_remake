@@ -1,10 +1,23 @@
 # Education Improvement
 
-This folder contains the standardized predictive and explanatory notebook templates for `education_improvement`.
+This folder contains the paired submission notebooks for `education_improvement`.
 
-## Notebook Standard
+## Status
+
+- Artifact-backed pipeline with committed model and evaluation files in `ml/models/`.
+- Canonical predictive notebook: `education-improvement-predictive.ipynb`
+- Canonical explanatory notebook: `education-improvement-explanatory.ipynb`
+## Required Submission Sections
+
+- Problem Framing
+- Data Acquisition, Preparation & Exploration
+- Modeling & Feature Selection
+- Evaluation & Interpretation
+- Causal and Relationship Analysis
+- Deployment Notes
+
+## Deployment Anchor
 
 - Decision support: Help staff reinforce the education plans and support patterns linked to improvement.
-- Target summary: Current predictive label: `label_education_improvement_next_120d`, based on future attendance gains, progress gains, or a shift to completed status.
-- Recommended widgets: `insight_summary_card`, `ranked_table_widget`, `recommendation_panel`
 - Primary users: case managers, education coordinators
+- Recommended widgets: `insight_summary_card`, `ranked_table_widget`, `recommendation_panel`

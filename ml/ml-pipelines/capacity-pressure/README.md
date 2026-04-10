@@ -1,10 +1,23 @@
 # Capacity Pressure
 
-This folder contains the standardized predictive and explanatory notebook templates for `capacity_pressure`.
+This folder contains the paired submission notebooks for `capacity_pressure`.
 
-## Notebook Standard
+## Status
+
+- Artifact-backed pipeline with committed model and evaluation files in `ml/models/`.
+- Canonical predictive notebook: `capacity-pressure-predictive.ipynb`
+- Canonical explanatory notebook: `capacity-pressure-explanatory.ipynb`
+## Required Submission Sections
+
+- Problem Framing
+- Data Acquisition, Preparation & Exploration
+- Modeling & Feature Selection
+- Evaluation & Interpretation
+- Causal and Relationship Analysis
+- Deployment Notes
+
+## Deployment Anchor
 
 - Decision support: Help operations leadership intervene early when a site is likely to approach or exceed practical capacity.
-- Target summary: Current predictive label: `label_capacity_pressure_next_month`, using safehouse-month occupancy and service patterns to flag next-month near-capacity risk.
-- Recommended widgets: `risk_badge_widget`, `insight_summary_card`, `recommendation_panel`
 - Primary users: operations leadership, program leadership
+- Recommended widgets: `risk_badge_widget`, `insight_summary_card`, `recommendation_panel`
