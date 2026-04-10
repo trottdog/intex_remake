@@ -60,10 +60,10 @@ const STAT_CARDS = [
 export default function PublicImpactPage() {
   const { data } = useGetPublicImpact();
   const stats = [
-    { ...STAT_CARDS[0], value: fmtCount(data?.residentsServedTotal ?? 0) },
-    { ...STAT_CARDS[1], value: fmtCount(data?.safehouseCount ?? 0) },
+    { ...STAT_CARDS[0], value: fmtCount(data?.residentsServedTotal) },
+    { ...STAT_CARDS[1], value: fmtCount(data?.safehouseCount) },
     { ...STAT_CARDS[2], value: fmtPeso(data?.totalDonationsRaised ?? 0) },
-    { ...STAT_CARDS[3], value: fmtCount(data?.donationCount ?? 0) },
+    { ...STAT_CARDS[3], value: fmtCount(data?.donationCount) },
   ];
 
   return (

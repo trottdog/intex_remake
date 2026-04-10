@@ -298,11 +298,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-3">
-            <p className="text-xs text-amber-700">
-              <span className="font-semibold">Demo environment.</span> Contact your administrator for access credentials.
-            </p>
-          </div>
         </div>
       </main>
     </div>
