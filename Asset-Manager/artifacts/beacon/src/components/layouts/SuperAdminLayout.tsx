@@ -4,6 +4,7 @@ import {
   Briefcase, DollarSign, Heart, Layers,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
+import lighthouseLogo from "@assets/Minimalist_lighthouse_logo_design_1775623783267.png";
 
 const SUPERADMIN_NAV = [
   // ── Overview ────────────────────────────────────────────────────────────────
@@ -43,7 +44,7 @@ const SUPERADMIN_NAV = [
 
 export function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <DashboardLayout navItems={SUPERADMIN_NAV} portalName="Super Admin">
+    <DashboardLayout navItems={SUPERADMIN_NAV} portalName="Super Admin" brandLogoSrc={lighthouseLogo}>
       {children}
     </DashboardLayout>
   );

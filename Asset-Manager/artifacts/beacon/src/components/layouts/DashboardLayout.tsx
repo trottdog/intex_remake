@@ -26,6 +26,7 @@ interface DashboardLayoutProps {
   children: ReactNode;
   navItems: NavItem[];
   portalName: string;
+  brandLogoSrc?: string;
   safehouseLabel?: string;
   bellBadge?: number;
   bellItems?: NotificationItem[];
@@ -33,7 +34,7 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({
-  children, navItems, portalName, safehouseLabel, bellBadge = 0, bellItems = [], onBellOpen,
+  children, navItems, portalName, brandLogoSrc, safehouseLabel, bellBadge = 0, bellItems = [], onBellOpen,
 }: DashboardLayoutProps) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
@@ -134,7 +135,13 @@ export function DashboardLayout({
     <div className="min-h-screen flex bg-background">
       <aside className="w-64 bg-sidebar text-sidebar-foreground hidden md:flex flex-col border-r border-sidebar-border shrink-0 fixed h-full z-10">
         <div className={`flex items-center px-6 border-b border-sidebar-border ${safehouseLabel ? "py-4" : "h-16"}`}>
-          <div className="w-8 h-8 bg-primary rounded flex items-center justify-center text-white font-bold mr-3 shrink-0">B</div>
+          {brandLogoSrc ? (
+            <div className="mr-3 flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/10 shrink-0">
+              <img src={brandLogoSrc} alt="Beacon" className="h-8 w-8 object-contain shrink-0" />
+            </div>
+          ) : (
+            <div className="w-8 h-8 bg-primary rounded flex items-center justify-center text-white font-bold mr-3 shrink-0">B</div>
+          )}
           <div className="flex flex-col min-w-0">
             <span className="font-bold text-lg leading-tight">Beacon</span>
             <span className="text-xs text-sidebar-accent-foreground/70 uppercase tracking-wider">{portalName}</span>

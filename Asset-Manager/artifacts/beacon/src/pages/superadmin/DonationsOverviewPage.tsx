@@ -16,7 +16,7 @@ interface RichDonation {
   donationId: number;
   supporterId: number | null;
   supporterName: string | null;
-  amount: number;
+  amount: number | null;
   currencyCode: string | null;
   donationDate: string | null;
   donationType: string | null;
@@ -24,8 +24,8 @@ interface RichDonation {
   channelSource: string | null;
   isRecurring: boolean | null;
   notes: string | null;
-  totalAllocated: number;
-  unallocated: number;
+  totalAllocated: number | null;
+  unallocated: number | null;
   safehouseId: number | null;
   safehouseName: string | null;
   isGeneralFund: boolean;
@@ -47,24 +47,27 @@ interface Safehouse {
   safehouseName: string | null;
 }
 
-function fmt(n: number) {
-  return `₱${n.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+function fmt(n: number | null | undefined) {
+  return `₱${(n ?? 0).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function AllocationStatus({ donation }: { donation: RichDonation }) {
-  const pct = donation.amount > 0 ? Math.min(100, (donation.totalAllocated / donation.amount) * 100) : 0;
-  const fullyAllocated = donation.unallocated <= 0;
+  const amt = donation.amount ?? 0;
+  const alloc = donation.totalAllocated ?? 0;
+  const unalloc = donation.unallocated ?? 0;
+  const pct = amt > 0 ? Math.min(100, (alloc / amt) * 100) : 0;
+  const fullyAllocated = unalloc <= 0;
   return (
     <div className="min-w-[140px]">
       <div className="flex items-center justify-between text-xs mb-1">
         <span className={`font-semibold ${fullyAllocated ? "text-[#2a9d72]" : "text-amber-600"}`}>
-          {fullyAllocated ? "Fully allocated" : `${fmt(donation.unallocated)} pending`}
+          {fullyAllocated ? "Fully allocated" : `${fmt(unalloc)} pending`}
         </span>
       </div>
       <div className="w-full bg-gray-100 rounded-full h-1.5">
         <div className={`h-1.5 rounded-full transition-all ${fullyAllocated ? "bg-[#2a9d72]" : "bg-amber-400"}`} style={{ width: `${pct}%` }} />
       </div>
-      <div className="text-xs text-gray-400 mt-0.5">{fmt(donation.totalAllocated)} of {fmt(donation.amount)}</div>
+      <div className="text-xs text-gray-400 mt-0.5">{fmt(alloc)} of {fmt(amt)}</div>
     </div>
   );
 }
@@ -95,7 +98,7 @@ function AllocateModal({
 
   const allocations = allocationsData?.data ?? [];
   const totalAllocated = allocations.reduce((s, a) => s + (a.amountAllocated ?? 0), 0);
-  const remaining = Math.max(0, donation.amount - totalAllocated);
+  const remaining = Math.max(0, (donation.amount ?? 0) - totalAllocated);
 
   const { mutate: addAllocation, isPending: adding } = useMutation({
     mutationFn: () => apiPost("/api/donation-allocations", {
@@ -299,18 +302,25 @@ function AllocateModal({
   );
 }
 
+const PAGE_SIZE = 20;
+
 export default function DonationsOverviewPage() {
   const { token } = useAuth();
   const [search, setSearch] = useState("");
   const [selectedDonation, setSelectedDonation] = useState<RichDonation | null>(null);
   const [allocFilter, setAllocFilter] = useState<"all" | "unallocated" | "allocated">("all");
   const [fundType, setFundType] = useState<"all" | "general" | "directed">("all");
+  const [page, setPage] = useState(1);
 
   const { data: donationsData, isLoading } = useQuery({
-    queryKey: ["admin-donations", fundType],
+    queryKey: ["admin-donations", fundType, page],
     queryFn: () => {
-      const qs = fundType !== "all" ? `?fundType=${fundType}` : "";
-      return apiFetch<{ data: RichDonation[]; total: number }>(`/api/donations${qs}`, token ?? undefined);
+      const params = new URLSearchParams();
+      if (fundType !== "all") params.set("fundType", fundType);
+      params.set("page", String(page));
+      params.set("pageSize", String(PAGE_SIZE));
+      const qs = params.toString();
+      return apiFetch<{ data: RichDonation[]; total: number }>(`/api/donations?${qs}`, token ?? undefined);
     },
     enabled: !!token,
   });
@@ -321,7 +331,18 @@ export default function DonationsOverviewPage() {
     enabled: !!token,
   });
 
+  const { data: statsData } = useQuery({
+    queryKey: ["donation-stats", fundType],
+    queryFn: () => {
+      const qs = fundType !== "all" ? `?fundType=${fundType}` : "";
+      return apiFetch<{ totalReceived: number; totalAllocated: number; pendingAllocationCount: number; uniqueDonors: number }>(`/api/donations/stats${qs}`, token ?? undefined);
+    },
+    enabled: !!token,
+  });
+
   const allDonations = donationsData?.data ?? [];
+  const totalRecords = donationsData?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalRecords / PAGE_SIZE));
   const safehouses = safehousesData?.data ?? [];
 
   const donations = allDonations.filter(d => {
@@ -331,15 +352,15 @@ export default function DonationsOverviewPage() {
       || (d.campaignName ?? "").toLowerCase().includes(search.toLowerCase())
       || (d.safehouseName ?? "").toLowerCase().includes(search.toLowerCase());
     const matchAlloc = allocFilter === "all"
-      || (allocFilter === "unallocated" && d.unallocated > 0.005)
-      || (allocFilter === "allocated" && d.unallocated <= 0.005);
+      || (allocFilter === "unallocated" && (d.unallocated ?? 0) > 0.005)
+      || (allocFilter === "allocated" && (d.unallocated ?? 0) <= 0.005);
     return matchSearch && matchAlloc;
   });
 
-  const totalAmount = allDonations.reduce((s, d) => s + d.amount, 0);
-  const totalAllocated = allDonations.reduce((s, d) => s + d.totalAllocated, 0);
-  const unallocatedCount = allDonations.filter(d => d.unallocated > 0.005).length;
-  const uniqueDonors = new Set(allDonations.map(d => d.supporterId).filter(Boolean)).size;
+  const totalAmount = statsData?.totalReceived ?? 0;
+  const totalAllocated = statsData?.totalAllocated ?? 0;
+  const unallocatedCount = statsData?.pendingAllocationCount ?? 0;
+  const uniqueDonors = statsData?.uniqueDonors ?? 0;
 
   function fmtDate(d: string | null | undefined) {
     if (!d) return "—";
@@ -382,7 +403,7 @@ export default function DonationsOverviewPage() {
           { key: "general", label: "General Fund", Icon: Globe },
           { key: "directed", label: "Directed", Icon: Building2 },
         ] as const).map(({ key, label, Icon }) => (
-          <button key={key} onClick={() => setFundType(key)}
+          <button key={key} onClick={() => { setFundType(key); setPage(1); }}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-colors ${fundType === key ? "bg-white text-[#0e2118] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
             <Icon className="w-3.5 h-3.5" /> {label}
           </button>
@@ -455,7 +476,7 @@ export default function DonationsOverviewPage() {
                         </div>
                       </td>
                       <td className="px-5 py-4">
-                        <span className="text-base font-black text-[#0e2118]">₱{d.amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}</span>
+                        <span className="text-base font-black text-[#0e2118]">₱{(d.amount ?? 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</span>
                         <div className="text-xs text-gray-400">{d.currencyCode ?? "PHP"}</div>
                       </td>
                       <td className="px-5 py-4 text-gray-500 text-xs">{fmtDate(d.donationDate)}</td>
@@ -479,17 +500,40 @@ export default function DonationsOverviewPage() {
                         <button
                           onClick={() => setSelectedDonation(d)}
                           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                            d.unallocated > 0.005 ? "bg-[#0e2118] text-white hover:bg-[#1a3528]" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                            (d.unallocated ?? 0) > 0.005 ? "bg-[#0e2118] text-white hover:bg-[#1a3528]" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                           }`}
                         >
                           <Layers className="w-3.5 h-3.5" />
-                          {d.unallocated > 0.005 ? "Allocate" : "Review"}
+                          {(d.unallocated ?? 0) > 0.005 ? "Allocate" : "Review"}
                         </button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {totalRecords > PAGE_SIZE && (
+            <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
+              <span>Showing {Math.min(page * PAGE_SIZE, totalRecords)} of {totalRecords} donations</span>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage(p => p - 1)}
+                  className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                >
+                  Previous
+                </button>
+                <span className="text-xs">Page {page} of {totalPages}</span>
+                <button
+                  disabled={page >= totalPages}
+                  onClick={() => setPage(p => p + 1)}
+                  className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                >
+                  Next
+                </button>
+              </div>
             </div>
           )}
         </div>

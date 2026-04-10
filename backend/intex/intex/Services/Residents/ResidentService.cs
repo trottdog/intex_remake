@@ -10,10 +10,10 @@ namespace backend.intex.Services.Residents;
 
 public sealed class ResidentService(IResidentRepository residentRepository) : IResidentService
 {
-    public async Task<ResidentStatsResponseDto> GetStatsAsync(string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default)
+    public async Task<ResidentStatsResponseDto> GetStatsAsync(long? safehouseId, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default)
     {
         var enforceScope = role is BeaconRoles.Staff or BeaconRoles.Admin;
-        var rows = await residentRepository.ListResidentsForStatsAsync(assignedSafehouses, enforceScope, cancellationToken);
+        var rows = await residentRepository.ListResidentsForStatsAsync(safehouseId, assignedSafehouses, enforceScope, cancellationToken);
         var active = rows.Where(resident => string.Equals(resident.CaseStatus, "active", StringComparison.OrdinalIgnoreCase)).ToList();
         var thirtyDaysAgo = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-30));
 

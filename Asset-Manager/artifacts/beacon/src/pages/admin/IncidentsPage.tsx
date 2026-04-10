@@ -224,11 +224,10 @@ export default function IncidentsPage() {
     );
   });
 
-  // Use the stats query (full dataset) for accurate KPI counts
   const totalAll = statsData?.total ?? data?.total ?? 0;
-  const open = allStats.filter(i => i.status === "open" || i.status === "investigating").length;
+  const resolvedCount = allStats.filter(i => i.status === "resolved" || i.status === "closed" || (i.resolved === true && !i.status)).length;
+  const open = allStats.filter(i => i.status === "open" || i.status === "investigating" || (!i.status && !i.resolved)).length;
   const critical = allStats.filter(i => i.severity === "critical").length;
-  const resolved = allStats.filter(i => i.status === "resolved" || i.status === "closed").length;
 
   const totalPages = data?.pagination?.totalPages ?? 1;
   const isSaving = createMutation.isPending || updateMutation.isPending;
@@ -271,7 +270,7 @@ export default function IncidentsPage() {
           { label: "Total Incidents", value: totalAll, color: "text-gray-900" },
           { label: "Open / Investigating", value: open, color: "text-amber-600" },
           { label: "Critical Severity", value: critical, color: "text-red-600" },
-          { label: "Resolved / Closed", value: resolved, color: "text-[#2a9d72]" },
+          { label: "Resolved / Closed", value: resolvedCount, color: "text-[#2a9d72]" },
         ].map(kpi => (
           <div key={kpi.label} className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{kpi.label}</p>
@@ -324,7 +323,8 @@ export default function IncidentsPage() {
               </tr>
             ) : incidents.map(r => {
               const sev = SEVERITY_CONFIG[r.severity ?? ""] ?? { label: r.severity ?? "—", cls: "bg-gray-100 text-gray-600 border border-gray-200" };
-              const st = STATUS_CONFIG[r.status ?? ""] ?? { label: r.status ?? "—", icon: Clock, cls: "bg-gray-100 text-gray-600 border border-gray-200" };
+              const effectiveStatus = r.status ?? (r.resolved ? "resolved" : "open");
+              const st = STATUS_CONFIG[effectiveStatus] ?? { label: effectiveStatus, icon: Clock, cls: "bg-gray-100 text-gray-600 border border-gray-200" };
               const StatusIcon = st.icon;
               return (
                 <tr key={r.incidentId} onClick={() => setViewTarget(r)} className="hover:bg-[#f0faf5] transition-colors group cursor-pointer">

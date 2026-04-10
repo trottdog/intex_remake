@@ -1,27 +1,45 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { MLOverviewSection } from "./MLOverviewWidgets";
 import {
   useGetExecutiveDashboardSummary,
   useListSafehouses,
-  type SafehouseBreakdownItem,
 } from "@/services/superadmin.service";
+import { useListSocialMediaPosts, useListSupporters } from "@/services";
+import { type Resident, useListResidents } from "@/services/residents.service";
+import { apiFetch } from "@/services/api";
 import {
-  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
   ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts";
 import {
-  Building2, Users, DollarSign, TrendingUp, AlertTriangle,
-  ShieldAlert, Activity, Calendar, Brain, Settings2,
-  ArrowRight, Loader2, ChevronDown, RefreshCw, Heart,
-  BookOpen, FileText, CheckCircle2,
+  AlertTriangle,
+  ArrowRight,
+  Building2,
+  ChevronDown,
+  Clock3,
+  DollarSign,
+  Loader2,
+  RefreshCw,
+  Repeat2,
+  Settings2,
+  Share2,
+  TrendingUp,
+  UserX,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const ACCENT = "#2a9d72";
 const DARK = "#0e2118";
-const MINT = "#7bc5a6";
 
 const RISK_COLORS: Record<string, string> = {
   low: "#22c55e",
@@ -31,148 +49,18 @@ const RISK_COLORS: Record<string, string> = {
   unknown: "#94a3b8",
 };
 
-const CHANNEL_COLORS = ["#2a9d72", "#0e2118", "#7bc5a6", "#457b9d", "#e9c46a", "#f4a261"];
+const PLATFORM_COLORS = ["#2a9d72", "#0e2118", "#7bc5a6", "#457b9d", "#e9c46a"];
 
-type Section =
-  | "kpis"
-  | "donationTrend"
-  | "capacity"
-  | "riskDistribution"
-  | "reintegration"
-  | "safehouseTable"
-  | "incidentsFeed"
-  | "mlAlerts"
-  | "conferences"
-  | "programAllocation"
-  | "channelBreakdown";
+type Section = "kpis" | "careGaps" | "donorHealth";
 
 const ALL_SECTIONS: { id: Section; label: string }[] = [
-  { id: "kpis", label: "KPI Overview" },
-  { id: "donationTrend", label: "Donation Trend" },
-  { id: "capacity", label: "Safehouse Capacity" },
-  { id: "riskDistribution", label: "Risk Distribution" },
-  { id: "reintegration", label: "Reintegration Pipeline" },
-  { id: "safehouseTable", label: "Safehouse Performance" },
-  { id: "incidentsFeed", label: "Recent Incidents" },
-  { id: "mlAlerts", label: "ML Risk Alerts" },
-  { id: "conferences", label: "Upcoming Conferences" },
-  { id: "programAllocation", label: "Program Allocation" },
-  { id: "channelBreakdown", label: "Donor Channels" },
+  { id: "kpis", label: "Top KPIs" },
+  { id: "careGaps", label: "Care Gaps" },
+  { id: "donorHealth", label: "Donor Health" },
 ];
 
 const STORAGE_KEY = "sa_dashboard_sections";
 const MONTHS_KEY = "sa_dashboard_months";
-
-function loadSections(): Record<Section, boolean> {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return Object.fromEntries(ALL_SECTIONS.map(s => [s.id, true])) as Record<Section, boolean>;
-}
-
-function saveSections(v: Record<Section, boolean>) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(v)); } catch {}
-}
-
-function fmt(n: number | undefined | null, prefix = ""): string {
-  if (n == null || isNaN(n)) return "—";
-  return `${prefix}${n.toLocaleString()}`;
-}
-
-function fmtPeso(n: number | undefined | null): string {
-  if (n == null || isNaN(n)) return "—";
-  return `₱${n.toLocaleString("en-PH", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-}
-
-function fmtPct(n: number | undefined | null): string {
-  if (n == null || isNaN(n)) return "—";
-  return `${(n * 100).toFixed(1)}%`;
-}
-
-type Trend = "up" | "down" | "neutral";
-
-function KpiCard({
-  label, value, sub, icon: Icon, color = ACCENT, trend,
-}: {
-  label: string; value: string; sub?: string; icon: React.ElementType; color?: string; trend?: Trend;
-}) {
-  return (
-    <div className="bg-white border border-gray-100 rounded-xl p-5 flex flex-col gap-2 hover:shadow-sm transition-shadow">
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</span>
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${color}18` }}>
-          <Icon className="w-4 h-4" style={{ color }} />
-        </div>
-      </div>
-      <div className="text-2xl font-bold text-gray-900 leading-tight">{value}</div>
-      {sub && (
-        <div className={`text-xs ${trend === "up" ? "text-green-600" : trend === "down" ? "text-red-500" : "text-gray-400"}`}>
-          {sub}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SectionHeader({ title, to, count }: { title: string; to?: string; count?: number }) {
-  return (
-    <div className="flex items-center justify-between mb-4">
-      <h3 className="font-semibold text-gray-800 text-sm uppercase tracking-wide">
-        {title}
-        {count != null && (
-          <span className="ml-2 bg-gray-100 text-gray-500 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{count}</span>
-        )}
-      </h3>
-      {to && (
-        <Link href={to}>
-          <button className="text-xs text-[#2a9d72] hover:text-[#0e2118] flex items-center gap-1 font-medium transition-colors">
-            View all <ArrowRight className="w-3 h-3" />
-          </button>
-        </Link>
-      )}
-    </div>
-  );
-}
-
-function SeverityBadge({ severity }: { severity?: string | null }) {
-  const s = (severity ?? "").toLowerCase();
-  const map: Record<string, string> = {
-    critical: "bg-red-100 text-red-700",
-    high: "bg-orange-100 text-orange-700",
-    medium: "bg-amber-100 text-amber-700",
-    low: "bg-green-100 text-green-700",
-  };
-  return (
-    <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${map[s] ?? "bg-gray-100 text-gray-500"}`}>
-      {s || "unknown"}
-    </span>
-  );
-}
-
-function RiskBadge({ level }: { level?: string | null }) {
-  const l = (level ?? "").toLowerCase();
-  return (
-    <span
-      className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded"
-      style={{ backgroundColor: `${RISK_COLORS[l] ?? "#94a3b8"}22`, color: RISK_COLORS[l] ?? "#94a3b8" }}
-    >
-      {l || "—"}
-    </span>
-  );
-}
-
-function OccupancyBar({ pct }: { pct: number }) {
-  const color = pct >= 90 ? "#ef4444" : pct >= 70 ? "#f59e0b" : ACCENT;
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-        <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, pct)}%`, backgroundColor: color }} />
-      </div>
-      <span className="text-xs text-gray-500 w-8 text-right">{pct}%</span>
-    </div>
-  );
-}
 
 const MONTHS_OPTIONS = [
   { label: "1M", value: 1 },
@@ -182,59 +70,355 @@ const MONTHS_OPTIONS = [
   { label: "24M", value: 24 },
 ];
 
+type ProcessRecordingItem = {
+  recordingId?: number | null;
+  residentId?: number | null;
+  residentCode?: string | null;
+  sessionDate?: string | null;
+  socialWorker?: string | null;
+  progressNoted?: boolean | null;
+  concernsFlagged?: boolean | null;
+};
+
+type AttentionResident = {
+  residentId?: number | null;
+  label: string;
+  safehouseName: string;
+  riskLevel?: string | null;
+  signals: string[];
+  score: number;
+  daysSinceUpdate: number | null;
+};
+
+function defaultSections(): Record<Section, boolean> {
+  return Object.fromEntries(ALL_SECTIONS.map((section) => [section.id, true])) as Record<Section, boolean>;
+}
+
+function loadSections(): Record<Section, boolean> {
+  const defaults = defaultSections();
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaults;
+    return { ...defaults, ...JSON.parse(raw) } as Record<Section, boolean>;
+  } catch {
+    return defaults;
+  }
+}
+
+function saveSections(value: Record<Section, boolean>) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+  } catch {}
+}
+
+function fmt(n: number | undefined | null): string {
+  if (n == null || Number.isNaN(n)) return "—";
+  return n.toLocaleString();
+}
+
+function fmtPeso(n: number | undefined | null): string {
+  if (n == null || Number.isNaN(n)) return "—";
+  return `₱${n.toLocaleString("en-PH", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+}
+
+function fmtPct(n: number | undefined | null): string {
+  if (n == null || Number.isNaN(n)) return "—";
+  const value = n <= 1 ? n * 100 : n;
+  return `${value.toFixed(1)}%`;
+}
+
+function periodLabel(months: number): string {
+  if (months <= 1) return "This month";
+  return `Last ${months} months`;
+}
+
+function toDateValue(dateString?: string | null): number | null {
+  if (!dateString) return null;
+  const value = new Date(dateString).getTime();
+  return Number.isNaN(value) ? null : value;
+}
+
+function daysSince(dateString?: string | null): number | null {
+  const value = toDateValue(dateString);
+  if (value == null) return null;
+  return Math.max(0, Math.floor((Date.now() - value) / (1000 * 60 * 60 * 24)));
+}
+
+function safeResidentLabel(resident: Resident): string {
+  return resident.internalCode ?? resident.residentCode ?? resident.caseControlNo ?? "Resident";
+}
+
+function KpiCard({
+  label,
+  value,
+  sub,
+  icon: Icon,
+  color = ACCENT,
+  emphasis = false,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  icon: React.ElementType;
+  color?: string;
+  emphasis?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-xl border p-5 transition-all ${
+        emphasis
+          ? "border-red-100 bg-white hover:border-red-200 hover:shadow-md"
+          : "border-gray-100 bg-white hover:border-[#2a9d72]/30 hover:shadow-md"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-xs font-bold uppercase tracking-widest text-gray-400">{label}</div>
+          <div className={`mt-3 text-3xl font-black leading-none ${emphasis ? "text-red-600" : "text-gray-900"}`}>
+            {value}
+          </div>
+        </div>
+        <div
+          className="flex h-10 w-10 items-center justify-center rounded-xl"
+          style={{ backgroundColor: `${color}18` }}
+        >
+          <Icon className="h-5 w-5" style={{ color }} />
+        </div>
+      </div>
+      {sub ? <div className={`mt-3 text-xs ${emphasis ? "text-red-600" : "text-gray-400"}`}>{sub}</div> : null}
+    </div>
+  );
+}
+
+function SectionHeader({
+  title,
+  description,
+  to,
+  cta = "View all",
+}: {
+  title: string;
+  description?: string;
+  to?: string;
+  cta?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        {description ? <p className="mt-1 text-sm text-gray-500">{description}</p> : null}
+      </div>
+      {to ? (
+        <Link href={to}>
+          <button className="inline-flex items-center gap-1 text-sm font-semibold text-[#2a9d72] transition-colors hover:underline">
+            {cta} <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </Link>
+      ) : null}
+    </div>
+  );
+}
+
+function RiskBadge({ level }: { level?: string | null }) {
+  const value = (level ?? "unknown").toLowerCase();
+  const color = RISK_COLORS[value] ?? RISK_COLORS.unknown;
+  return (
+    <span
+      className="inline-flex rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wide"
+      style={{ backgroundColor: `${color}18`, color }}
+    >
+      {value}
+    </span>
+  );
+}
+
 export default function SuperAdminDashboard() {
   const [safehouseId, setSafehouseId] = useState<number | null>(null);
   const [months, setMonths] = useState<number>(() => {
-    try { return parseInt(localStorage.getItem(MONTHS_KEY) ?? "12") || 12; } catch { return 12; }
+    try {
+      return parseInt(localStorage.getItem(MONTHS_KEY) ?? "12", 10) || 12;
+    } catch {
+      return 12;
+    }
   });
   const [sections, setSections] = useState<Record<Section, boolean>>(loadSections);
   const [showCustomize, setShowCustomize] = useState(false);
 
-  const { data, isLoading, error, refetch, isFetching } = useGetExecutiveDashboardSummary(
-    { safehouseId, months }
-  );
+  const { data, isLoading, error, refetch, isFetching } = useGetExecutiveDashboardSummary({ safehouseId, months });
   const { data: safehousesData } = useListSafehouses({ pageSize: 100 });
+  const { data: residentsData } = useListResidents({ pageSize: 200, safehouseId: safehouseId ?? undefined, caseStatus: "active" });
+  const { data: supportersData } = useListSupporters({ pageSize: 1000 });
+  const { data: socialPostsData } = useListSocialMediaPosts({ pageSize: 200 });
+  const { data: recordingsData } = useQuery<{ data: ProcessRecordingItem[]; total: number }>({
+    queryKey: ["process-recordings", "dashboard", safehouseId ?? "all"],
+    queryFn: () => apiFetch(`/api/process-recordings?pageSize=500${safehouseId ? `&safehouseId=${safehouseId}` : ""}`),
+  });
+
   const allSafehouses = safehousesData?.data ?? [];
+  const activeResidents = residentsData?.data ?? [];
+  const supporters = supportersData?.data ?? [];
+  const socialPosts = socialPostsData?.data ?? [];
+  const processRecordings = recordingsData?.data ?? [];
 
   useEffect(() => {
-    try { localStorage.setItem(MONTHS_KEY, String(months)); } catch {}
+    try {
+      localStorage.setItem(MONTHS_KEY, String(months));
+    } catch {}
   }, [months]);
 
   function toggleSection(id: Section) {
-    setSections(prev => {
-      const next = { ...prev, [id]: !prev[id] };
+    setSections((previous) => {
+      const next = { ...previous, [id]: !previous[id] };
       saveSections(next);
       return next;
     });
   }
 
-  const riskPieData = useMemo(() => {
-    const rd = data?.riskDistribution;
-    if (!rd) return [];
-    return [
-      { name: "Low", value: rd.low, color: RISK_COLORS.low },
-      { name: "Medium", value: rd.medium, color: RISK_COLORS.medium },
-      { name: "High", value: rd.high, color: RISK_COLORS.high },
-      { name: "Critical", value: rd.critical, color: RISK_COLORS.critical },
-      { name: "Unknown", value: rd.unknown, color: RISK_COLORS.unknown },
-    ].filter(d => d.value > 0);
-  }, [data?.riskDistribution]);
+  const safehouseMap = useMemo(() => {
+    return new Map((data?.safehouseBreakdown ?? []).map((safehouse) => [safehouse.safehouseId, safehouse]));
+  }, [data?.safehouseBreakdown]);
+
+  const latestRecordingByResident = useMemo(() => {
+    const map = new Map<number, ProcessRecordingItem>();
+    for (const recording of processRecordings) {
+      if (!recording.residentId) continue;
+      const current = map.get(recording.residentId);
+      if (!current || (toDateValue(recording.sessionDate) ?? -1) > (toDateValue(current.sessionDate) ?? -1)) {
+        map.set(recording.residentId, recording);
+      }
+    }
+    return map;
+  }, [processRecordings]);
+
+  const careGapSignals = useMemo(() => {
+    const noRecentUpdateCount = activeResidents.filter((resident) => {
+      const lastRecording = resident.residentId ? latestRecordingByResident.get(resident.residentId) : undefined;
+      const elapsed = daysSince(lastRecording?.sessionDate);
+      return elapsed == null || elapsed > 30;
+    }).length;
+
+    const missingAssignedSupportCount = activeResidents.filter(
+      (resident) => !resident.assignedSocialWorker && !resident.assignedWorkerName,
+    ).length;
+
+    const stalledProgressCount = activeResidents.filter((resident) => {
+      const lastRecording = resident.residentId ? latestRecordingByResident.get(resident.residentId) : undefined;
+      return lastRecording?.progressNoted === false;
+    }).length;
+
+    const overCapacitySafehouseCount = (data?.safehouseBreakdown ?? []).filter(
+      (safehouse) => (safehouse.occupancyPct ?? 0) >= 90,
+    ).length;
+
+    return {
+      noRecentUpdateCount,
+      missingAssignedSupportCount,
+      stalledProgressCount,
+      overCapacitySafehouseCount,
+    };
+  }, [activeResidents, data?.safehouseBreakdown, latestRecordingByResident]);
+
+  const attentionResidents = useMemo<AttentionResident[]>(() => {
+    return activeResidents
+      .map((resident) => {
+        const lastRecording = resident.residentId ? latestRecordingByResident.get(resident.residentId) : undefined;
+        const elapsed = daysSince(lastRecording?.sessionDate);
+        const occupancy = resident.safehouseId ? safehouseMap.get(resident.safehouseId)?.occupancyPct ?? 0 : 0;
+        const riskLevel = resident.currentRiskLevel ?? resident.riskLevel ?? "unknown";
+        const signals: string[] = [];
+
+        if (elapsed == null || elapsed > 30) signals.push("No recent update");
+        if (!resident.assignedSocialWorker && !resident.assignedWorkerName) signals.push("Missing assigned support");
+        if (lastRecording?.progressNoted === false) signals.push("Stalled progress");
+        if (occupancy >= 90) signals.push("Capacity pressure");
+
+        const riskScore =
+          riskLevel === "critical" ? 4 :
+          riskLevel === "high" ? 3 :
+          riskLevel === "medium" ? 2 :
+          riskLevel === "low" ? 1 :
+          0;
+
+        return {
+          residentId: resident.residentId,
+          label: safeResidentLabel(resident),
+          safehouseName: resident.safehouseName ?? "Unassigned safehouse",
+          riskLevel,
+          signals,
+          daysSinceUpdate: elapsed,
+          score:
+            riskScore +
+            (signals.includes("No recent update") ? 3 : 0) +
+            (signals.includes("Missing assigned support") ? 2 : 0) +
+            (signals.includes("Stalled progress") ? 2 : 0) +
+            (signals.includes("Capacity pressure") ? 1 : 0),
+        };
+      })
+      .filter((resident) => resident.signals.length > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+  }, [activeResidents, latestRecordingByResident, safehouseMap]);
 
   const reintegrationData = useMemo(() => {
-    const rb = data?.reintegrationBreakdown;
-    if (!rb) return [];
+    const breakdown = data?.reintegrationBreakdown;
+    if (!breakdown) return [];
     return [
-      { stage: "Not Started", count: rb.notStarted, color: "#94a3b8" },
-      { stage: "In Progress", count: rb.inProgress, color: "#f59e0b" },
-      { stage: "Ready", count: rb.ready, color: ACCENT },
-      { stage: "Completed", count: rb.completed, color: DARK },
+      { stage: "Not Started", count: breakdown.notStarted, color: "#94a3b8" },
+      { stage: "In Progress", count: breakdown.inProgress, color: "#f59e0b" },
+      { stage: "Ready", count: breakdown.ready, color: ACCENT },
+      { stage: "Completed", count: breakdown.completed, color: DARK },
     ];
   }, [data?.reintegrationBreakdown]);
 
+  const donorSummary = useMemo(() => {
+    const donorRecords = supporters.filter(
+      (supporter) => (supporter.donationCount ?? 0) > 0 || !!supporter.firstDonationDate || !!supporter.lastGiftDate,
+    );
+    const returning = donorRecords.filter((supporter) => (supporter.donationCount ?? 0) > 1).length;
+    const newer = donorRecords.filter((supporter) => (supporter.donationCount ?? 0) <= 1).length;
+    return {
+      totalDonors: donorRecords.length,
+      returning,
+      newer,
+      returningPct: donorRecords.length > 0 ? (returning / donorRecords.length) * 100 : null,
+    };
+  }, [supporters]);
+
+  const donationMomentum = useMemo(() => {
+    const trend = data?.donationTrend ?? [];
+    if (trend.length < 2) return null;
+    const recent = trend.slice(-Math.min(3, trend.length));
+    const prior = trend.slice(Math.max(0, trend.length - 6), Math.max(0, trend.length - 3));
+    const recentTotal = recent.reduce((sum, point) => sum + point.amount, 0);
+    const priorTotal = prior.reduce((sum, point) => sum + point.amount, 0);
+    if (prior.length === 0 || priorTotal === 0) return null;
+    return ((recentTotal - priorTotal) / priorTotal) * 100;
+  }, [data?.donationTrend]);
+
+  const socialSummary = useMemo(() => {
+    const totalReferrals = socialPosts.reduce((sum, post) => sum + (post.donationReferrals ?? 0), 0);
+    const byPlatform = new Map<string, { platform: string; referrals: number }>();
+
+    for (const post of socialPosts) {
+      const platform = post.platform ?? "other";
+      const current = byPlatform.get(platform) ?? { platform, referrals: 0 };
+      current.referrals += post.donationReferrals ?? 0;
+      byPlatform.set(platform, current);
+    }
+
+    const platformBreakdown = [...byPlatform.values()].sort((a, b) => b.referrals - a.referrals).slice(0, 4);
+    const topPost = [...socialPosts].sort((a, b) => {
+      const referralDiff = (b.donationReferrals ?? 0) - (a.donationReferrals ?? 0);
+      if (referralDiff !== 0) return referralDiff;
+      return (b.estimatedDonationValuePhp ?? 0) - (a.estimatedDonationValuePhp ?? 0);
+    })[0];
+
+    return { totalReferrals, platformBreakdown, topPost };
+  }, [socialPosts]);
+
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-72 gap-3 text-gray-400">
-        <Loader2 className="w-8 h-8 animate-spin text-[#2a9d72]" />
+      <div className="flex h-72 flex-col items-center justify-center gap-3 text-gray-400">
+        <Loader2 className="h-8 w-8 animate-spin text-[#2a9d72]" />
         <span className="text-sm">Loading executive dashboard…</span>
       </div>
     );
@@ -242,551 +426,488 @@ export default function SuperAdminDashboard() {
 
   if (error || !data) {
     return (
-      <div className="flex flex-col items-center justify-center h-72 gap-3 text-gray-400">
-        <AlertTriangle className="w-8 h-8 text-amber-400" />
+      <div className="flex h-72 flex-col items-center justify-center gap-3 text-gray-400">
+        <AlertTriangle className="h-8 w-8 text-amber-400" />
         <p className="text-sm font-medium text-gray-600">Dashboard data unavailable</p>
-        <Button size="sm" variant="outline" onClick={() => refetch()}>Retry</Button>
+        <Button size="sm" variant="outline" onClick={() => refetch()}>
+          Retry
+        </Button>
       </div>
     );
   }
 
-  const recentIncidents = data.recentIncidents ?? [];
-  const upcomingConfs = data.upcomingConferences ?? [];
-  const mlAlerts = data.mlAlerts ?? [];
-  const safehouseBreakdown: SafehouseBreakdownItem[] = data.safehouseBreakdown ?? [];
-  const donationTrend = data.donationTrend ?? [];
-  const allocationByProgram = data.allocationByProgram ?? [];
-  const donationByChannel = data.donationByChannel ?? [];
+  const selectedPeriod = periodLabel(months);
+  const returningDonorDisplay = donorSummary.returningPct != null ? `${donorSummary.returningPct.toFixed(1)}%` : "—";
+  const hasPriorityCases = attentionResidents.length > 0;
 
   return (
     <div className="space-y-6 pb-8">
-
-      {/* ── Header ───────────────────────────────────────────────────────────── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Executive Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Live organization-wide snapshot across all safehouses</p>
+          <p className="mt-0.5 text-sm text-gray-500">
+            Focused on care risk, donor retention, and what is driving donor action.
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {/* Safehouse filter */}
           <div className="relative">
             <select
               value={safehouseId ?? ""}
-              onChange={e => setSafehouseId(e.target.value ? parseInt(e.target.value) : null)}
-              className="appearance-none text-sm border border-gray-200 rounded-lg pl-3 pr-7 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#2a9d72] cursor-pointer"
+              onChange={(event) => setSafehouseId(event.target.value ? parseInt(event.target.value, 10) : null)}
+              className="cursor-pointer appearance-none rounded-xl border border-gray-100 bg-white py-1.5 pl-3 pr-7 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-1 focus:ring-[#2a9d72]"
             >
               <option value="">All Safehouses</option>
-              {allSafehouses.map(sh => (
-                <option key={sh.safehouseId ?? sh.id} value={sh.safehouseId ?? sh.id ?? ""}>
-                  {sh.name ?? sh.safehouseCode}
+              {allSafehouses.map((safehouse) => (
+                <option key={safehouse.safehouseId ?? safehouse.id} value={safehouse.safehouseId ?? safehouse.id ?? ""}>
+                  {safehouse.name ?? safehouse.safehouseCode}
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
           </div>
 
-          {/* Month range */}
-          <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
-            {MONTHS_OPTIONS.map(opt => (
+          <div className="flex items-center overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+            {MONTHS_OPTIONS.map((option) => (
               <button
-                key={opt.value}
-                onClick={() => setMonths(opt.value)}
+                key={option.value}
+                onClick={() => setMonths(option.value)}
                 className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  months === opt.value
-                    ? "bg-[#0e2118] text-white"
-                    : "text-gray-500 hover:bg-gray-50"
+                  months === option.value ? "bg-[#2a9d72] text-white" : "text-gray-500 hover:bg-gray-50"
                 }`}
               >
-                {opt.label}
+                {option.label}
               </button>
             ))}
           </div>
 
-          {/* Refresh */}
           <button
             onClick={() => refetch()}
-            className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-gray-800 transition-colors"
+            className="rounded-xl border border-gray-100 bg-white p-1.5 text-gray-500 shadow-sm transition-colors hover:text-gray-800"
             title="Refresh"
           >
-            <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
           </button>
 
-          {/* Customize */}
           <button
-            onClick={() => setShowCustomize(v => !v)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors ${
+            onClick={() => setShowCustomize((value) => !value)}
+            className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold shadow-sm transition-colors ${
               showCustomize
-                ? "bg-[#0e2118] text-white border-[#0e2118]"
+                ? "border-[#2a9d72] bg-[#2a9d72] text-white"
                 : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
             }`}
           >
-            <Settings2 className="w-3.5 h-3.5" /> Customize
+            <Settings2 className="h-3.5 w-3.5" /> Customize
           </button>
         </div>
       </div>
 
-      {/* ── Customize Panel ───────────────────────────────────────────────────── */}
-      {showCustomize && (
-        <div className="bg-white border border-gray-100 rounded-xl p-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Toggle Panels</p>
+      {showCustomize ? (
+        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">Show Sections</p>
           <div className="flex flex-wrap gap-2">
-            {ALL_SECTIONS.map(s => (
+            {ALL_SECTIONS.map((section) => (
               <button
-                key={s.id}
-                onClick={() => toggleSection(s.id)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-                  sections[s.id]
-                    ? "bg-[#0e2118] text-white border-[#0e2118]"
-                    : "bg-white text-gray-500 border-gray-200 hover:border-gray-400"
+                key={section.id}
+                onClick={() => toggleSection(section.id)}
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  sections[section.id]
+                    ? "border-[#2a9d72] bg-[#2a9d72] text-white"
+                    : "border-gray-200 bg-white text-gray-500 hover:border-gray-400"
                 }`}
               >
-                {s.label}
+                {section.label}
               </button>
             ))}
           </div>
         </div>
-      )}
+      ) : null}
 
-      {/* ── KPI Row ───────────────────────────────────────────────────────────── */}
-      {sections.kpis && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      {sections.kpis ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <KpiCard
-            label="Active Residents"
+            label="Survivors in Care"
             value={fmt(data.activeResidents)}
-            sub={`${fmt(data.admissionsThisMonth)} new this month`}
+            sub={`${fmt(data.activeSafehouses)} active safehouses`}
             icon={Users}
-            color={ACCENT}
-            trend="neutral"
           />
           <KpiCard
-            label="Safehouses"
-            value={fmt(data.totalSafehouses)}
-            sub={`${fmt(data.activeSafehouses)} active`}
-            icon={Building2}
-            color={DARK}
+            label="Cases at Risk"
+            value={fmt(data.highRiskResidents)}
+            sub="High and critical cases needing close attention"
+            icon={AlertTriangle}
+            color="#dc2626"
+            emphasis
           />
           <KpiCard
-            label="Total Funds Raised"
+            label="Total Donations"
             value={fmtPeso(data.totalDonations)}
-            sub={`${fmt(data.totalDonationCount)} donations`}
+            sub={`${selectedPeriod} · ${fmt(data.totalDonationCount)} gifts tracked`}
             icon={DollarSign}
-            color={ACCENT}
-            trend="up"
           />
           <KpiCard
-            label="Donors / Supporters"
-            value={fmt(data.totalSupporters)}
-            sub="All channels"
-            icon={TrendingUp}
+            label="Returning Donors %"
+            value={returningDonorDisplay}
+            sub={`${fmt(donorSummary.returning)} returning donors out of ${fmt(donorSummary.totalDonors)}`}
+            icon={Repeat2}
             color="#457b9d"
           />
-          <KpiCard
-            label="Open Incidents"
-            value={fmt(data.openIncidents)}
-            sub={`${fmt(data.incidentsThisWeek)} this week`}
-            icon={ShieldAlert}
-            color={data.openIncidents && data.openIncidents > 0 ? "#ef4444" : ACCENT}
-            trend={data.openIncidents && data.openIncidents > 0 ? "down" : "neutral"}
-          />
-          <KpiCard
-            label="High Risk Residents"
-            value={fmt(data.highRiskResidents)}
-            sub="High + critical"
-            icon={AlertTriangle}
-            color={data.highRiskResidents && data.highRiskResidents > 0 ? "#f97316" : ACCENT}
-            trend={data.highRiskResidents && data.highRiskResidents > 0 ? "down" : "neutral"}
-          />
-          <KpiCard
-            label="Reintegration Rate"
-            value={fmtPct(data.reintegrationRate)}
-            sub={`${fmt(data.reintegrationCount)} completed`}
-            icon={CheckCircle2}
-            color={ACCENT}
-            trend="up"
-          />
-          <KpiCard
-            label="Upcoming Conferences"
-            value={fmt(data.upcomingCaseConferences)}
-            sub="Within 7 days"
-            icon={Calendar}
-            color="#7c3aed"
-          />
         </div>
-      )}
+      ) : null}
 
-      {/* ── Secondary KPIs ───────────────────────────────────────────────────── */}
-      {sections.kpis && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { label: "Avg Health Score", value: data.avgHealthScore != null ? `${data.avgHealthScore}/10` : "—", icon: Heart, color: "#e11d48" },
-            { label: "Avg Education Progress", value: data.avgEducationProgress != null ? `${data.avgEducationProgress}%` : "—", icon: BookOpen, color: "#7c3aed" },
-            { label: "Active Intervention Plans", value: fmt(data.activeInterventionPlans), icon: Activity, color: ACCENT },
-            { label: "Session Records (30d)", value: fmt(data.processRecordingsThisMonth), icon: FileText, color: "#0891b2" },
-          ].map(kpi => (
-            <div key={kpi.label} className="bg-white border border-gray-100 rounded-xl px-4 py-3 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${kpi.color}18` }}>
-                <kpi.icon className="w-4 h-4" style={{ color: kpi.color }} />
-              </div>
-              <div>
-                <div className="text-xs text-gray-400">{kpi.label}</div>
-                <div className="font-bold text-gray-900">{kpi.value}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="grid items-stretch gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+        {sections.careGaps ? (
+          <div className="h-full">
+            <section className="flex h-full flex-col rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+              <SectionHeader
+                title="Preventing Girls From Falling Through the Cracks"
+                description="A compact executive view of cases needing intervention, safehouse pressure, and reintegration flow."
+                to="/superadmin/residents"
+                cta="View residents"
+              />
 
-      {/* ── Donation Trend + Safehouse Capacity ──────────────────────────────── */}
-      <div className={`grid ${sections.donationTrend && sections.capacity ? "lg:grid-cols-2" : ""} gap-6`}>
-        {sections.donationTrend && (
-          <div className="bg-white border border-gray-100 rounded-xl p-5">
-            <SectionHeader title="Donation Trend" to="/superadmin/donors" />
-            {donationTrend.length > 0 ? (
-              <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={donationTrend} margin={{ left: -10, right: 8 }}>
-                  <defs>
-                    <linearGradient id="donGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={ACCENT} stopOpacity={0.25} />
-                      <stop offset="95%" stopColor={ACCENT} stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="label" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 10 }} tickFormatter={v => `₱${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip
-                    formatter={(v: number) => [fmtPeso(v), "Amount"]}
-                    contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e2e8f0" }}
-                  />
-                  <Area type="monotone" dataKey="amount" stroke={ACCENT} strokeWidth={2} fill="url(#donGradient)" dot={false} />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-48 flex items-center justify-center text-gray-300 text-sm">No donation data</div>
-            )}
-            <div className="mt-3 flex gap-4 text-xs text-gray-400">
-              <span>Total: <span className="font-semibold text-gray-700">{fmtPeso(data.totalDonations)}</span></span>
-              <span>Transactions: <span className="font-semibold text-gray-700">{fmt(data.totalDonationCount)}</span></span>
-            </div>
-          </div>
-        )}
+              <div
+                className={`mt-6 rounded-xl border p-5 ${
+                  hasPriorityCases ? "border-amber-200 bg-amber-50" : "border-gray-100 bg-[#f8fbf9]"
+                }`}
+              >
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Cases Needing Attention</h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Priority signals pulled from case coverage, assignment gaps, recent progress, and capacity pressure.
+                    </p>
+                  </div>
+                  <div
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
+                      hasPriorityCases ? "bg-red-100 text-red-700" : "bg-emerald-50 text-[#2a9d72]"
+                    }`}
+                  >
+                    {hasPriorityCases ? <AlertTriangle className="h-3.5 w-3.5" /> : <Users className="h-3.5 w-3.5" />}
+                    {fmt(attentionResidents.length)} priority cases surfaced
+                  </div>
+                </div>
 
-        {sections.capacity && (
-          <div className="bg-white border border-gray-100 rounded-xl p-5">
-            <SectionHeader title="Safehouse Capacity" to="/superadmin/safehouses" />
-            {safehouseBreakdown.length > 0 ? (
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={safehouseBreakdown} margin={{ left: -10, right: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e2e8f0" }} />
-                  <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="currentOccupancy" name="Occupied" fill={ACCENT} radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="capacityGirls" name="Capacity" fill="#e2e8f0" radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-48 flex items-center justify-center text-gray-300 text-sm">No safehouse data</div>
-            )}
-          </div>
-        )}
-      </div>
+                <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  {[
+                    {
+                      label: "No recent update",
+                      value: careGapSignals.noRecentUpdateCount,
+                      note: "30+ days since last case recording",
+                      icon: Clock3,
+                      toneAlert: "border-amber-200 bg-amber-50 text-amber-800",
+                      toneCalm: "border-gray-200 bg-white text-gray-500",
+                    },
+                    {
+                      label: "Missing assigned support",
+                      value: careGapSignals.missingAssignedSupportCount,
+                      note: "Active cases without a named worker",
+                      icon: UserX,
+                      toneAlert: "border-red-200 bg-red-50 text-red-800",
+                      toneCalm: "border-gray-200 bg-white text-gray-500",
+                    },
+                    {
+                      label: "Stalled progress",
+                      value: careGapSignals.stalledProgressCount,
+                      note: "Latest session recorded no progress",
+                      icon: TrendingUp,
+                      toneAlert: "border-orange-200 bg-orange-50 text-orange-800",
+                      toneCalm: "border-gray-200 bg-white text-gray-500",
+                    },
+                    {
+                      label: "Capacity pressure",
+                      value: careGapSignals.overCapacitySafehouseCount,
+                      note: "Safehouses above 90% occupancy",
+                      icon: Building2,
+                      toneAlert: "border-[#bfe2cc] bg-[#eef8f3] text-[#2a9d72]",
+                      toneCalm: "border-gray-200 bg-white text-gray-500",
+                    },
+                  ].map((item) => {
+                    const active = item.value > 0;
+                    return (
+                      <div
+                        key={item.label}
+                        className={`rounded-xl border p-4 transition-colors ${
+                          active ? `${item.toneAlert} border-[1.5px]` : item.toneCalm
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${active ? "" : "text-gray-400"}`}>
+                            {item.label}
+                          </span>
+                          <item.icon className={`h-4 w-4 ${active ? "" : "text-gray-300"}`} />
+                        </div>
+                        <div className={`mt-3 font-bold ${active ? "text-4xl" : "text-3xl text-gray-500"}`}>{fmt(item.value)}</div>
+                        <div className={`mt-2 text-xs ${active ? "opacity-90" : "text-gray-400"}`}>{item.note}</div>
+                      </div>
+                    );
+                  })}
+                </div>
 
-      {/* ── Risk Distribution + Reintegration Pipeline ───────────────────────── */}
-      <div className={`grid ${sections.riskDistribution && sections.reintegration ? "lg:grid-cols-2" : ""} gap-6`}>
-        {sections.riskDistribution && (
-          <div className="bg-white border border-gray-100 rounded-xl p-5">
-            <SectionHeader title="Risk Level Distribution" to="/superadmin/residents" />
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              {riskPieData.length > 0 ? (
-                <ResponsiveContainer width={180} height={180}>
-                  <PieChart>
-                    <Pie
-                      data={riskPieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={52}
-                      outerRadius={80}
-                      paddingAngle={2}
-                      dataKey="value"
-                    >
-                      {riskPieData.map((entry, i) => (
-                        <Cell key={i} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e2e8f0" }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="w-40 h-40 flex items-center justify-center text-gray-300 text-sm">No data</div>
-              )}
-              <div className="flex-1 space-y-2">
-                {riskPieData.map(d => {
-                  const total = riskPieData.reduce((s, x) => s + x.value, 0);
-                  const pct = total > 0 ? ((d.value / total) * 100).toFixed(1) : "0";
-                  return (
-                    <div key={d.name} className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
-                      <span className="text-xs text-gray-600 flex-1">{d.name}</span>
-                      <span className="text-xs font-semibold text-gray-900">{d.value}</span>
-                      <span className="text-xs text-gray-400 w-10 text-right">{pct}%</span>
+                <div className="mt-6 space-y-3 border-t border-black/5 pt-5">
+                  {attentionResidents.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-[#cfe7d8] bg-white px-4 py-6 text-sm text-[#2a9d72]">
+                      No urgent care gaps surfaced from the current resident and case-recording data.
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {sections.reintegration && (
-          <div className="bg-white border border-gray-100 rounded-xl p-5">
-            <SectionHeader title="Reintegration Pipeline" to="/superadmin/residents" />
-            {reintegrationData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={reintegrationData} layout="vertical" margin={{ left: 0, right: 24 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 10 }} />
-                  <YAxis dataKey="stage" type="category" tick={{ fontSize: 11 }} width={80} />
-                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e2e8f0" }} />
-                  <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                    {reintegrationData.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-40 flex items-center justify-center text-gray-300 text-sm">No data</div>
-            )}
-            <div className="mt-3 flex justify-between text-xs text-gray-400">
-              <span>Total tracked: <span className="font-semibold text-gray-700">{fmt((data.reintegrationBreakdown?.notStarted ?? 0) + (data.reintegrationBreakdown?.inProgress ?? 0) + (data.reintegrationBreakdown?.ready ?? 0) + (data.reintegrationBreakdown?.completed ?? 0))}</span></span>
-              <span>Success rate: <span className="font-semibold text-[#2a9d72]">{fmtPct(data.reintegrationRate)}</span></span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── Safehouse Performance Table ───────────────────────────────────────── */}
-      {sections.safehouseTable && safehouseBreakdown.length > 0 && (
-        <div className="bg-white border border-gray-100 rounded-xl p-5">
-          <SectionHeader title="Safehouse Performance" to="/superadmin/safehouses" count={safehouseBreakdown.length} />
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  {["Safehouse", "Status", "Occupancy", "Active", "High Risk", "Open Incidents", "Risk Breakdown"].map(h => (
-                    <th key={h} className="text-left text-[10px] font-bold uppercase tracking-wider text-gray-400 pb-3 pr-4 whitespace-nowrap">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {safehouseBreakdown.map(sh => (
-                  <tr key={sh.safehouseId} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="py-3 pr-4">
-                      <div className="font-medium text-gray-900 whitespace-nowrap">{sh.name ?? "—"}</div>
-                      {sh.region && <div className="text-xs text-gray-400">{sh.region}</div>}
-                    </td>
-                    <td className="py-3 pr-4">
-                      <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${sh.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
-                        {sh.status ?? "—"}
-                      </span>
-                    </td>
-                    <td className="py-3 pr-4 min-w-[120px]">
-                      <OccupancyBar pct={sh.occupancyPct ?? 0} />
-                      <div className="text-xs text-gray-400 mt-0.5">{sh.currentOccupancy}/{sh.capacityGirls}</div>
-                    </td>
-                    <td className="py-3 pr-4 text-center font-semibold text-gray-900">{sh.activeResidents ?? 0}</td>
-                    <td className="py-3 pr-4 text-center">
-                      <span className={`font-semibold ${(sh.highRiskCount ?? 0) > 0 ? "text-orange-600" : "text-gray-400"}`}>
-                        {sh.highRiskCount ?? 0}
-                      </span>
-                    </td>
-                    <td className="py-3 pr-4 text-center">
-                      <span className={`font-semibold ${(sh.openIncidents ?? 0) > 0 ? "text-red-600" : "text-gray-400"}`}>
-                        {sh.openIncidents ?? 0}
-                      </span>
-                    </td>
-                    <td className="py-3">
-                      <div className="flex items-center gap-1">
-                        {[
-                          { color: RISK_COLORS.low, count: sh.riskLow ?? 0, title: "Low" },
-                          { color: RISK_COLORS.medium, count: sh.riskMedium ?? 0, title: "Med" },
-                          { color: RISK_COLORS.high, count: sh.riskHigh ?? 0, title: "High" },
-                          { color: RISK_COLORS.critical, count: sh.riskCritical ?? 0, title: "Crit" },
-                        ].map(r => (
-                          <div key={r.title} className="flex flex-col items-center" title={r.title}>
-                            <div className="w-1 rounded-full" style={{ height: Math.max(4, r.count * 4), backgroundColor: r.color }} />
-                            <span className="text-[9px] text-gray-400 mt-0.5">{r.count}</span>
+                  ) : (
+                    attentionResidents.map((resident) => (
+                      <div
+                        key={`${resident.residentId ?? resident.label}`}
+                        className="rounded-xl border border-red-100 bg-white px-4 py-3"
+                      >
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-semibold text-gray-900">{resident.label}</span>
+                              <RiskBadge level={resident.riskLevel} />
+                            </div>
+                            <div className="mt-1 text-sm text-gray-500">
+                              {resident.safehouseName}
+                              {resident.daysSinceUpdate != null ? ` · ${resident.daysSinceUpdate} days since last update` : " · No case update on file"}
+                            </div>
                           </div>
-                        ))}
+                          <div className="flex flex-wrap gap-2">
+                            {resident.signals.map((signal) => (
+                              <span
+                                key={`${resident.label}-${signal}`}
+                                className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-700"
+                              >
+                                {signal}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+                    ))
+                  )}
+                </div>
+              </div>
 
-      {/* ── Incidents + ML Alerts + Conferences ──────────────────────────────── */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {sections.incidentsFeed && (
-          <div className="bg-white border border-gray-100 rounded-xl p-5">
-            <SectionHeader title="Recent Incidents" to="/superadmin/incidents" count={recentIncidents.length} />
-            {recentIncidents.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-8">No incidents on record</p>
-            ) : (
-              <div className="space-y-2.5">
-                {recentIncidents.slice(0, 7).map(inc => (
-                  <div key={inc.incidentId} className="flex items-start gap-2.5 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                    <ShieldAlert className={`w-4 h-4 mt-0.5 flex-shrink-0 ${inc.severity === "critical" || inc.severity === "high" ? "text-red-500" : "text-amber-500"}`} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <SeverityBadge severity={inc.severity} />
-                        <span className="text-xs text-gray-500 capitalize">{(inc.incidentType ?? "").replace(/_/g, " ")}</span>
-                      </div>
-                      <div className="text-xs text-gray-400 mt-0.5">
-                        {inc.safehouseName ?? "—"} · {inc.incidentDate ?? "—"}
-                      </div>
+              <div className="mt-8 border-t border-black/5 pt-6">
+                <div className="min-h-[320px] rounded-xl border border-gray-100 bg-white p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Reintegration Progress</h3>
                     </div>
-                    <span className={`text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded flex-shrink-0 ${inc.status === "open" ? "bg-red-50 text-red-600" : "bg-gray-100 text-gray-500"}`}>
-                      {inc.status}
+                    <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-[#2a9d72]">
+                      {fmtPct(data.reintegrationRate)} success
+                    </div>
+                  </div>
+                  {reintegrationData.length > 0 ? (
+                    <>
+                      <div className="mt-5">
+                        <ResponsiveContainer width="100%" height={200}>
+                          <BarChart data={reintegrationData} layout="vertical" margin={{ left: 0, right: 18 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                            <XAxis type="number" tick={{ fontSize: 10 }} allowDecimals={false} />
+                            <YAxis dataKey="stage" type="category" tick={{ fontSize: 11 }} width={82} />
+                            <Tooltip cursor={{ fill: "#f8fafc" }} />
+                            <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                              {reintegrationData.map((entry) => (
+                                <Cell key={entry.stage} fill={entry.color} />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="mt-4 flex items-center justify-between text-sm">
+                        <span className="text-gray-500">Completed reintegrations</span>
+                        <span className="font-semibold text-gray-900">{fmt(data.reintegrationCount)}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex h-40 items-center justify-center text-sm text-gray-400">No reintegration data</div>
+                  )}
+                </div>
+              </div>
+
+            </section>
+          </div>
+        ) : null}
+
+        {sections.donorHealth ? (
+          <div className="h-full">
+            <section className="flex h-full flex-col rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+              <SectionHeader
+                title="Donor Health & Retention"
+                description="A clearer executive read on giving momentum, retention, and the channels that are creating donor action."
+                to="/superadmin/donors"
+                cta="View donors"
+              />
+
+              <div className="mt-6 rounded-xl border border-gray-100 bg-white p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Donation Trend</h3>
+                    <p className="mt-1 text-sm text-gray-500">{selectedPeriod} of donation movement across the organization.</p>
+                  </div>
+                  <div className="rounded-full border border-[#bfe2cc] bg-[#eef8f3] px-3 py-1.5 text-xs font-semibold text-[#2a9d72]">
+                    {donationMomentum == null ? "Trend stabilizing" : `${donationMomentum >= 0 ? "+" : ""}${donationMomentum.toFixed(1)}% vs prior period`}
+                  </div>
+                </div>
+                {(data.donationTrend ?? []).length > 0 ? (
+                  <>
+                    <div className="mt-3">
+                      <ResponsiveContainer width="100%" height={310}>
+                        <AreaChart data={data.donationTrend} margin={{ left: -14, right: 4, top: 8, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="executive-donation-gradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor={ACCENT} stopOpacity={0.22} />
+                              <stop offset="95%" stopColor={ACCENT} stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="2 4" stroke="#edf2f7" vertical={false} />
+                          <XAxis dataKey="label" tick={{ fontSize: 10 }} />
+                          <YAxis tick={{ fontSize: 10 }} tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}k`} />
+                          <Tooltip
+                            formatter={(value: number) => [fmtPeso(value), "Amount"]}
+                            contentStyle={{ borderRadius: 12, border: "1px solid #e5e7eb", fontSize: 12 }}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="amount"
+                            stroke={ACCENT}
+                            strokeWidth={3}
+                            fill="url(#executive-donation-gradient)"
+                            dot={false}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                      {[
+                        { label: "Donations tracked", value: fmt(data.totalDonationCount) },
+                        { label: "Total donations", value: fmtPeso(data.totalDonations) },
+                        { label: "Returning donors", value: returningDonorDisplay },
+                      ].map((item) => (
+                        <div key={item.label} className="rounded-xl border border-gray-100 bg-[#f8fbf9] px-4 py-3">
+                          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">{item.label}</div>
+                          <div className="mt-2 text-xl font-semibold text-gray-900">{item.value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex h-64 items-center justify-center text-sm text-gray-400">No donation trend data</div>
+                )}
+              </div>
+
+              <div className="mt-4 rounded-xl border border-gray-100 bg-white p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Retention Summary</h3>
+                    <p className="mt-1 text-sm text-gray-500">A concise snapshot of how many donors are coming back and how the mix is shifting.</p>
+                  </div>
+                  <Repeat2 className="h-5 w-5 text-[#457b9d]" />
+                </div>
+                <div className="mt-5">
+                  <div className="rounded-xl border border-[#d7e6f1] bg-[#f4f9fd] p-4">
+                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#457b9d]">Returning Donors %</div>
+                    <div className="mt-3 text-3xl font-bold text-[#1d4f74]">{returningDonorDisplay}</div>
+                    <div className="mt-2 text-sm text-[#51718c]">
+                      {fmt(donorSummary.returning)} of {fmt(donorSummary.totalDonors)} donors have given more than once.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </section>
+          </div>
+        ) : null}
+      </div>
+
+      {sections.donorHealth ? (
+        <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Social Contribution</h2>
+              <p className="mt-1 text-sm text-gray-500">
+                What is bringing donors in, without letting vanity metrics take over the page.
+              </p>
+            </div>
+            <Link href="/superadmin/social-outreach">
+              <button className="inline-flex items-center gap-1 text-sm font-semibold text-[#2a9d72] transition-colors hover:underline">
+                View outreach <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </Link>
+          </div>
+
+          <div className="mt-6 rounded-xl border border-gray-100 bg-[#f8fbf9] px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2a9d72]">Referrals Total</div>
+                <div className="mt-1.5 text-4xl font-bold leading-none text-[#0e2118]">{fmt(socialSummary.totalReferrals)}</div>
+              </div>
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#e9f6ef]">
+                <Share2 className="h-5 w-5 text-[#2a9d72]" />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-5 border-t border-black/5 pt-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+            <div className="rounded-xl border border-gray-100 bg-white p-4">
+              <div className="text-sm font-semibold text-gray-900">Referrals by Platform</div>
+              {socialSummary.platformBreakdown.length > 0 ? (
+                <div className="mt-4">
+                  <ResponsiveContainer width="100%" height={180}>
+                    <BarChart data={socialSummary.platformBreakdown} layout="vertical" margin={{ left: 8, right: 8 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 10 }} allowDecimals={false} />
+                      <YAxis dataKey="platform" type="category" tick={{ fontSize: 11 }} width={70} />
+                      <Tooltip formatter={(value: number) => [value, "Referrals"]} />
+                      <Bar dataKey="referrals" radius={[0, 4, 4, 0]}>
+                        {socialSummary.platformBreakdown.map((item, index) => (
+                          <Cell key={item.platform} fill={PLATFORM_COLORS[index % PLATFORM_COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="mt-4 flex h-36 items-center justify-center text-sm text-gray-400">No referral data yet</div>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-gray-100 bg-white p-4">
+              <div className="text-sm font-semibold text-gray-900">Top Performing Content</div>
+              {socialSummary.topPost ? (
+                <div className="mt-4 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold capitalize text-gray-700">
+                      {socialSummary.topPost.platform ?? "Platform"}
+                    </span>
+                    <span className="rounded-full bg-[#eef8f3] px-2.5 py-1 text-xs font-semibold text-[#2a9d72]">
+                      {fmt(socialSummary.topPost.donationReferrals)} referrals
                     </span>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {sections.mlAlerts && (
-          <div className="bg-white border border-gray-100 rounded-xl p-5">
-            <SectionHeader title="ML Risk Alerts" to="/superadmin/ml" count={mlAlerts.length} />
-            {mlAlerts.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-8">No ML predictions available</p>
-            ) : (
-              <div className="space-y-2.5">
-                {mlAlerts.slice(0, 7).map(alert => {
-                  const score = alert.predictionScore ?? 0;
-                  const color = score >= 0.8 ? RISK_COLORS.critical : score >= 0.6 ? RISK_COLORS.high : score >= 0.4 ? RISK_COLORS.medium : RISK_COLORS.low;
-                  return (
-                    <div key={alert.predictionId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                      <Brain className="w-4 h-4 flex-shrink-0" style={{ color }} />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-gray-800 truncate">{alert.entityLabel ?? "—"}</div>
-                        <div className="text-xs text-gray-400">{(alert.pipelineName ?? "").replace(/_/g, " ")}</div>
+                  <div className="rounded-xl border border-gray-100 bg-[#fbfdfb] p-4">
+                    <p className="line-clamp-3 text-sm leading-6 text-gray-700">
+                      {socialSummary.topPost.content ?? socialSummary.topPost.caption ?? "No content preview available."}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-gray-100 bg-[#f8fbf9] px-4 py-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">Referral Value</div>
+                        <div className="mt-1 text-base font-semibold text-gray-900">
+                          {fmtPeso(socialSummary.topPost.estimatedDonationValuePhp)}
+                        </div>
                       </div>
-                      <div className="text-right flex-shrink-0">
-                        <div className="text-sm font-bold" style={{ color }}>{(score * 100).toFixed(0)}%</div>
-                        <div className="w-12 h-1 bg-gray-100 rounded-full mt-1">
-                          <div className="h-full rounded-full" style={{ width: `${score * 100}%`, backgroundColor: color }} />
+                      <div className="text-right">
+                        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">Published</div>
+                        <div className="mt-1 text-sm font-medium text-gray-700">
+                          {socialSummary.topPost.postDate ?? socialSummary.topPost.createdAt ?? "—"}
                         </div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {sections.conferences && (
-          <div className="bg-white border border-gray-100 rounded-xl p-5">
-            <SectionHeader title="Upcoming Conferences" to="/superadmin/case-management" count={upcomingConfs.length} />
-            {upcomingConfs.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-8">No conferences in the next 7 days</p>
-            ) : (
-              <div className="space-y-2.5">
-                {upcomingConfs.map(conf => (
-                  <div key={conf.conferenceId} className="flex items-start gap-2.5 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                    <Calendar className="w-4 h-4 mt-0.5 flex-shrink-0 text-violet-500" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-800 capitalize">
-                        {(conf.conferenceType ?? "Conference").replace(/_/g, " ")}
-                      </div>
-                      <div className="text-xs text-gray-400">{conf.conferenceDate ?? "—"}</div>
-                    </div>
-                    <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 flex-shrink-0">
-                      {conf.status ?? "scheduled"}
-                    </span>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* ── Program Allocation + Channel Breakdown ────────────────────────────── */}
-      <div className={`grid ${sections.programAllocation && sections.channelBreakdown ? "lg:grid-cols-2" : ""} gap-6`}>
-        {sections.programAllocation && allocationByProgram.length > 0 && (
-          <div className="bg-white border border-gray-100 rounded-xl p-5">
-            <SectionHeader title="Donation Allocation by Program" to="/superadmin/donors" />
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <ResponsiveContainer width={160} height={160}>
-                <PieChart>
-                  <Pie
-                    data={allocationByProgram.slice(0, 6)}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={44}
-                    outerRadius={72}
-                    paddingAngle={2}
-                    dataKey="amount"
-                    nameKey="programArea"
-                  >
-                    {allocationByProgram.slice(0, 6).map((_, i) => (
-                      <Cell key={i} fill={CHANNEL_COLORS[i % CHANNEL_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(v: number) => [fmtPeso(v), "Allocated"]}
-                    contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e2e8f0" }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="flex-1 space-y-1.5">
-                {allocationByProgram.slice(0, 6).map((a, i) => (
-                  <div key={a.programArea} className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: CHANNEL_COLORS[i % CHANNEL_COLORS.length] }} />
-                    <span className="text-xs text-gray-600 flex-1 truncate">{a.programArea}</span>
-                    <span className="text-xs font-semibold text-gray-900">{a.percentage}%</span>
-                  </div>
-                ))}
-              </div>
+                </div>
+              ) : (
+                <div className="mt-4 flex h-36 items-center justify-center text-sm text-gray-400">No top-performing post available</div>
+              )}
             </div>
           </div>
-        )}
-
-        {sections.channelBreakdown && donationByChannel.length > 0 && (
-          <div className="bg-white border border-gray-100 rounded-xl p-5">
-            <SectionHeader title="Donations by Channel" to="/superadmin/donors" />
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={donationByChannel} layout="vertical" margin={{ left: 8, right: 32 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={v => `₱${(v / 1000).toFixed(0)}k`} />
-                <YAxis dataKey="channel" type="category" tick={{ fontSize: 11 }} width={80} />
-                <Tooltip
-                  formatter={(v: number) => [fmtPeso(v), "Amount"]}
-                  contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e2e8f0" }}
-                />
-                <Bar dataKey="amount" radius={[0, 4, 4, 0]}>
-                  {donationByChannel.map((_, i) => (
-                    <Cell key={i} fill={CHANNEL_COLORS[i % CHANNEL_COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </div>
-
-      {/* ── AI Intelligence Section ──────────────────────────────────────────── */}
-      <MLOverviewSection />
-
+        </section>
+      ) : null}
     </div>
   );
 }
