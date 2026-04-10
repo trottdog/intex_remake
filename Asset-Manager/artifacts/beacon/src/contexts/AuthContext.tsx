@@ -27,18 +27,22 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 const AUTH_STORAGE_KEY = "beacon.auth.v1";
+const LEGACY_AUTH_STORAGE_KEY = AUTH_STORAGE_KEY;
 
 function persistAuth(token: string, user: AuthUser) {
-  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ token, user }));
+  sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ token, user }));
 }
 
 function clearPersistedAuth() {
-  localStorage.removeItem(AUTH_STORAGE_KEY);
+  sessionStorage.removeItem(AUTH_STORAGE_KEY);
+  localStorage.removeItem(LEGACY_AUTH_STORAGE_KEY);
 }
 
 function restorePersistedAuth(): { token: string; user: AuthUser } | null {
-  const raw = localStorage.getItem(AUTH_STORAGE_KEY);
-  if (!raw) return null;
+  const raw = sessionStorage.getItem(AUTH_STORAGE_KEY) ?? localStorage.getItem(LEGACY_AUTH_STORAGE_KEY);
+  if (!raw) {
+    return null;
+  }
 
   try {
     const parsed = JSON.parse(raw) as { token?: unknown; user?: unknown };
@@ -47,10 +51,16 @@ function restorePersistedAuth(): { token: string; user: AuthUser } | null {
       return null;
     }
 
-    return {
+    const restored = {
       token: parsed.token,
       user: parsed.user as AuthUser,
     };
+
+    // Migrate any older persistent auth entry into tab-scoped storage.
+    sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(restored));
+    localStorage.removeItem(LEGACY_AUTH_STORAGE_KEY);
+
+    return restored;
   } catch {
     clearPersistedAuth();
     return null;

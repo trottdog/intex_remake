@@ -5,6 +5,7 @@ import pytest
 
 from ml.src.config.paths import MODELS_DIR, RAW_DATA_DIR, REPORTS_DIR
 from ml.src.data.loaders import describe_raw_source, load_raw_tables
+from ml.src.pipelines.notebook_execution import execute_notebook
 from ml.src.pipelines.registry import run_predictive_pipeline
 
 REPRESENTATIVE_RAW_TABLES = (
@@ -27,6 +28,11 @@ EXECUTED_NOTEBOOKS = (
     Path("ml/ml-pipelines/home-visitation-outcome/home-visitation-outcome-predictive.ipynb"),
     Path("ml/ml-pipelines/reintegration-readiness/reintegration-readiness-predictive.ipynb"),
     Path("ml/ml-pipelines/resident-risk/resident-risk-predictive.ipynb"),
+)
+
+HEADLESS_EXECUTION_NOTEBOOKS = (
+    Path("ml/ml-pipelines/donor-upgrade/donor-upgrade-predictive.ipynb"),
+    Path("ml/ml-pipelines/social-media-conversion/social-media-conversion-predictive.ipynb"),
 )
 
 
@@ -67,3 +73,11 @@ def test_is455_selected_submission_notebooks_have_executed_outputs(
         cell.get("execution_count") is not None and len(cell.get("outputs", [])) > 0
         for cell in code_cells
     )
+
+
+@pytest.mark.parametrize("notebook_path", HEADLESS_EXECUTION_NOTEBOOKS)
+def test_is455_selected_notebooks_execute_headlessly(notebook_path: Path) -> None:
+    result = execute_notebook(notebook_path, cwd=Path("."))
+
+    assert result["code_cell_count"] > 0
+    assert result["executed_with_output_count"] > 0
