@@ -33,11 +33,12 @@ interface DashboardLayoutProps {
   bellBadge?: number;
   bellItems?: NotificationItem[];
   onBellOpen?: () => void;
+  showThemeToggle?: boolean;
 }
 
 export function DashboardLayout({
   children, navItems, portalName, brandLogoSrc, safehouseLabel, compactSidebar = false,
-  bellBadge = 0, bellItems = [], onBellOpen,
+  bellBadge = 0, bellItems = [], onBellOpen, showThemeToggle = true,
 }: DashboardLayoutProps) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
@@ -251,10 +252,12 @@ export function DashboardLayout({
               <div className="w-2 h-2 rounded-full bg-green-500" />
               System Healthy
             </div>
-            <Button variant="ghost" size="icon" onClick={toggleTheme}>
-              <Sun className="w-4 h-4 hidden dark:block" />
-              <Moon className="w-4 h-4 block dark:hidden" />
-            </Button>
+            {showThemeToggle && (
+              <Button variant="ghost" size="icon" onClick={toggleTheme}>
+                <Sun className="w-4 h-4 hidden dark:block" />
+                <Moon className="w-4 h-4 block dark:hidden" />
+              </Button>
+            )}
 
             <div ref={bellRef} className="relative">
               <button

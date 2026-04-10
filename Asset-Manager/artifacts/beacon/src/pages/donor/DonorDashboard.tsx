@@ -7,8 +7,8 @@ import {
   PieChart, Pie, Cell, Legend,
 } from "recharts";
 import {
-  Heart, DollarSign, Calendar, TrendingUp, Users, Home, Award,
-  Loader2, AlertTriangle, BookOpen, Activity, ArrowUpRight, Sparkles, RefreshCw,
+  Heart, DollarSign, Calendar, TrendingUp, Award,
+  Loader2, AlertTriangle, ArrowUpRight, RefreshCw,
 } from "lucide-react";
 import { QuickDonateModal } from "@/components/donor/QuickDonateModal";
 
@@ -56,20 +56,6 @@ function KpiCard({ label, value, sub, icon: Icon, accent = "#2a9d72", trend }: K
         <div className="text-xs font-semibold uppercase tracking-widest text-gray-400 mt-0.5">{label}</div>
       </div>
       {sub && <div className="text-xs text-gray-400 border-t border-gray-50 pt-2">{sub}</div>}
-    </div>
-  );
-}
-
-function ImpactStatPill({
-  label, value, icon: Icon, color,
-}: { label: string; value: string | number; icon: React.ElementType; color: string }) {
-  return (
-    <div className="flex flex-col items-center text-center px-6 py-4">
-      <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-2" style={{ backgroundColor: `${color}20` }}>
-        <Icon className="w-6 h-6" style={{ color }} />
-      </div>
-      <div className="text-3xl font-black text-[#0e2118]">{value}</div>
-      <div className="text-xs text-gray-500 uppercase tracking-wider mt-1">{label}</div>
     </div>
   );
 }
@@ -212,7 +198,6 @@ export default function DonorDashboard() {
     );
   }
 
-  const impact = data.impactStats ?? {};
   const snapshots = data.recentSnapshots ?? [];
   const givingTrend = (data.givingTrend ?? []).filter(p => p.amount > 0 || true);
   const allocation = data.allocationBreakdown ?? [];
@@ -325,35 +310,6 @@ export default function DonorDashboard() {
           accent="#e76f51"
           sub="Unique campaigns"
         />
-      </div>
-
-      {/* ── LIVE ORG IMPACT ───────────────────────────────────────── */}
-      <div className="bg-gradient-to-r from-[#f0faf5] to-[#e8f5ee] border border-[#c8e6d4] rounded-2xl p-6 shadow-sm">
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-1">
-            <Sparkles className="w-4 h-4 text-[#2a9d72]" />
-            <span className="text-[#2a9d72] text-xs font-bold uppercase tracking-widest">Beacon Network — Live Data</span>
-          </div>
-          <p className="text-gray-500 text-sm">Real-time outcomes across our safehouse network, powered by your generosity.</p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-0 divide-x divide-[#c8e6d4]">
-          <ImpactStatPill label="Active Residents" value={impact.activeResidents ?? "—"} icon={Users} color="#2a9d72" />
-          <ImpactStatPill label="Total Served" value={`${impact.totalResidentsServed ?? 0}+`} icon={Heart} color="#f4a261" />
-          <ImpactStatPill label="Safehouses" value={impact.safehouses ?? "—"} icon={Home} color="#457b9d" />
-          <ImpactStatPill label="Reintegrations" value={impact.reintegrations ?? "—"} icon={Award} color="#e9c46a" />
-          <ImpactStatPill
-            label="Avg Health Score"
-            value={impact.avgHealthScore ? `${impact.avgHealthScore}/10` : "—"}
-            icon={Activity}
-            color="#e76f51"
-          />
-          <ImpactStatPill
-            label="Edu Progress"
-            value={impact.avgEducationProgress ? `${impact.avgEducationProgress}%` : "—"}
-            icon={BookOpen}
-            color="#2a9d72"
-          />
-        </div>
       </div>
 
       {/* ── GIVING TREND + ALLOCATIONS ────────────────────────────── */}

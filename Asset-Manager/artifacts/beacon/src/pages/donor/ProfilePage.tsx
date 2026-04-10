@@ -1,48 +1,62 @@
 import { useState, useEffect } from "react";
-import { useGetMyDonorProfile, updateMyDonorProfile } from "@/services/donor.service";
+import { useGetMyDonorProfile, useListMyDonations, updateMyDonorProfile } from "@/services/donor.service";
 import { useAuth } from "@/contexts/AuthContext";
-import { getCookie, setCookie } from "@/lib/cookies";
 import { applyConsent, getConsentLevel } from "@/lib/consent";
-import { User, Mail, Phone, MapPin, Building, Shield, Bell, CreditCard, Edit3, Save, X, Lock, CheckCircle, Sun, Moon, Monitor } from "lucide-react";
+import { User, Mail, Phone, MapPin, Building, Shield, Bell, CreditCard, Edit3, Save, X, Lock, CheckCircle } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
-type ThemePref = "light" | "dark" | "system";
+type CommunicationPreferenceKey = "emailUpdates" | "impactReports" | "campaignAlerts" | "taxReceiptReminders";
 
-function getThemePref(): ThemePref {
-  const saved = getCookie("beacon_theme");
-  if (saved === "dark") return "dark";
-  if (saved === "light") return "light";
-  return "system";
+const ACQUISITION_CHANNEL_OPTIONS = [
+  "Social Media",
+  "Friend or Family",
+  "Search Engine",
+  "Community Event",
+  "Corporate Partner",
+  "Email Newsletter",
+  "Other",
+] as const;
+
+function parseDateLike(value: unknown): Date | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
-function applyTheme(pref: ThemePref) {
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const useDark = pref === "dark" || (pref === "system" && prefersDark);
-  document.documentElement.classList.toggle("dark", useDark);
-  if (pref === "system") {
-    setCookie("beacon_theme", "system");
-  } else {
-    setCookie("beacon_theme", pref);
-  }
+function formatDate(value: Date | null): string {
+  if (!value) return "—";
+  return value.toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" });
 }
 
 export default function ProfilePage() {
-  const { user, token } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const queryClient = useQueryClient();
   const { data: profile, isLoading } = useGetMyDonorProfile();
+  const { data: donationHistory } = useListMyDonations({ page: 1, pageSize: 5000 });
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [themePref, setThemePref] = useState<ThemePref>(getThemePref);
   const [consentLevel, setConsentLevel] = useState<"all" | "essential">(() => {
     return getConsentLevel() === "all" ? "all" : "essential";
   });
   const [consentSaved, setConsentSaved] = useState(false);
+  const [communicationPrefs, setCommunicationPrefs] = useState<Record<CommunicationPreferenceKey, boolean>>({
+    emailUpdates: true,
+    impactReports: true,
+    campaignAlerts: false,
+    taxReceiptReminders: true,
+  });
 
-  const handleThemeChange = (pref: ThemePref) => {
-    setThemePref(pref);
-    applyTheme(pref);
+  const communicationPrefItems: Array<{ key: CommunicationPreferenceKey; label: string }> = [
+    { key: "emailUpdates", label: "Email Updates" },
+    { key: "impactReports", label: "Impact Reports" },
+    { key: "campaignAlerts", label: "Campaign Alerts" },
+    { key: "taxReceiptReminders", label: "Tax Receipt Reminders" },
+  ];
+
+  const toggleCommunicationPref = (key: CommunicationPreferenceKey) => {
+    setCommunicationPrefs((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const donor = profile as Record<string, unknown> | undefined;
@@ -54,6 +68,7 @@ export default function ProfilePage() {
     phone: "",
     organization: "",
     communicationPreference: "",
+    acquisitionChannel: "",
   });
 
   useEffect(() => {
@@ -65,16 +80,41 @@ export default function ProfilePage() {
         phone: String(donor.phone ?? ""),
         organization: String(donor.organization ?? ""),
         communicationPreference: String(donor.communicationPreference ?? ""),
+        acquisitionChannel: String(donor.acquisitionChannel ?? ""),
       });
     }
   }, [profile]);
+
+  const firstDonationDate = (() => {
+    const dates: Date[] = [];
+    const fromProfile = parseDateLike(donor?.firstDonationDate);
+    if (fromProfile) dates.push(fromProfile);
+    for (const donation of donationHistory?.data ?? []) {
+      const parsed = parseDateLike(donation.donationDate);
+      if (parsed) dates.push(parsed);
+    }
+    if (dates.length === 0) return null;
+    return new Date(Math.min(...dates.map((d) => d.getTime())));
+  })();
 
   const handleSave = async () => {
     if (!token) return;
     setSaving(true);
     setSaveError(null);
     try {
-      await updateMyDonorProfile(form);
+      const payload = {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        phone: form.phone,
+        organizationName: form.organization,
+        acquisitionChannel: form.acquisitionChannel,
+      };
+      const updatedProfile = await updateMyDonorProfile(payload) as Record<string, unknown>;
+      updateUser({
+        firstName: String(updatedProfile.firstName ?? form.firstName ?? user?.firstName ?? ""),
+        lastName: String(updatedProfile.lastName ?? form.lastName ?? user?.lastName ?? ""),
+        email: String(updatedProfile.email ?? user?.email ?? ""),
+      });
       await queryClient.invalidateQueries({ queryKey: ["donor", "profile"] });
       setSaveSuccess(true);
       setEditing(false);
@@ -95,6 +135,7 @@ export default function ProfilePage() {
         phone: String(donor.phone ?? ""),
         organization: String(donor.organization ?? ""),
         communicationPreference: String(donor.communicationPreference ?? ""),
+        acquisitionChannel: String(donor.acquisitionChannel ?? ""),
       });
     }
     setEditing(false);
@@ -226,17 +267,35 @@ export default function ProfilePage() {
               Giving Preferences
             </h3>
             <div className="space-y-3">
-              {[
-                { label: "Support Type", value: String(donor?.supportType ?? "monetary") },
-                { label: "Giving Frequency", value: donor?.isRecurring ? "Recurring" : "One-time" },
-                { label: "Acquisition Channel", value: String(donor?.acquisitionChannel ?? "—") },
-                { label: "Donor Since", value: donor?.donorSince ? String(donor.donorSince) : "—" },
-              ].map((item) => (
-                <div key={item.label} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-                  <span className="text-sm text-gray-500">{item.label}</span>
-                  <span className="text-sm font-medium text-gray-900 capitalize">{item.value}</span>
-                </div>
-              ))}
+              <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                <span className="text-sm text-gray-500">Support Type</span>
+                <span className="text-sm font-medium text-gray-900 capitalize">{String(donor?.supportType ?? "individual")}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                <span className="text-sm text-gray-500">Giving Frequency</span>
+                <span className="text-sm font-medium text-gray-900 capitalize">{donor?.isRecurring ? "Recurring" : "One-time"}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                <span className="text-sm text-gray-500">Acquisition Channel</span>
+                {editing ? (
+                  <select
+                    value={form.acquisitionChannel}
+                    onChange={(e) => setForm((prev) => ({ ...prev, acquisitionChannel: e.target.value }))}
+                    className="text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30"
+                  >
+                    <option value="">Select one</option>
+                    {ACQUISITION_CHANNEL_OPTIONS.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <span className="text-sm font-medium text-gray-900 capitalize">{form.acquisitionChannel || "—"}</span>
+                )}
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+                <span className="text-sm text-gray-500">Donor Since</span>
+                <span className="text-sm font-medium text-gray-900">{formatDate(firstDonationDate)}</span>
+              </div>
             </div>
           </div>
 
@@ -246,21 +305,23 @@ export default function ProfilePage() {
               Communication Preferences
             </h3>
             <div className="space-y-3">
-              {[
-                { label: "Email Updates", enabled: true },
-                { label: "Impact Reports", enabled: true },
-                { label: "Campaign Alerts", enabled: false },
-                { label: "Tax Receipt Reminders", enabled: true },
-              ].map((pref) => (
-                <div key={pref.label} className="flex justify-between items-center">
+              {communicationPrefItems.map((pref) => {
+                const enabled = communicationPrefs[pref.key];
+                return (
+                <div key={pref.key} className="flex justify-between items-center">
                   <span className="text-sm text-gray-700">{pref.label}</span>
                   <button
-                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${pref.enabled ? "bg-[#2a9d72]" : "bg-gray-200"}`}
+                    type="button"
+                    role="switch"
+                    aria-checked={enabled}
+                    aria-label={`Toggle ${pref.label}`}
+                    onClick={() => toggleCommunicationPref(pref.key)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${enabled ? "bg-[#2a9d72]" : "bg-gray-200"}`}
                   >
-                    <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${pref.enabled ? "translate-x-4.5" : "translate-x-1"}`} />
+                    <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${enabled ? "translate-x-4.5" : "translate-x-1"}`} />
                   </button>
                 </div>
-              ))}
+              )})}
             </div>
           </div>
 
@@ -283,30 +344,6 @@ export default function ProfilePage() {
               ))}
             </div>
           </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-        <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <Sun className="w-4 h-4 text-[#2a9d72]" />
-          Display Preferences
-        </h3>
-        <p className="text-sm text-gray-500 mb-4">Choose how Beacon appears on your device.</p>
-        <div className="flex gap-3">
-          {([
-            { pref: "light" as ThemePref, icon: Sun, label: "Light" },
-            { pref: "dark" as ThemePref, icon: Moon, label: "Dark" },
-            { pref: "system" as ThemePref, icon: Monitor, label: "System" },
-          ]).map(({ pref, icon: Icon, label }) => (
-            <button
-              key={pref}
-              onClick={() => handleThemeChange(pref)}
-              className={`flex-1 flex flex-col items-center gap-2 py-3 px-4 rounded-lg border text-sm font-medium transition-colors ${themePref === pref ? "border-[#2a9d72] bg-[#f0faf6] text-[#2a9d72]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}
-            >
-              <Icon className="w-4 h-4" />
-              {label}
-            </button>
-          ))}
         </div>
       </div>
 

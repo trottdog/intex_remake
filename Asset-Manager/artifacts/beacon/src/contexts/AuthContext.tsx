@@ -21,6 +21,7 @@ interface AuthContextType {
   user: AuthUser | null;
   token: string | null;
   login: (token: string, user: AuthUser) => void;
+  updateUser: (updates: Partial<AuthUser>) => void;
   logout: () => void;
   isLoading: boolean;
 }
@@ -100,6 +101,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setApiTokenGetter(() => newToken);
   };
 
+  const updateUser = (updates: Partial<AuthUser>) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const nextUser = { ...prev, ...updates };
+      if (token) {
+        persistAuth(token, nextUser);
+      }
+      return nextUser;
+    });
+  };
+
   // Listen for global 401 events dispatched by the API client
   useEffect(() => {
     const handleUnauthorized = () => logout();
@@ -118,7 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated: !!user, user, token, login, logout, isLoading }}
+      value={{ isAuthenticated: !!user, user, token, login, updateUser, logout, isLoading }}
     >
       {children}
     </AuthContext.Provider>

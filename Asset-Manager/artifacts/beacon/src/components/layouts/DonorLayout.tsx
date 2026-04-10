@@ -65,6 +65,7 @@ export function DonorLayout({ children }: { children: React.ReactNode }) {
     <DashboardLayout
       navItems={navItems}
       portalName="Donor Portal"
+      showThemeToggle={false}
       bellBadge={notifs?.totalUnread ?? 0}
       bellItems={notifs?.items ?? []}
       onBellOpen={handleBellOpen}

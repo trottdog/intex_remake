@@ -105,6 +105,9 @@ export interface SocialMediaPost {
   postId?: number | null;
   id?: number | null;
   platform?: string | null;
+  postUrl?: string | null;
+  imageUrl?: string | null;
+  mediaType?: string | null;
   content?: string | null;
   caption?: string | null;
   createdAt?: string | null;
