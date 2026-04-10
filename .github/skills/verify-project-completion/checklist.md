@@ -58,7 +58,7 @@ Do not call the project ready unless every item below is true.
 - [~] Login works on the deployed site
 - [~] Admin account exists and works on the deployed site
 - [~] Donor account exists and works on the deployed site
-- [ ] Donor account has historical donations tied correctly
+- [x] Donor account has historical donations tied correctly
 - [ ] At least one account exists with MFA enabled for testing
 - [x] Public pages work without authentication
 - [~] Required protected staff/admin pages work after login
@@ -361,6 +361,8 @@ Deployment note (2026-04-09): public pages are live, but authenticated deployed 
 
 # 6. IS 414 Audit: Security
 
+Audit note (2026-04-09 local verification): headless Chrome verified anonymous and role-based route protection against `http://127.0.0.1:5173`, and direct API calls against `https://localhost:7194` verified invalid login rejection, working admin/donor/superadmin credentials, `/auth/me`, donor ledger history, and donor write denial. Evidence: `Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md`.
+
 ## 6.1 Critical Rule
 
 - [ ] Every claimed security feature is clearly shown in the security video
@@ -377,7 +379,7 @@ Deployment note (2026-04-09): public pages are live, but authenticated deployed 
 
 - [x] Username/password authentication works
 - [x] Visitors can browse public pages unauthenticated
-- [ ] Authenticated users can access protected pages
+- [x] Authenticated users can access protected pages
 - [x] Better-than-default password policy is configured according to class expectations
 - [x] Team can explain the exact password rules used
 - [x] /login and /auth/me style endpoints are accessible as needed
@@ -387,7 +389,7 @@ Deployment note (2026-04-09): public pages are live, but authenticated deployed 
 
 - [x] Admin role exists
 - [x] Donor role exists
-- [ ] Public/non-authenticated access is restricted appropriately
+- [x] Public/non-authenticated access is restricted appropriately
 - [x] Only admin can create data where required
 - [x] Only admin can update data where required
 - [x] Only admin can delete data where required
@@ -399,7 +401,7 @@ Deployment note (2026-04-09): public pages are live, but authenticated deployed 
 - [x] Change/delete actions require authorization
 - [x] Delete confirmation is required
 - [x] Unauthorized CUD attempts fail
-- [ ] Team can demonstrate those failures
+- [x] Team can demonstrate those failures
 
 ## 6.6 Credentials
 
@@ -447,14 +449,14 @@ Mark only what was actually completed and can be proved.
 
 ## 6.11 Required Grading Credentials
 
-- [ ] Admin account without MFA exists
-- [ ] Admin account without MFA works
-- [ ] Donor account without MFA exists
-- [ ] Donor account without MFA works
-- [ ] Donor account is tied to historical donations
+- [x] Admin account without MFA exists
+- [x] Admin account without MFA works
+- [x] Donor account without MFA exists
+- [x] Donor account without MFA works
+- [x] Donor account is tied to historical donations
 - [ ] MFA-enabled account exists
 - [ ] MFA-enabled account is configured correctly
-- [ ] Credentials are accurate and tested
+- [x] Credentials are accurate and tested
 - [ ] Credentials are included where required in final submission
 
 ---
@@ -623,9 +625,9 @@ Deployment verification note (2026-04-09): current public pages are live, but au
 
 ## 10.1 Functional Testing
 
-- [ ] Public navigation tested
-- [ ] Login/logout tested
-- [ ] Role-based route protection tested
+- [x] Public navigation tested
+- [x] Login/logout tested
+- [x] Role-based route protection tested
 - [ ] CRUD tested for supporters/donors
 - [ ] CRUD tested for residents
 - [ ] CRUD tested for process recordings
@@ -635,10 +637,10 @@ Deployment verification note (2026-04-09): current public pages are live, but au
 
 ## 10.2 Failure / Edge Cases
 
-- [ ] Invalid login tested
+- [x] Invalid login tested
 - [ ] Empty form submission tested
 - [ ] Bad API request tested
-- [ ] Unauthorized access tested
+- [x] Unauthorized access tested
 - [ ] Delete confirmation tested
 - [ ] Empty data states tested
 - [ ] Graceful error state tested somewhere meaningful
@@ -717,8 +719,8 @@ Open every link from a logged-out browser/private window.
 
 ## 12.3 Credential Verification
 
-- [~] Admin credential works
-- [~] Donor credential works
+- [x] Admin credential works
+- [x] Donor credential works
 - [ ] MFA account exists as claimed
 - [ ] Credentials are copied accurately into submission
 - [ ] Credentials are not exposed publicly elsewhere

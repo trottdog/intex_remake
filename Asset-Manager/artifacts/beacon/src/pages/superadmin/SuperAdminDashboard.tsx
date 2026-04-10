@@ -437,6 +437,7 @@ export default function SuperAdminDashboard() {
   }
 
   const selectedPeriod = periodLabel(months);
+  const survivorsInCare = data.activeResidents ?? data.totalActiveResidents ?? data.totalResidents;
   const returningDonorDisplay = donorSummary.returningPct != null ? `${donorSummary.returningPct.toFixed(1)}%` : "—";
   const hasPriorityCases = attentionResidents.length > 0;
 
@@ -526,7 +527,7 @@ export default function SuperAdminDashboard() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <KpiCard
             label="Survivors in Care"
-            value={fmt(data.activeResidents)}
+            value={fmt(survivorsInCare)}
             sub={`${fmt(data.activeSafehouses)} active safehouses`}
             icon={Users}
           />

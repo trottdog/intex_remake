@@ -52,6 +52,8 @@ export interface ExecutiveDashboardSummary {
   activeSafehouses?: number;
   totalResidents?: number;
   activeResidents?: number;
+  // Legacy API contract compatibility.
+  totalActiveResidents?: number;
   totalSupporters?: number;
   totalDonations?: number;
   totalDonationCount?: number;
