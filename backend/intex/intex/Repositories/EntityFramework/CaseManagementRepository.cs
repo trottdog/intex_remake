@@ -4,6 +4,8 @@ using backend.intex.Entities.Database;
 using backend.intex.Infrastructure.Data.EntityFramework;
 using backend.intex.Repositories.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using Npgsql;
 
 namespace backend.intex.Repositories.EntityFramework;
 
@@ -93,10 +95,27 @@ public sealed class CaseManagementRepository(BeaconDbContext dbContext) : ICaseM
         IReadOnlyDictionary<string, JsonElement> fields,
         CancellationToken cancellationToken = default)
     {
-        var entity = DeserializeEntity<ProcessRecording>(fields);
-        dbContext.ProcessRecordings.Add(entity);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return await GetProcessRecordingCoreAsync(entity.RecordingId, [], false, cancellationToken);
+        var executionStrategy = dbContext.Database.CreateExecutionStrategy();
+        long recordingId = 0;
+
+        await executionStrategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+            var fieldMap = new Dictionary<string, JsonElement>(fields, StringComparer.OrdinalIgnoreCase);
+            if (!fieldMap.ContainsKey("recordingId"))
+            {
+                fieldMap["recordingId"] = JsonSerializer.SerializeToElement(
+                    await GetNextTableIdAsync("process_recordings", "recording_id", transaction, cancellationToken));
+            }
+
+            var entity = DeserializeEntity<ProcessRecording>(fieldMap);
+            dbContext.ProcessRecordings.Add(entity);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            recordingId = entity.RecordingId;
+        });
+
+        return await GetProcessRecordingCoreAsync(recordingId, [], false, cancellationToken);
     }
 
     public async Task<ProcessRecordingResponseDto?> UpdateProcessRecordingAsync(
@@ -197,10 +216,27 @@ public sealed class CaseManagementRepository(BeaconDbContext dbContext) : ICaseM
         IReadOnlyDictionary<string, JsonElement> fields,
         CancellationToken cancellationToken = default)
     {
-        var entity = DeserializeEntity<HomeVisitation>(fields);
-        dbContext.HomeVisitations.Add(entity);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return await GetHomeVisitationCoreAsync(entity.VisitationId, [], false, cancellationToken);
+        var executionStrategy = dbContext.Database.CreateExecutionStrategy();
+        long visitationId = 0;
+
+        await executionStrategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+            var fieldMap = new Dictionary<string, JsonElement>(fields, StringComparer.OrdinalIgnoreCase);
+            if (!fieldMap.ContainsKey("visitationId"))
+            {
+                fieldMap["visitationId"] = JsonSerializer.SerializeToElement(
+                    await GetNextTableIdAsync("home_visitations", "visitation_id", transaction, cancellationToken));
+            }
+
+            var entity = DeserializeEntity<HomeVisitation>(fieldMap);
+            dbContext.HomeVisitations.Add(entity);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            visitationId = entity.VisitationId;
+        });
+
+        return await GetHomeVisitationCoreAsync(visitationId, [], false, cancellationToken);
     }
 
     public async Task<HomeVisitationResponseDto?> UpdateHomeVisitationAsync(
@@ -378,6 +414,8 @@ public sealed class CaseManagementRepository(BeaconDbContext dbContext) : ICaseM
             {
                 query = query.Where(item =>
                     item.Plan.Status != null
+                    && !EF.Functions.ILike(item.Plan.Status, "achieved")
+                    && !EF.Functions.ILike(item.Plan.Status, "closed")
                     && !EF.Functions.ILike(item.Plan.Status, "completed")
                     && !EF.Functions.ILike(item.Plan.Status, "discontinued")
                     && !EF.Functions.ILike(item.Plan.Status, "cancelled"));
@@ -436,16 +474,32 @@ public sealed class CaseManagementRepository(BeaconDbContext dbContext) : ICaseM
         IReadOnlyDictionary<string, JsonElement> fields,
         CancellationToken cancellationToken = default)
     {
-        var fieldMap = new Dictionary<string, JsonElement>(fields, StringComparer.OrdinalIgnoreCase);
-        if (!fieldMap.ContainsKey("createdAt"))
-        {
-            fieldMap["createdAt"] = JsonSerializer.SerializeToElement(DateTime.UtcNow);
-        }
+        var executionStrategy = dbContext.Database.CreateExecutionStrategy();
+        long planId = 0;
 
-        var entity = DeserializeEntity<InterventionPlan>(fieldMap);
-        dbContext.InterventionPlans.Add(entity);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return await GetInterventionPlanCoreAsync(entity.PlanId, [], false, cancellationToken);
+        await executionStrategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+            var fieldMap = NormalizeInterventionPlanFields(fields);
+            if (!fieldMap.ContainsKey("planId"))
+            {
+                fieldMap["planId"] = JsonSerializer.SerializeToElement(
+                    await GetNextTableIdAsync("intervention_plans", "plan_id", transaction, cancellationToken));
+            }
+
+            if (!fieldMap.ContainsKey("createdAt"))
+            {
+                fieldMap["createdAt"] = JsonSerializer.SerializeToElement(DateTime.UtcNow);
+            }
+
+            var entity = DeserializeEntity<InterventionPlan>(fieldMap);
+            dbContext.InterventionPlans.Add(entity);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            planId = entity.PlanId;
+        });
+
+        return await GetInterventionPlanCoreAsync(planId, [], false, cancellationToken);
     }
 
     public async Task<InterventionPlanResponseDto?> UpdateInterventionPlanAsync(
@@ -459,10 +513,8 @@ public sealed class CaseManagementRepository(BeaconDbContext dbContext) : ICaseM
             return null;
         }
 
-        var fieldMap = new Dictionary<string, JsonElement>(fields, StringComparer.OrdinalIgnoreCase)
-        {
-            ["updatedAt"] = JsonSerializer.SerializeToElement(DateTime.UtcNow)
-        };
+        var fieldMap = NormalizeInterventionPlanFields(fields);
+        fieldMap["updatedAt"] = JsonSerializer.SerializeToElement(DateTime.UtcNow);
 
         ApplyMergedValues(entity, fieldMap);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -574,10 +626,27 @@ public sealed class CaseManagementRepository(BeaconDbContext dbContext) : ICaseM
         IReadOnlyDictionary<string, JsonElement> fields,
         CancellationToken cancellationToken = default)
     {
-        var entity = DeserializeEntity<IncidentReport>(fields);
-        dbContext.IncidentReports.Add(entity);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return await GetIncidentReportCoreAsync(entity.IncidentId, [], false, cancellationToken);
+        var executionStrategy = dbContext.Database.CreateExecutionStrategy();
+        long incidentId = 0;
+
+        await executionStrategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+            var fieldMap = new Dictionary<string, JsonElement>(fields, StringComparer.OrdinalIgnoreCase);
+            if (!fieldMap.ContainsKey("incidentId"))
+            {
+                fieldMap["incidentId"] = JsonSerializer.SerializeToElement(
+                    await GetNextTableIdAsync("incident_reports", "incident_id", transaction, cancellationToken));
+            }
+
+            var entity = DeserializeEntity<IncidentReport>(fieldMap);
+            dbContext.IncidentReports.Add(entity);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            incidentId = entity.IncidentId;
+        });
+
+        return await GetIncidentReportCoreAsync(incidentId, [], false, cancellationToken);
     }
 
     public async Task<IncidentReportResponseDto?> UpdateIncidentReportAsync(
@@ -834,6 +903,58 @@ public sealed class CaseManagementRepository(BeaconDbContext dbContext) : ICaseM
         where TEntity : class =>
         JsonSerializer.Deserialize<TEntity>(JsonSerializer.Serialize(fields, JsonOptions), JsonOptions)
         ?? throw new InvalidOperationException("The request body is invalid.");
+
+    private static Dictionary<string, JsonElement> NormalizeInterventionPlanFields(IReadOnlyDictionary<string, JsonElement> fields)
+    {
+        var normalized = new Dictionary<string, JsonElement>(fields, StringComparer.OrdinalIgnoreCase);
+        if (normalized.TryGetValue("targetValue", out var targetValue)
+            && targetValue.ValueKind == JsonValueKind.String
+            && decimal.TryParse(targetValue.GetString(), out var parsedTargetValue))
+        {
+            normalized["targetValue"] = JsonSerializer.SerializeToElement(parsedTargetValue);
+        }
+
+        return normalized;
+    }
+
+    private async Task<long> GetNextTableIdAsync(
+        string tableName,
+        string columnName,
+        IDbContextTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        var connection = (NpgsqlConnection)dbContext.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+        {
+            await connection.OpenAsync(cancellationToken);
+        }
+
+        return await GetNextTableIdAsync(
+            connection,
+            (NpgsqlTransaction)transaction.GetDbTransaction(),
+            tableName,
+            columnName,
+            cancellationToken);
+    }
+
+    private static async Task<long> GetNextTableIdAsync(
+        NpgsqlConnection connection,
+        NpgsqlTransaction transaction,
+        string tableName,
+        string columnName,
+        CancellationToken cancellationToken)
+    {
+        await using var lockCommand = connection.CreateCommand();
+        lockCommand.Transaction = transaction;
+        lockCommand.CommandText = $"LOCK TABLE {tableName} IN EXCLUSIVE MODE;";
+        await lockCommand.ExecuteNonQueryAsync(cancellationToken);
+
+        await using var nextIdCommand = connection.CreateCommand();
+        nextIdCommand.Transaction = transaction;
+        nextIdCommand.CommandText = $"SELECT COALESCE(MAX({columnName}), 0) + 1 FROM {tableName};";
+        var nextId = await nextIdCommand.ExecuteScalarAsync(cancellationToken);
+        return Convert.ToInt64(nextId);
+    }
 
     private void ApplyMergedValues<TEntity>(TEntity entity, IReadOnlyDictionary<string, JsonElement> fields)
         where TEntity : class

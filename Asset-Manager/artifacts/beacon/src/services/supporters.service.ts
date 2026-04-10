@@ -33,6 +33,8 @@ export interface Supporter {
   acquisitionChannel?: string | null;
   identityUserId?: string | null;
   canLogin?: boolean | null;
+  communicationPreference?: string | null;
+  donorTier?: string | null;
   recurringEnabled?: boolean | null;
   isRecurring?: boolean | null;
   lifetimeGiving?: number | null;

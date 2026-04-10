@@ -9,6 +9,68 @@ namespace backend.intex.Services.CaseManagement;
 
 public sealed class CaseManagementService(ICaseManagementRepository repository) : ICaseManagementService
 {
+    private static readonly HashSet<string> AllowedProcessRecordingSessionTypes = new(StringComparer.Ordinal)
+    {
+        "Individual",
+        "Group"
+    };
+
+    private static readonly HashSet<string> AllowedProcessRecordingEmotionalStates = new(StringComparer.Ordinal)
+    {
+        "Calm",
+        "Anxious",
+        "Sad",
+        "Angry",
+        "Hopeful",
+        "Withdrawn",
+        "Happy",
+        "Distressed"
+    };
+
+    private static readonly HashSet<string> AllowedHomeVisitTypes = new(StringComparer.Ordinal)
+    {
+        "Initial Assessment",
+        "Routine Follow-Up",
+        "Reintegration Assessment",
+        "Post-Placement Monitoring",
+        "Emergency"
+    };
+
+    private static readonly HashSet<string> AllowedHomeVisitCooperationLevels = new(StringComparer.Ordinal)
+    {
+        "Highly Cooperative",
+        "Cooperative",
+        "Neutral",
+        "Uncooperative"
+    };
+
+    private static readonly HashSet<string> AllowedHomeVisitOutcomes = new(StringComparer.Ordinal)
+    {
+        "Favorable",
+        "Needs Improvement",
+        "Unfavorable",
+        "Inconclusive"
+    };
+
+    private static readonly HashSet<string> AllowedInterventionPlanCategories = new(StringComparer.Ordinal)
+    {
+        "Safety",
+        "Psychosocial",
+        "Education",
+        "Physical Health",
+        "Legal",
+        "Reintegration"
+    };
+
+    private static readonly HashSet<string> AllowedInterventionPlanStatuses = new(StringComparer.Ordinal)
+    {
+        "Open",
+        "In Progress",
+        "Achieved",
+        "On Hold",
+        "Closed"
+    };
+
     public async Task<StandardPagedResponse<ProcessRecordingResponseDto>> ListProcessRecordingsAsync(ListProcessRecordingsQuery query, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default)
     {
         var page = ResolvePage(query.Page);
@@ -29,6 +91,12 @@ public sealed class CaseManagementService(ICaseManagementRepository repository) 
             return (null, "residentId is required");
         }
 
+        var fieldValidationError = ValidateProcessRecordingFields(request.Fields);
+        if (fieldValidationError is not null)
+        {
+            return (null, fieldValidationError);
+        }
+
         var validationError = await ValidateResidentScopeAsync(residentId.Value, role, assignedSafehouses, cancellationToken);
         return validationError is not null
             ? (null, validationError)
@@ -41,6 +109,12 @@ public sealed class CaseManagementService(ICaseManagementRepository repository) 
         if (existing is null)
         {
             return (null, "Not found");
+        }
+
+        var fieldValidationError = ValidateProcessRecordingFields(request.Fields);
+        if (fieldValidationError is not null)
+        {
+            return (null, fieldValidationError);
         }
 
         var effectiveResidentId = ReadNullableLong(request.Fields, "residentId") ?? existing.ResidentId;
@@ -83,6 +157,12 @@ public sealed class CaseManagementService(ICaseManagementRepository repository) 
             return (null, "residentId is required");
         }
 
+        var fieldValidationError = ValidateHomeVisitationFields(request.Fields);
+        if (fieldValidationError is not null)
+        {
+            return (null, fieldValidationError);
+        }
+
         var validationError = await ValidateResidentScopeAsync(residentId.Value, role, assignedSafehouses, cancellationToken);
         return validationError is not null
             ? (null, validationError)
@@ -95,6 +175,12 @@ public sealed class CaseManagementService(ICaseManagementRepository repository) 
         if (existing is null)
         {
             return (null, "Not found");
+        }
+
+        var fieldValidationError = ValidateHomeVisitationFields(request.Fields);
+        if (fieldValidationError is not null)
+        {
+            return (null, fieldValidationError);
         }
 
         var effectiveResidentId = ReadNullableLong(request.Fields, "residentId") ?? existing.ResidentId;
@@ -188,6 +274,12 @@ public sealed class CaseManagementService(ICaseManagementRepository repository) 
             return (null, "residentId is required");
         }
 
+        var fieldValidationError = ValidateInterventionPlanFields(request.Fields);
+        if (fieldValidationError is not null)
+        {
+            return (null, fieldValidationError);
+        }
+
         var validationError = await ValidateResidentScopeAsync(residentId.Value, role, assignedSafehouses, cancellationToken);
         return validationError is not null
             ? (null, validationError)
@@ -200,6 +292,12 @@ public sealed class CaseManagementService(ICaseManagementRepository repository) 
         if (existing is null)
         {
             return (null, "Not found");
+        }
+
+        var fieldValidationError = ValidateInterventionPlanFields(request.Fields);
+        if (fieldValidationError is not null)
+        {
+            return (null, fieldValidationError);
         }
 
         var effectiveResidentId = ReadNullableLong(request.Fields, "residentId") ?? existing.ResidentId;
@@ -322,6 +420,85 @@ public sealed class CaseManagementService(ICaseManagementRepository repository) 
         return null;
     }
 
+    private static string? ValidateProcessRecordingFields(IReadOnlyDictionary<string, JsonElement> fields)
+    {
+        var sessionType = ReadNullableString(fields, "sessionType");
+        if (!string.IsNullOrWhiteSpace(sessionType) && !AllowedProcessRecordingSessionTypes.Contains(sessionType))
+        {
+            return "sessionType must be one of: Individual, Group";
+        }
+
+        var emotionalStateObserved = ReadNullableString(fields, "emotionalStateObserved");
+        if (!string.IsNullOrWhiteSpace(emotionalStateObserved) && !AllowedProcessRecordingEmotionalStates.Contains(emotionalStateObserved))
+        {
+            return "emotionalStateObserved must be one of: Calm, Anxious, Sad, Angry, Hopeful, Withdrawn, Happy, Distressed";
+        }
+
+        var emotionalStateEnd = ReadNullableString(fields, "emotionalStateEnd");
+        if (!string.IsNullOrWhiteSpace(emotionalStateEnd) && !AllowedProcessRecordingEmotionalStates.Contains(emotionalStateEnd))
+        {
+            return "emotionalStateEnd must be one of: Calm, Anxious, Sad, Angry, Hopeful, Withdrawn, Happy, Distressed";
+        }
+
+        return null;
+    }
+
+    private static string? ValidateHomeVisitationFields(IReadOnlyDictionary<string, JsonElement> fields)
+    {
+        var visitType = ReadNullableString(fields, "visitType");
+        if (!string.IsNullOrWhiteSpace(visitType) && !AllowedHomeVisitTypes.Contains(visitType))
+        {
+            return "visitType must be one of: Initial Assessment, Routine Follow-Up, Reintegration Assessment, Post-Placement Monitoring, Emergency";
+        }
+
+        var cooperationLevel = ReadNullableString(fields, "familyCooperationLevel");
+        if (!string.IsNullOrWhiteSpace(cooperationLevel) && !AllowedHomeVisitCooperationLevels.Contains(cooperationLevel))
+        {
+            return "familyCooperationLevel must be one of: Highly Cooperative, Cooperative, Neutral, Uncooperative";
+        }
+
+        var visitOutcome = ReadNullableString(fields, "visitOutcome");
+        if (!string.IsNullOrWhiteSpace(visitOutcome) && !AllowedHomeVisitOutcomes.Contains(visitOutcome))
+        {
+            return "visitOutcome must be one of: Favorable, Needs Improvement, Unfavorable, Inconclusive";
+        }
+
+        return null;
+    }
+
+    private static string? ValidateInterventionPlanFields(IReadOnlyDictionary<string, JsonElement> fields)
+    {
+        var planCategory = ReadNullableString(fields, "planCategory");
+        if (!string.IsNullOrWhiteSpace(planCategory) && !AllowedInterventionPlanCategories.Contains(planCategory))
+        {
+            return "planCategory must be one of: Safety, Psychosocial, Education, Physical Health, Legal, Reintegration";
+        }
+
+        var status = ReadNullableString(fields, "status");
+        if (!string.IsNullOrWhiteSpace(status) && !AllowedInterventionPlanStatuses.Contains(status))
+        {
+            return "status must be one of: Open, In Progress, Achieved, On Hold, Closed";
+        }
+
+        if (fields.TryGetValue("targetValue", out var targetValue)
+            && targetValue.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
+        {
+            var isValidNumeric = targetValue.ValueKind switch
+            {
+                JsonValueKind.Number => true,
+                JsonValueKind.String => decimal.TryParse(targetValue.GetString(), out _),
+                _ => false
+            };
+
+            if (!isValidNumeric)
+            {
+                return "targetValue must be a JSON number";
+            }
+        }
+
+        return null;
+    }
+
     private static long? ReadNullableLong(IReadOnlyDictionary<string, JsonElement> fields, string key)
     {
         if (!fields.TryGetValue(key, out var value) || value.ValueKind == JsonValueKind.Null || value.ValueKind == JsonValueKind.Undefined)
@@ -333,6 +510,20 @@ public sealed class CaseManagementService(ICaseManagementRepository repository) 
         {
             JsonValueKind.Number when value.TryGetInt64(out var longValue) => longValue,
             JsonValueKind.String when long.TryParse(value.GetString(), out var stringValue) => stringValue,
+            _ => null
+        };
+    }
+
+    private static string? ReadNullableString(IReadOnlyDictionary<string, JsonElement> fields, string key)
+    {
+        if (!fields.TryGetValue(key, out var value) || value.ValueKind == JsonValueKind.Null || value.ValueKind == JsonValueKind.Undefined)
+        {
+            return null;
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => value.GetString()?.Trim(),
             _ => null
         };
     }

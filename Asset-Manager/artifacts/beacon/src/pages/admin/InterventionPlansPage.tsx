@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiFetch, apiPost, apiPatch, apiDelete } from "@/services/api";
+import { ApiError, apiFetch, apiPost, apiPatch, apiDelete } from "@/services/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQueryPagination } from "@/hooks/useQueryPagination";
 import { Button } from "@/components/ui/button";
@@ -34,18 +34,22 @@ interface Resident { residentId: number; internalCode: string | null; }
 interface ApiResponse { data: InterventionPlan[]; total: number; pagination: { totalPages: number } }
 
 const PLAN_CATEGORIES = [
-  "Psychosocial Support", "Legal Assistance", "Medical / Health", "Educational Support",
-  "Livelihood / Skills Training", "Family Reintegration", "Shelter Transition", "Spiritual / Pastoral", "Other",
-];
+  "Safety",
+  "Psychosocial",
+  "Education",
+  "Physical Health",
+  "Legal",
+  "Reintegration",
+] as const;
 
-const PLAN_STATUSES = ["Planned", "In Progress", "On Hold", "Completed", "Discontinued"];
+const PLAN_STATUSES = ["Open", "In Progress", "Achieved", "On Hold", "Closed"] as const;
 
 const STATUS_COLORS: Record<string, string> = {
-  Planned:       "bg-gray-100   text-gray-600   border border-gray-200",
+  Open:          "bg-gray-100   text-gray-600   border border-gray-200",
   "In Progress": "bg-blue-50    text-blue-700   border border-blue-200",
+  Achieved:      "bg-[#e6f4ee]  text-[#0e6641]  border border-[#b3deca]",
   "On Hold":     "bg-amber-50   text-amber-700  border border-amber-200",
-  Completed:     "bg-[#e6f4ee]  text-[#0e6641]  border border-[#b3deca]",
-  Discontinued:  "bg-red-50     text-red-700    border border-red-200",
+  Closed:        "bg-red-50     text-red-700    border border-red-200",
 };
 
 type FormState = {
@@ -70,7 +74,7 @@ function toPayload(f: FormState) {
     planCategory: f.planCategory || null,
     planDescription: f.planDescription || null,
     servicesProvided: f.servicesProvided || null,
-    targetValue: f.targetValue ? f.targetValue : null,
+    targetValue: f.targetValue ? Number(f.targetValue) : null,
     targetDate: f.targetDate || null,
     status: f.status || null,
     caseConferenceDate: f.caseConferenceDate || null,
@@ -107,12 +111,12 @@ export default function InterventionPlansPage() {
   const createMutation = useMutation({
     mutationFn: (body: object) => apiPost<InterventionPlan>("/api/intervention-plans", body, token ?? undefined),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["intervention-plans"] }); closePanel(); },
-    onError: () => setFormError("Failed to save. Please check all fields."),
+    onError: (error) => setFormError(error instanceof ApiError ? error.message : "Failed to save intervention plan."),
   });
   const updateMutation = useMutation({
     mutationFn: ({ id, body }: { id: number; body: object }) => apiPatch<InterventionPlan>(`/api/intervention-plans/${id}`, body, token ?? undefined),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["intervention-plans"] }); closePanel(); },
-    onError: () => setFormError("Failed to update. Please check all fields."),
+    onError: (error) => setFormError(error instanceof ApiError ? error.message : "Failed to update intervention plan."),
   });
   const deleteMutation = useMutation({
     mutationFn: (id: number) => apiDelete(`/api/intervention-plans/${id}`, token ?? undefined),
