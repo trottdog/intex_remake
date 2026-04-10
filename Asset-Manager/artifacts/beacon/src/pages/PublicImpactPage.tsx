@@ -49,11 +49,11 @@ const STAT_CARDS = [
     desc: "Funds raised to sustain care and programs",
   },
   {
-    label: "Donations",
+    label: "Unique Donors",
     icon: Heart,
     color: "text-rose-600",
     bg: "bg-rose-50",
-    desc: "Individual gifts received from supporters",
+    desc: "Supporters who have made at least one donation",
   },
 ] as const;
 
@@ -63,7 +63,7 @@ export default function PublicImpactPage() {
     { ...STAT_CARDS[0], value: fmtCount(data?.residentsServedTotal) },
     { ...STAT_CARDS[1], value: fmtCount(data?.safehouseCount) },
     { ...STAT_CARDS[2], value: fmtPeso(data?.totalDonationsRaised ?? 0) },
-    { ...STAT_CARDS[3], value: fmtCount(data?.donationCount) },
+    { ...STAT_CARDS[3], value: fmtCount(data?.uniqueDonors) },
   ];
 
   return (
