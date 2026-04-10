@@ -25,7 +25,7 @@ export default function AuthCallbackPage() {
   const [challengeToken, setChallengeToken] = useState<string | null>(null);
 
   useEffect(() => {
-    const payload = parseOAuthCallbackPayload(window.location.hash);
+    const payload = parseOAuthCallbackPayload(window.location.hash, window.location.search);
     window.history.replaceState({}, document.title, window.location.pathname);
 
     if (payload.error) {

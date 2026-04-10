@@ -84,15 +84,26 @@ export function changePasswordApi(
 }
 
 export async function startGoogleLogin(): Promise<void> {
-  const callbackUrl = new URL("/auth/callback", window.location.origin);
+  const basePath = import.meta.env.BASE_URL ?? "/";
+  const normalizedBasePath = basePath.endsWith("/") ? basePath : `${basePath}/`;
+  const callbackUrl = new URL(`${normalizedBasePath.replace(/^\//, "")}auth/callback`, window.location.origin);
   const loginUrl = new URL("/api/auth/oauth/google/start", window.location.origin);
   loginUrl.searchParams.set("returnUrl", callbackUrl.toString());
   window.location.assign(loginUrl.toString());
 }
 
-export function parseOAuthCallbackPayload(hash: string): OAuthCallbackPayload {
+export function parseOAuthCallbackPayload(hash: string, search?: string): OAuthCallbackPayload {
   const rawFragment = hash.startsWith("#") ? hash.slice(1) : hash;
+  const rawSearch = search?.startsWith("?") ? search.slice(1) : (search ?? "");
   const params = new URLSearchParams(rawFragment);
+
+  if (!params.toString() && rawSearch) {
+    const searchParams = new URLSearchParams(rawSearch);
+    for (const [key, value] of searchParams.entries()) {
+      params.set(key, value);
+    }
+  }
+
   const encodedUser = params.get("user");
 
   let user: AuthUser | null = null;

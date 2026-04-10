@@ -338,7 +338,13 @@ public sealed class AuthController(
             var candidateOrigin = returnUri.GetLeftPart(UriPartial.Authority).TrimEnd('/');
             if (configuredOrigins.Contains(candidateOrigin, StringComparer.OrdinalIgnoreCase))
             {
-                return $"{candidateOrigin}/auth/callback";
+                var callbackPath = returnUri.AbsolutePath;
+                if (string.IsNullOrWhiteSpace(callbackPath) || callbackPath == "/")
+                {
+                    callbackPath = "/auth/callback";
+                }
+
+                return $"{candidateOrigin}{callbackPath}";
             }
         }
 

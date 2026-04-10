@@ -275,9 +275,13 @@ public static class ServiceCollectionExtensions
                     {
                         context.HandleResponse();
 
-                        var callbackBase = string.IsNullOrWhiteSpace(googleOptions.PublicOrigin)
-                            ? "/auth/callback"
-                            : $"{googleOptions.PublicOrigin.TrimEnd('/')}/auth/callback";
+                        var callbackBase = context.Properties?.Items.TryGetValue("returnUrl", out var returnUrl) == true
+                            && Uri.TryCreate(returnUrl, UriKind.Absolute, out var returnUri)
+                            && (returnUri.Scheme == Uri.UriSchemeHttps || returnUri.Scheme == Uri.UriSchemeHttp)
+                            ? returnUri.ToString()
+                            : string.IsNullOrWhiteSpace(googleOptions.PublicOrigin)
+                                ? "/auth/callback"
+                                : $"{googleOptions.PublicOrigin.TrimEnd('/')}/auth/callback";
                         var message = string.IsNullOrWhiteSpace(context.Failure?.Message)
                             ? "Google sign-in could not be completed"
                             : "Google sign-in could not be completed";
