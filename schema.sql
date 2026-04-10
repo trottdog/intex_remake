@@ -40,7 +40,7 @@ CREATE TABLE public.donation_allocations (
   CONSTRAINT donation_allocations_safehouse_id_fkey FOREIGN KEY (safehouse_id) REFERENCES public.safehouses(safehouse_id)
 );
 CREATE TABLE public.donations (
-  donation_id bigint NOT NULL,
+  donation_id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   supporter_id bigint,
   donation_type text,
   donation_date date,
