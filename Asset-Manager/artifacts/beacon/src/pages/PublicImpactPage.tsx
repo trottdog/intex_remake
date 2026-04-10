@@ -7,6 +7,16 @@ import sunsetImg from "@assets/SunsetArmsUp_1775623133974.jpg";
 import circleImg from "@assets/GreenGrassFingerStar-e1741389539890_1775623133974.jpg";
 import pinkImg from "@assets/PinkShirtPinkFlower-768x705_1775623133974.jpg";
 
+function fmtPeso(n: number | null | undefined) {
+  if (n == null || Number.isNaN(n)) return "₱0";
+  return `₱${n.toLocaleString("en-PH")}`;
+}
+
+function fmtCount(n: number | null | undefined) {
+  if (n == null || Number.isNaN(n)) return "—";
+  return n.toLocaleString("en-PH");
+}
+
 const PROGRAMS = [
   { name: "Emergency Shelter", desc: "Safe 24/7 housing away from harm, staffed by trained house mothers and security." },
   { name: "Trauma Counseling", desc: "Individual and group therapy sessions with licensed clinical psychologists." },
@@ -16,10 +26,9 @@ const PROGRAMS = [
   { name: "Family Reintegration", desc: "Structured family reconciliation programs and aftercare support." },
 ];
 
-const STATIC_STATS = [
+const STAT_CARDS = [
   {
     label: "Residents Served",
-    value: "60+",
     icon: Users,
     color: "text-[#2a9d72]",
     bg: "bg-[#f0faf6]",
@@ -27,7 +36,6 @@ const STATIC_STATS = [
   },
   {
     label: "Safe Homes",
-    value: "9",
     icon: Building2,
     color: "text-[#214636]",
     bg: "bg-[#e6f0ea]",
@@ -35,24 +43,28 @@ const STATIC_STATS = [
   },
   {
     label: "Donations Raised",
-    value: "₱30,000+",
     icon: CircleDollarSign,
     color: "text-rose-600",
     bg: "bg-rose-50",
     desc: "Funds raised to sustain care and programs",
   },
   {
-    label: "Donations",
-    value: "420+",
+    label: "Unique Donors",
     icon: Heart,
     color: "text-rose-600",
     bg: "bg-rose-50",
-    desc: "Individual gifts received from supporters",
+    desc: "Supporters who have made at least one donation",
   },
 ] as const;
 
 export default function PublicImpactPage() {
   const { data } = useGetPublicImpact();
+  const stats = [
+    { ...STAT_CARDS[0], value: fmtCount(data?.residentsServedTotal) },
+    { ...STAT_CARDS[1], value: fmtCount(data?.safehouseCount) },
+    { ...STAT_CARDS[2], value: fmtPeso(data?.totalDonationsRaised ?? 0) },
+    { ...STAT_CARDS[3], value: "60+" },
+  ];
 
   return (
     <PublicLayout>
@@ -76,7 +88,7 @@ export default function PublicImpactPage() {
       <section className="py-16 px-6 bg-[#f9f9f7]">
         <div className="max-w-5xl mx-auto">
           <div className="grid gap-4 md:grid-cols-4">
-            {STATIC_STATS.map((s) => (
+            {stats.map((s) => (
               <div key={s.label} className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col items-center text-center shadow-sm hover:shadow-md transition-shadow">
                 <div className={`w-11 h-11 ${s.bg} rounded-xl flex items-center justify-center mb-3`}>
                   <s.icon className={`h-5 w-5 ${s.color}`} />

@@ -213,7 +213,12 @@ export default function SuperAdminDashboard() {
 
   const dashboardKpis = useMemo(() => {
     const survivorsInCare = data?.activeResidents ?? data?.totalActiveResidents ?? activeResidents.length;
-    const casesAtRisk = data?.highRiskResidents ?? 0;
+    const casesAtRisk = data?.riskDistribution
+      ? (data.riskDistribution.high ?? 0) + (data.riskDistribution.critical ?? 0)
+      : activeResidents.filter((resident) => {
+          const risk = (resident.currentRiskLevel ?? resident.riskLevel ?? "").trim().toLowerCase();
+          return risk === "high" || risk === "critical";
+        }).length;
     const totalDonations = data?.totalDonations ?? data?.donationsYtd ?? null;
     const returningDonorsPct = data?.orgRetentionEstimate ?? null;
 
@@ -223,7 +228,7 @@ export default function SuperAdminDashboard() {
       totalDonations,
       returningDonorsPct,
     };
-  }, [activeResidents.length, data?.activeResidents, data?.highRiskResidents, data?.orgRetentionEstimate, data?.donationsYtd, data?.totalActiveResidents, data?.totalDonations]);
+  }, [activeResidents, data?.activeResidents, data?.orgRetentionEstimate, data?.donationsYtd, data?.riskDistribution, data?.totalActiveResidents, data?.totalDonations]);
 
   const reintegrationData = useMemo(() => {
     const breakdown = data?.reintegrationBreakdown;
@@ -293,6 +298,7 @@ export default function SuperAdminDashboard() {
           icon={AlertTriangle}
           color="#dc2626"
           emphasis={dashboardKpis.casesAtRisk > 0}
+          onClick={goTo("/superadmin/donors?tab=supporters")}
         />
         <KpiCard label="Total Donations" value={fmtPeso(dashboardKpis.totalDonations)} icon={DollarSign} onClick={goTo("/superadmin/fundraising")} />
         <KpiCard label="Returning Donors %" value={fmtPercent(dashboardKpis.returningDonorsPct)} icon={Repeat2} color="#457b9d" onClick={goTo("/superadmin/donors?tab=churn")} />

@@ -502,10 +502,12 @@ router.get("/dashboard/public-impact", async (_req, res) => {
     const safehouses = await db.select().from(safehousesTable);
     const supporters = await db.select().from(supportersTable);
     const totalDonations = donations.reduce((s, d) => s + parseFloat(d.amount || "0"), 0);
+    const uniqueDonors = new Set(donations.map(d => d.supporterId).filter((id): id is number => id !== null)).size;
     const reintegrated = residents.filter(r => r.reintegrationStatus === "completed").length;
     return res.json({
       residentsServedTotal: residents.length,
       totalDonationsRaised: parseFloat(totalDonations.toFixed(2)),
+      uniqueDonors,
       reintegrationCount: reintegrated,
       safehouseCount: safehouses.length,
       programAreasActive: 8,
