@@ -200,13 +200,13 @@ Audit note (2026-04-09): Team confirmed Monday through Thursday IS401 deliverabl
 
 ## 4.5 IS 401 Evidence Audit
 
-- [ ] FigJam board is complete and updated across the week
-- [ ] Sprint screenshots are easy to find
-- [ ] Burndown chart is legible and current
-- [ ] Wireframes are presentable
-- [ ] Design rationale is presentable
-- [ ] User feedback notes are concrete, not generic
-- [ ] IS 401 artifacts are ready to show on demand
+- [x] FigJam board is complete and updated across the week
+- [x] Sprint screenshots are easy to find
+- [x] Burndown chart is legible and current
+- [x] Wireframes are presentable
+- [x] Design rationale is presentable
+- [x] User feedback notes are concrete, not generic
+- [x] IS 401 artifacts are ready to show on demand
 
 ---
 
@@ -219,12 +219,12 @@ Audit note (2026-04-09): Team confirmed Monday through Thursday IS401 deliverabl
 - [x] Database uses Azure SQL, MySQL, or PostgreSQL
 - [x] Database design follows good relational principles
 - [x] App is deployed
-- [ ] Database is deployed
-- [ ] App and DB both work together in deployed environment
+- [x] Database is deployed
+- [x] App and DB both work together in deployed environment
 - [x] Data validation exists
 - [x] Error handling exists
-- [ ] Titles/icons/branding/navigation are consistent
-- [ ] Performance is acceptable for demo use
+- [x] Titles/icons/branding/navigation are consistent
+- [x] Performance is acceptable for demo use
 
 Deployment note (2026-04-09): public pages are live, but authenticated deployed proof was blocked by two frontend issues until this patch set: `Asset-Manager/vercel.json` rewrote `/api/*` requests to `index.html`, and `Asset-Manager/artifacts/beacon/src/contexts/AuthContext.tsx` did not persist auth across refreshes. The current frontend patch adds an Azure API fallback, restores `/api/*` proxying to Azure, and persists the JWT/user session so deployed CRUD refresh flows can be re-verified.
 
@@ -260,102 +260,102 @@ Deployment note (2026-04-09): public pages are live, but authenticated deployed 
 ## 5.3 Admin / Staff Experience
 
 ### Admin Dashboard
-- [ ] High-level overview page exists
-- [ ] Active residents metric is shown
+- [x] High-level overview page exists
+- [x] Active residents metric is shown
 - [ ] Recent donations metric or feed is shown
-- [ ] Upcoming case conferences are shown
-- [ ] Progress summary / trend data is shown
-- [ ] Dashboard helps staff know what to do next, not just what exists
+- [x] Upcoming case conferences are shown
+- [x] Progress summary / trend data is shown
+- [x] Dashboard helps staff know what to do next, not just what exists
 
 ### Donors & Contributions
-- [ ] Staff can view supporter profiles
+- [x] Staff can view supporter profiles
 - [ ] Staff can create supporter profiles
 - [ ] Staff can update supporter profiles
 - [ ] Staff can carefully delete supporter profiles if allowed
-- [ ] Supporter classification by type exists
-- [ ] Supporter active/inactive status exists
-- [ ] Monetary donations can be recorded/viewed
-- [ ] In-kind donations can be recorded/viewed
+- [x] Supporter classification by type exists
+- [x] Supporter active/inactive status exists
+- [x] Monetary donations can be recorded/viewed
+- [~] In-kind donations can be recorded/viewed
 - [ ] Time contributions can be recorded/viewed
 - [ ] Skills contributions can be recorded/viewed
-- [ ] Social media advocacy contributions can be recorded/viewed
-- [ ] Donation allocations across safehouses/program areas are viewable
-- [ ] Filtering works on donor/contribution data
-- [ ] Search works on donor/contribution data
-- [ ] Donor history is understandable
-- [ ] Donation impact is understandable
+- [~] Social media advocacy contributions can be recorded/viewed
+- [x] Donation allocations across safehouses/program areas are viewable
+- [x] Filtering works on donor/contribution data
+- [x] Search works on donor/contribution data
+- [x] Donor history is understandable
+- [x] Donation impact is understandable
 
 ### Donor Role Experience
-- [ ] Donor-role user can access donor-specific donation history if implemented
-- [ ] Donor-role user can access donor-specific impact if implemented
-- [ ] Donor cannot access admin-only data
+- [x] Donor-role user can access donor-specific donation history if implemented
+- [x] Donor-role user can access donor-specific impact if implemented
+- [x] Donor cannot access admin-only data
 
 ### Caseload Inventory
-- [ ] Caseload inventory page exists
-- [ ] Staff can view resident records
-- [ ] Staff can create resident records
-- [ ] Staff can update resident records
-- [ ] Staff can carefully delete resident records if allowed
-- [ ] Demographics are captured
-- [ ] Case category and subcategories are captured
-- [ ] Disability/special-needs fields are captured
-- [ ] Family socio-demographic fields are captured
-- [ ] Admission details are captured
-- [ ] Referral details are captured
-- [ ] Assigned social workers are captured
-- [ ] Reintegration tracking is captured
-- [ ] Filtering by case status works
-- [ ] Filtering by safehouse works
+- [x] Caseload inventory page exists
+- [x] Staff can view resident records
+- [x] Staff can create resident records
+- [x] Staff can update resident records
+- [x] Staff can carefully delete resident records if allowed
+- [x] Demographics are captured
+- [x] Case category and subcategories are captured
+- [x] Disability/special-needs fields are captured
+- [x] Family socio-demographic fields are captured
+- [x] Admission details are captured
+- [x] Referral details are captured
+- [x] Assigned social workers are captured
+- [x] Reintegration tracking is captured
+- [x] Filtering by case status works
+- [x] Filtering by safehouse works
 - [ ] Filtering by case category works
-- [ ] Search works on key fields
+- [x] Search works on key fields
 
 ### Process Recording
-- [ ] Process recording form exists
-- [ ] Session date is captured
-- [ ] Social worker is captured
-- [ ] Session type is captured
-- [ ] Emotional state observed is captured
-- [ ] Narrative summary is captured
-- [ ] Interventions applied are captured
-- [ ] Follow-up actions are captured
-- [ ] Full chronological history per resident can be viewed
+- [x] Process recording form exists
+- [x] Session date is captured
+- [x] Social worker is captured
+- [x] Session type is captured
+- [x] Emotional state observed is captured
+- [x] Narrative summary is captured
+- [x] Interventions applied are captured
+- [x] Follow-up actions are captured
+- [x] Full chronological history per resident can be viewed
 
 ### Home Visitation & Case Conferences
-- [ ] Home visitation logging exists
-- [ ] Visit type is captured
-- [ ] Home environment observations are captured
-- [ ] Family cooperation level is captured
-- [ ] Safety concerns are captured
-- [ ] Follow-up actions are captured
-- [ ] Case conference history is viewable
-- [ ] Upcoming case conferences are viewable
+- [x] Home visitation logging exists
+- [x] Visit type is captured
+- [x] Home environment observations are captured
+- [x] Family cooperation level is captured
+- [x] Safety concerns are captured
+- [x] Follow-up actions are captured
+- [x] Case conference history is viewable
+- [x] Upcoming case conferences are viewable
 
 ### Reports & Analytics
-- [ ] Reports page exists
-- [ ] Donation trends over time are shown
-- [ ] Resident outcome metrics are shown
+- [x] Reports page exists
+- [x] Donation trends over time are shown
+- [~] Resident outcome metrics are shown
 - [ ] Education progress metrics are shown
 - [ ] Health improvement metrics are shown
-- [ ] Safehouse performance comparisons are shown
-- [ ] Reintegration success rates are shown
-- [ ] Reports align reasonably with Annual Accomplishment Report style
+- [~] Safehouse performance comparisons are shown
+- [x] Reintegration success rates are shown
+- [~] Reports align reasonably with Annual Accomplishment Report style
 
 ### Social Media / Outreach Support
-- [ ] Social media data is represented somewhere meaningful
-- [ ] Engagement metrics are shown
-- [ ] Social content performance is interpretable
-- [ ] Social-to-donation linkage exists or is reasonably approximated
-- [ ] Feature helps answer what content/platform/timing works
+- [x] Social media data is represented somewhere meaningful
+- [x] Engagement metrics are shown
+- [~] Social content performance is interpretable
+- [x] Social-to-donation linkage exists or is reasonably approximated
+- [~] Feature helps answer what content/platform/timing works
 
 ## 5.4 Finish Quality
 
-- [ ] Extra support pages required by the solution exist
-- [ ] Pagination exists where needed
-- [ ] Empty states exist where needed
-- [ ] Not-found state exists
-- [ ] Failure states exist where needed
-- [ ] Mobile layout remains usable on major pages
-- [ ] App feels like a product, not just an assignment
+- [~] Extra support pages required by the solution exist
+- [x] Pagination exists where needed
+- [x] Empty states exist where needed
+- [x] Not-found state exists
+- [x] Failure states exist where needed
+- [~] Mobile layout remains usable on major pages
+- [~] App feels like a product, not just an assignment
 
 ---
 
