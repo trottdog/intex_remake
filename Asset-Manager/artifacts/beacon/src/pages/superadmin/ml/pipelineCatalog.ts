@@ -203,13 +203,13 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
     evidence: "direct",
     caveat: "caution",
     summary: "Surfaced directly in the social planner heatmap, recommendation card, and post table.",
-    limitation: "Notebook execution proof is still missing, so keep the demo language practical rather than overclaiming.",
     links: [{ label: "Campaigns: Social Planner", href: "/superadmin/campaigns?tab=social" }],
     auditStatus: "risk",
-    complete: "Framing, manifest, metrics artifacts, and campaigns super-admin integration are present.",
-    weak: "Notebook execution evidence is absent and the evaluate entrypoint is not implemented.",
-    missing: "Executed notebook outputs and a repeatable non-stub evaluation flow.",
-    videoSafety: "Safe to show with caveat language.",
+    complete:
+      "Framing, manifest, metrics artifacts, campaigns super-admin integration, and executed notebook evidence are present.",
+    weak: "No pipeline-specific execution-proof blockers are currently flagged.",
+    missing: "No critical evidence gaps identified for this pipeline entry.",
+    videoSafety: "Safe to show.",
     aliases: ["social_conversion"],
   },
   {
@@ -220,8 +220,8 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
     taskType: "classification",
     evidence: "direct",
     caveat: "caution",
-    summary: "Surfaced directly in the social planner heatmap and timing recommendation flow.",
-    limitation: "Show this in the social planner or control-center context, not as a separate end-user route.",
+    summary:
+      "Surfaced directly in the social planner heatmap and timing recommendation flow inside super-admin planning routes.",
     links: [
       { label: "Campaigns: Social Planner", href: "/superadmin/campaigns?tab=social" },
       { label: "ML Control Center", href: "/superadmin/ml?pipeline=best_posting_time" },

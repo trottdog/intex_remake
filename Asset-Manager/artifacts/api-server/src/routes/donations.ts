@@ -147,6 +147,59 @@ router.get("/donations", requireAuth, requireRoles("staff", "admin", "super_admi
   } catch (e) { console.error(e); return res.status(500).json({ error: "Failed" }); }
 });
 
+// ── Donation stats for dashboards ────────────────────────────────────────────
+router.get("/donations/stats", requireAuth, requireRoles("staff", "admin", "super_admin"), async (req, res) => {
+  try {
+    const { fundType } = req.query as Record<string, string>;
+    const allowedSafehouses = getUserSafehouses(req.user);
+
+    let query = db.select({
+      donationId: donationsTable.donationId,
+      amount: donationsTable.amount,
+      supporterId: donationsTable.supporterId,
+      safehouseId: donationsTable.safehouseId,
+      totalAllocated: sql<string>`coalesce((select sum(da.amount_allocated::numeric) from donation_allocations da where da.donation_id = ${donationsTable.donationId}), 0)`,
+    })
+      .from(donationsTable)
+      .$dynamic();
+
+    if (allowedSafehouses && allowedSafehouses.length > 0) {
+      query = query.where(sql`${donationsTable.safehouseId} = ANY(ARRAY[${sql.raw(allowedSafehouses.join(","))}]::bigint[])`);
+    }
+
+    if (fundType === "general") query = query.where(isNull(donationsTable.safehouseId));
+    if (fundType === "directed") query = query.where(isNotNull(donationsTable.safehouseId));
+
+    const rows = await query;
+
+    let totalReceived = 0;
+    let totalAllocated = 0;
+    let pendingAllocationCount = 0;
+    const donorSet = new Set<number>();
+
+    for (const row of rows) {
+      const amount = parseFloat(row.amount || "0");
+      const allocated = parseFloat(row.totalAllocated || "0");
+      const unallocated = Math.max(0, amount - allocated);
+
+      totalReceived += amount;
+      totalAllocated += allocated;
+      if (unallocated > 0.005) pendingAllocationCount += 1;
+      if (row.supporterId !== null) donorSet.add(row.supporterId);
+    }
+
+    return res.json({
+      totalReceived: parseFloat(totalReceived.toFixed(2)),
+      totalAllocated: parseFloat(totalAllocated.toFixed(2)),
+      pendingAllocationCount,
+      uniqueDonors: donorSet.size,
+    });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: "Failed" });
+  }
+});
+
 router.post("/donations", requireAuth, requireRoles("staff", "admin", "super_admin"), async (req, res) => {
   try {
     const [row] = await db.insert(donationsTable).values(req.body).returning();
