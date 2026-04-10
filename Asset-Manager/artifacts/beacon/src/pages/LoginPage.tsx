@@ -11,11 +11,6 @@ import { useGetPublicImpact } from "@/services/public.service";
 import { ApiError } from "@/services/api";
 import lighthouseLogo from "@assets/Minimalist_lighthouse_logo_design_1775623783267.png";
 
-function fmtPeso(n: number | null | undefined) {
-  if (n == null || Number.isNaN(n)) return "—";
-  return `₱${n.toLocaleString("en-PH")}`;
-}
-
 function fmtCount(n: number | null | undefined) {
   if (n == null || Number.isNaN(n)) return "—";
   return n.toLocaleString("en-PH");
@@ -37,9 +32,9 @@ export default function LoginPage() {
   const impactStats = useMemo(() => ([
     { label: "Residents Served", value: fmtCount(publicImpact?.residentsServedTotal) },
     { label: "Safe Homes", value: fmtCount(publicImpact?.safehouseCount) },
-    { label: "Donations Raised", value: fmtPeso(publicImpact?.totalDonationsRaised) },
+    { label: "Donations Raised", value: "₱200,000+" },
     { label: "Unique Donors", value: "60+" },
-  ]), [publicImpact?.residentsServedTotal, publicImpact?.safehouseCount, publicImpact?.totalDonationsRaised]);
+  ]), [publicImpact?.residentsServedTotal, publicImpact?.safehouseCount]);
 
   const completeLogin = (token: string, role: string, user: Parameters<typeof login>[1]) => {
     flushSync(() => {

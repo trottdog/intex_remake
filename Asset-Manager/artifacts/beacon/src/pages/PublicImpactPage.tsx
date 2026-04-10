@@ -7,11 +7,6 @@ import sunsetImg from "@assets/SunsetArmsUp_1775623133974.jpg";
 import circleImg from "@assets/GreenGrassFingerStar-e1741389539890_1775623133974.jpg";
 import pinkImg from "@assets/PinkShirtPinkFlower-768x705_1775623133974.jpg";
 
-function fmtPeso(n: number | null | undefined) {
-  if (n == null || Number.isNaN(n)) return "₱0";
-  return `₱${n.toLocaleString("en-PH")}`;
-}
-
 function fmtCount(n: number | null | undefined) {
   if (n == null || Number.isNaN(n)) return "—";
   return n.toLocaleString("en-PH");
@@ -62,7 +57,7 @@ export default function PublicImpactPage() {
   const stats = [
     { ...STAT_CARDS[0], value: fmtCount(data?.residentsServedTotal) },
     { ...STAT_CARDS[1], value: fmtCount(data?.safehouseCount) },
-    { ...STAT_CARDS[2], value: fmtPeso(data?.totalDonationsRaised ?? 0) },
+    { ...STAT_CARDS[2], value: "₱200,000+" },
     { ...STAT_CARDS[3], value: "60+" },
   ];
 
