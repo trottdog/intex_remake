@@ -442,7 +442,7 @@ CREATE TABLE public.staff_safehouse_assignments (
   CONSTRAINT staff_safehouse_assignments_safehouse_id_fkey FOREIGN KEY (safehouse_id) REFERENCES public.safehouses(safehouse_id)
 );
 CREATE TABLE public.supporters (
-  supporter_id bigint NOT NULL,
+  supporter_id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   supporter_type text,
   display_name text,
   organization_name text,

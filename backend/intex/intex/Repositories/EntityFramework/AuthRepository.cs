@@ -13,6 +13,45 @@ public sealed class AuthRepository(BeaconDbContext dbContext) : IAuthRepository
     public Task<User?> FindUserByIdAsync(int userId, CancellationToken cancellationToken = default) =>
         dbContext.Users.AsNoTracking().FirstOrDefaultAsync(user => user.Id == userId, cancellationToken);
 
+    public Task<bool> UserExistsByUsernameOrEmailAsync(string username, string email, CancellationToken cancellationToken = default) =>
+        dbContext.Users.AsNoTracking().AnyAsync(user =>
+            user.Username.ToLower() == username.ToLower() || user.Email.ToLower() == email.ToLower(), cancellationToken);
+
+    public async Task<User> CreateDonorAccountAsync(Supporter supporter, User user, CancellationToken cancellationToken = default)
+    {
+        User? donorUser = null;
+        var executionStrategy = dbContext.Database.CreateExecutionStrategy();
+
+        await executionStrategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+            dbContext.Supporters.Add(supporter);
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            donorUser = new User
+            {
+                Username = user.Username,
+                Email = user.Email,
+                PasswordHash = user.PasswordHash,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Role = user.Role,
+                IsActive = user.IsActive,
+                MfaEnabled = user.MfaEnabled,
+                SupporterId = supporter.SupporterId,
+                CreatedAt = user.CreatedAt,
+                UpdatedAt = user.UpdatedAt,
+            };
+
+            dbContext.Users.Add(donorUser);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        });
+
+        return donorUser ?? throw new InvalidOperationException("Failed to create donor account");
+    }
+
     public async Task<IReadOnlyList<long>> GetAssignedSafehousesAsync(int userId, CancellationToken cancellationToken = default) =>
         await dbContext.StaffSafehouseAssignments.AsNoTracking()
             .Where(assignment => assignment.UserId == userId.ToString())

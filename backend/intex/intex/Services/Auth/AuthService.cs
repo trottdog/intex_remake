@@ -113,6 +113,66 @@ public sealed class AuthService(
         return (true, null);
     }
 
+    public async Task<(RegisterDonorResponse? Response, string? ErrorMessage, bool IsConflict)> RegisterDonorAsync(RegisterDonorRequest request, CancellationToken cancellationToken = default)
+    {
+        var firstName = request.FirstName?.Trim();
+        var lastName = request.LastName?.Trim();
+        var email = request.Email?.Trim().ToLowerInvariant();
+        var username = request.Username?.Trim().ToLowerInvariant();
+
+        if (string.IsNullOrWhiteSpace(firstName)
+            || string.IsNullOrWhiteSpace(lastName)
+            || string.IsNullOrWhiteSpace(email)
+            || string.IsNullOrWhiteSpace(username)
+            || string.IsNullOrWhiteSpace(request.Password))
+        {
+            return (null, "firstName, lastName, email, username, and password are required", false);
+        }
+
+        var passwordError = PasswordRules.Validate(request.Password);
+        if (passwordError is not null)
+        {
+            return (null, passwordError, false);
+        }
+
+        var duplicateExists = await authRepository.UserExistsByUsernameOrEmailAsync(username, email, cancellationToken);
+        if (duplicateExists)
+        {
+            return (null, "Username or email already exists", true);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var supporter = new Supporter
+        {
+            SupporterType = "individual",
+            DisplayName = $"{firstName} {lastName}",
+            FirstName = firstName,
+            LastName = lastName,
+            Email = email,
+            Status = "active",
+            CreatedAt = now.ToString("O"),
+            CanLogin = true,
+            RecurringEnabled = false,
+        };
+
+        var user = new User
+        {
+            Username = username,
+            Email = email,
+            PasswordHash = passwordService.HashPassword(request.Password),
+            FirstName = firstName,
+            LastName = lastName,
+            Role = BeaconRoles.Donor,
+            IsActive = true,
+            MfaEnabled = false,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+
+        var created = await authRepository.CreateDonorAccountAsync(supporter, user, cancellationToken);
+        return (new RegisterDonorResponse(created.Id, created.Username, created.Email, created.SupporterId), null, false);
+    }
+
     private async Task<LoginResponse> BuildCompletedLoginResponseAsync(User user, CancellationToken cancellationToken)
     {
         var previousLastLogin = user.LastLogin?.ToUniversalTime().ToString("O");

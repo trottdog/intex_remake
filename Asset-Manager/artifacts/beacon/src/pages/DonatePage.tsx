@@ -56,6 +56,9 @@ export default function DonatePage() {
   const [step, setStep] = useState<"destination" | "form">("destination");
   const [destination, setDestination] = useState<"general" | number>("general");
   const [safehouses, setSafehouses] = useState<Safehouse[]>([]);
+  const [safehousesLoading, setSafehousesLoading] = useState(true);
+  const [safehousesError, setSafehousesError] = useState<string | null>(null);
+  const [safehousesRetryToken, setSafehousesRetryToken] = useState(0);
   const [selectedAmount, setSelectedAmount] = useState<number | null>(2500);
   const [customAmount, setCustomAmount] = useState("");
   const [frequency, setFrequency] = useState<"once" | "monthly">("once");
@@ -69,8 +72,38 @@ export default function DonatePage() {
   const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
 
   useEffect(() => {
-    apiFetch<{ data: Safehouse[] }>("/api/public/safehouses").then(d => setSafehouses(d.data ?? [])).catch(() => {});
-  }, []);
+    let cancelled = false;
+
+    setSafehousesLoading(true);
+    setSafehousesError(null);
+
+    apiFetch<{ data: Safehouse[] }>("/api/public/safehouses")
+      .then((response) => {
+        if (cancelled) {
+          return;
+        }
+
+        setSafehouses(response.data ?? []);
+      })
+      .catch((error: unknown) => {
+        if (cancelled) {
+          return;
+        }
+
+        console.error("Unable to load safehouses", error);
+        setSafehouses([]);
+        setSafehousesError("Unable to load safehouses right now. You can still continue with the General Fund.");
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setSafehousesLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [safehousesRetryToken]);
 
   useEffect(() => {
     if (!submitted || !createAccount || redirectCountdown === null) return;
@@ -240,8 +273,21 @@ export default function DonatePage() {
                   {/* Safehouses */}
                   <div className="space-y-2">
                     <p className="text-xs font-bold uppercase tracking-widest text-gray-400 px-1">Or choose a specific safehouse</p>
-                    {safehouses.length === 0 ? (
+                    {safehousesLoading ? (
                       <div className="text-sm text-gray-400 text-center py-4">Loading safehouses...</div>
+                    ) : safehousesError ? (
+                      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900 space-y-3">
+                        <p>{safehousesError}</p>
+                        <button
+                          type="button"
+                          onClick={() => setSafehousesRetryToken((token) => token + 1)}
+                          className="text-sm font-semibold text-[#214636] hover:underline"
+                        >
+                          Retry loading safehouses
+                        </button>
+                      </div>
+                    ) : safehouses.length === 0 ? (
+                      <div className="text-sm text-gray-400 text-center py-4">No safehouses are available right now.</div>
                     ) : safehouses.map(s => (
                       <button
                         key={s.safehouseId}
