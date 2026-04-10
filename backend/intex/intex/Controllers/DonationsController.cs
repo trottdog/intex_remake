@@ -10,6 +10,12 @@ namespace backend.intex.Controllers;
 [Route("donations")]
 public sealed class DonationsController(IDonationService donationService, IUserScopeService userScopeService) : ApiControllerBase
 {
+    [Authorize(Policy = PolicyNames.StaffOrAbove)]
+    [HttpGet("prior-supporters")]
+    [ProducesResponseType<IReadOnlyList<PriorDonorSupporterOptionDto>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<PriorDonorSupporterOptionDto>>> SearchPriorSupporters([FromQuery] string? search, [FromQuery] int? limit, CancellationToken cancellationToken)
+        => Ok(await donationService.SearchPriorDonorSupportersAsync(search, limit, cancellationToken));
+
     [Authorize(Policy = PolicyNames.DonorOnly)]
     [HttpGet("my-ledger")]
     [ProducesResponseType<StandardPagedResponse<DonationResponseDto>>(StatusCodes.Status200OK)]
@@ -21,6 +27,12 @@ public sealed class DonationsController(IDonationService donationService, IUserS
     [ProducesResponseType<DonationTrendsResponse>(StatusCodes.Status200OK)]
     public async Task<ActionResult<DonationTrendsResponse>> GetTrends([FromQuery] DonationTrendsQuery query, CancellationToken cancellationToken)
         => Ok(await donationService.GetDonationTrendsAsync(query.Months, cancellationToken));
+
+    [Authorize(Policy = PolicyNames.StaffOrAbove)]
+    [HttpGet("stats")]
+    [ProducesResponseType<DonationStatsResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<DonationStatsResponse>> GetStats([FromQuery] DonationStatsQuery query, CancellationToken cancellationToken)
+        => Ok(await donationService.GetDonationStatsAsync(query.FundType, User.GetRole(), await userScopeService.GetAssignedSafehousesAsync(User, cancellationToken), cancellationToken));
 
     [Authorize(Policy = PolicyNames.StaffOrAbove)]
     [HttpGet]
@@ -35,6 +47,23 @@ public sealed class DonationsController(IDonationService donationService, IUserS
     {
         var created = await donationService.CreateDonationAsync(request, cancellationToken);
         return StatusCode(StatusCodes.Status201Created, created);
+    }
+
+    [Authorize(Policy = PolicyNames.StaffOrAbove)]
+    [HttpPost("admin-entry")]
+    [ProducesResponseType<DonationResponseDto>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<DonationResponseDto>> CreateAdminDonationEntry([FromBody] CreateAdminDonationRequest request, CancellationToken cancellationToken)
+    {
+        var result = await donationService.CreateAdminDonationEntryAsync(
+            request,
+            User.GetRole(),
+            await userScopeService.GetAssignedSafehousesAsync(User, cancellationToken),
+            cancellationToken);
+
+        return result.Response is null
+            ? BadRequest(new ErrorResponse(result.ErrorMessage ?? "Failed to record donation"))
+            : StatusCode(StatusCodes.Status201Created, result.Response);
     }
 
     [Authorize]
@@ -88,6 +117,18 @@ public sealed class DonationsController(IDonationService donationService, IUserS
         var result = await donationService.CreatePublicDonationAsync(request, cancellationToken);
         return result.Response is null
             ? BadRequest(new ErrorResponse(result.ErrorMessage ?? "Failed to record donation"))
+            : StatusCode(StatusCodes.Status201Created, result.Response);
+    }
+
+    [AllowAnonymous]
+    [HttpPost("public/in-kind")]
+    [ProducesResponseType<PublicDonationResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PublicDonationResponse>> PublicInKindDonate([FromBody] PublicInKindDonationRequest request, CancellationToken cancellationToken)
+    {
+        var result = await donationService.CreatePublicInKindDonationAsync(request, cancellationToken);
+        return result.Response is null
+            ? BadRequest(new ErrorResponse(result.ErrorMessage ?? "Failed to record in-kind donation"))
             : StatusCode(StatusCodes.Status201Created, result.Response);
     }
 }

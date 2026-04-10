@@ -210,6 +210,116 @@ export interface ReportReintegrationStat {
   reintegrationType?: string;
 }
 
+export interface AdminReportsOverview {
+  generatedAt?: string;
+  scope?: {
+    primarySafehouseId?: number | null;
+    primarySafehouseName?: string | null;
+    scopedSafehouseIds?: number[];
+    scopedSafehouseNames?: string[];
+    reportWindowMonths?: number;
+  };
+  summary?: {
+    totalDonationsRaised?: number;
+    donationCount?: number;
+    recurringDonationCount?: number;
+    inKindDonationValue?: number;
+    activeResidents?: number;
+    totalResidents?: number;
+    highRiskResidents?: number;
+    openIncidents?: number;
+    processRecordings?: number;
+    homeVisitations?: number;
+    activeInterventionPlans?: number;
+    completedReintegrations?: number;
+    reintegrationCompletionRate?: number;
+    avgEducationProgress?: number;
+    avgAttendanceRate?: number;
+    avgHealthScore?: number;
+    avgNutritionScore?: number;
+  };
+  donationTrends?: Array<{
+    period: string;
+    monthKey: string;
+    totalAmount: number;
+    recurringAmount: number;
+    inKindEstimatedValue: number;
+    donationCount: number;
+  }>;
+  residentOutcomes?: {
+    caseStatus?: Array<{ status: string; count: number }>;
+    riskDistribution?: Array<{ level: string; count: number }>;
+    reintegrationStatus?: Array<{ status: string; count: number }>;
+    activeResidents?: number;
+    closedCases?: number;
+    transferredCases?: number;
+    newAdmissionsThisQuarter?: number;
+    casesClosedThisQuarter?: number;
+  };
+  educationMetrics?: {
+    avgProgressPercent?: number;
+    avgAttendanceRate?: number;
+    completedCount?: number;
+    inProgressCount?: number;
+    notStartedCount?: number;
+    monthlyTrend?: Array<{
+      period: string;
+      monthKey: string;
+      avgProgressPercent: number;
+      avgAttendanceRate: number;
+    }>;
+  };
+  healthMetrics?: {
+    avgGeneralHealthScore?: number;
+    avgNutritionScore?: number;
+    avgSleepScore?: number;
+    avgEnergyScore?: number;
+    medicalCoverageRate?: number;
+    dentalCoverageRate?: number;
+    psychologicalCoverageRate?: number;
+    monthlyTrend?: Array<{
+      period: string;
+      monthKey: string;
+      avgGeneralHealthScore: number;
+      avgNutritionScore: number;
+      avgSleepScore: number;
+      avgEnergyScore: number;
+    }>;
+    improvementDelta?: number;
+  };
+  safehouseComparisons?: Array<{
+    safehouseId: number;
+    safehouseName: string;
+    region?: string | null;
+    isPrimary?: boolean;
+    capacityGirls?: number | null;
+    currentOccupancy?: number | null;
+    capacityUtilization?: number;
+    avgEducationProgress?: number | null;
+    avgHealthScore?: number | null;
+    activeResidents?: number | null;
+    processRecordingCount?: number | null;
+    homeVisitationCount?: number | null;
+    incidentCount?: number | null;
+    compositeHealthScore?: number | null;
+    peerRank?: number | null;
+    trendDirection?: string | null;
+    month?: string | null;
+  }>;
+  reintegrationComparisons?: Array<{
+    safehouseId: number;
+    safehouseName: string;
+    isPrimary?: boolean;
+    totalResidents?: number;
+    completedCount?: number;
+    successRate?: number;
+    notStarted?: number;
+    onHold?: number;
+    inProgress?: number;
+    completed?: number;
+  }>;
+}
+
 export function useGetReportDonationTrends() {
   return useQuery<{ data: { month: string; total: number; count: number }[] }>({
     queryKey: ["reports", "donation-trends"],
@@ -228,5 +338,12 @@ export function useGetReportReintegrationStats() {
   return useQuery<{ data: ReportReintegrationStat[] }>({
     queryKey: ["reports", "reintegration-stats"],
     queryFn: () => apiFetch("/api/residents/stats"),
+  });
+}
+
+export function useGetAdminReportsOverview() {
+  return useQuery<AdminReportsOverview>({
+    queryKey: ["admin", "reports", "overview"],
+    queryFn: () => apiFetch("/api/dashboard/admin-reports"),
   });
 }

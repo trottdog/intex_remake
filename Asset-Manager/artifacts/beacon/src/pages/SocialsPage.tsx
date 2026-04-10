@@ -1,15 +1,11 @@
 import { Link } from "wouter";
 import { PublicLayout } from "@/components/layouts/PublicLayout";
-import { Heart, MessageCircle } from "lucide-react";
+import { Heart, MessageCircle, Share2, Eye } from "lucide-react";
 import type { IconType } from "react-icons";
 import { FaFacebookF, FaInstagram, FaYoutube } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
-import handsImg from "@assets/Hands_Circle_1775623133974.jpg";
-import jumpImg from "@assets/BackwardsJump-e1741389606772_1775623133972.jpg";
-import circleImg from "@assets/GreenGrassFingerStar-e1741389539890_1775623133974.jpg";
-import pinkImg from "@assets/PinkShirtPinkFlower-768x705_1775623133974.jpg";
 import sunsetImg from "@assets/SunsetArmsUp_1775623133974.jpg";
-import beachImg from "@assets/HoldingHandsAtBeach_1775623758874.jpg";
+import { SOCIAL_FEED_POSTS } from "@/lib/social-feed";
 
 type SocialChannel = {
   name: string;
@@ -60,57 +56,6 @@ const SOCIAL_CHANNELS: SocialChannel[] = [
   },
 ];
 
-const POSTS = [
-  {
-    platform: "Instagram",
-    date: "April 5, 2026",
-    caption: "Our girls learned floral arrangement this week — and created something absolutely beautiful. Creativity is part of healing. #BeaconSanctuaryPH #Hope",
-    image: pinkImg,
-    likes: 284,
-    comments: 31,
-  },
-  {
-    platform: "Facebook",
-    date: "March 28, 2026",
-    caption: "Today marks 5 years since our second safe home opened. From 8 beds to 18 — and counting. Every bed is a life saved. Thank you to every donor who made this possible.",
-    image: handsImg,
-    likes: 512,
-    comments: 87,
-  },
-  {
-    platform: "Instagram",
-    date: "March 20, 2026",
-    caption: "They held hands. They jumped. They laughed. This is what freedom looks like. #SafeHome #BeaconPH",
-    image: jumpImg,
-    likes: 743,
-    comments: 54,
-  },
-  {
-    platform: "Facebook",
-    date: "March 15, 2026",
-    caption: "Day 3 of our Summer Camp! The girls formed a star with their fingers — a symbol of unity and light. These moments remind us why we do this work.",
-    image: circleImg,
-    likes: 398,
-    comments: 42,
-  },
-  {
-    platform: "Instagram",
-    date: "March 8, 2026",
-    caption: "International Women's Day — we celebrate you. Every girl here is a future leader, healer, and changemaker.",
-    image: sunsetImg,
-    likes: 621,
-    comments: 93,
-  },
-  {
-    platform: "Facebook",
-    date: "February 22, 2026",
-    caption: "The ocean reminds us: no matter how many waves hit you, you keep standing. We are so proud of our girls.",
-    image: beachImg,
-    likes: 891,
-    comments: 126,
-  },
-];
-
 export default function SocialsPage() {
   return (
     <PublicLayout>
@@ -139,7 +84,7 @@ export default function SocialsPage() {
             <p className="text-gray-500 mt-2">Real moments from real lives inside Beacon.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {POSTS.map((post, i) => (
+            {SOCIAL_FEED_POSTS.map((post, i) => (
               <div key={i} className="bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-md transition-shadow">
                 <div className="h-52 overflow-hidden">
                   <img src={post.image} alt="Social post" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
@@ -156,8 +101,16 @@ export default function SocialsPage() {
                       {post.likes.toLocaleString()}
                     </span>
                     <span className="flex items-center gap-1">
+                      <Share2 className="w-3 h-3" />
+                      {post.shares.toLocaleString()}
+                    </span>
+                    <span className="flex items-center gap-1">
                       <MessageCircle className="w-3 h-3" />
                       {post.comments}
+                    </span>
+                    <span className="ml-auto flex items-center gap-1">
+                      <Eye className="w-3 h-3" />
+                      {post.views.toLocaleString()}
                     </span>
                   </div>
                 </div>

@@ -1,8 +1,8 @@
 import { ReactNode, useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import { setCookie } from "@/lib/cookies";
-import { LogOut, Sun, Moon, Bell, Shield, Menu, X, Target, FileText, Building2 } from "lucide-react";
+import { LogOut, Bell, Shield, Menu, X, Target, FileText, Building2, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 
 interface NavItem {
@@ -33,28 +33,19 @@ interface DashboardLayoutProps {
   bellBadge?: number;
   bellItems?: NotificationItem[];
   onBellOpen?: () => void;
+  showThemeToggle?: boolean;
 }
 
 export function DashboardLayout({
   children, navItems, portalName, brandLogoSrc, safehouseLabel, compactSidebar = false,
-  bellBadge = 0, bellItems = [], onBellOpen,
+  bellBadge = 0, bellItems = [], onBellOpen, showThemeToggle = true,
 }: DashboardLayoutProps) {
   const [location] = useLocation();
+  const { resolvedTheme, setTheme } = useTheme();
   const { user, logout } = useAuth();
   const [bellOpen, setBellOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
-
-  const toggleTheme = () => {
-    const isDark = document.documentElement.classList.contains("dark");
-    if (isDark) {
-      document.documentElement.classList.remove("dark");
-      setCookie("beacon_theme", "light");
-    } else {
-      document.documentElement.classList.add("dark");
-      setCookie("beacon_theme", "dark");
-    }
-  };
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -85,9 +76,21 @@ export function DashboardLayout({
     if (next && onBellOpen) onBellOpen();
   }
 
+  function toggleTheme() {
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
+  }
+
   function fmtDate(d: string | null) {
     if (!d) return "";
     return new Date(d).toLocaleDateString("en-PH", { month: "short", day: "numeric" });
+  }
+
+  function getUserInitials() {
+    const firstInitial = user?.firstName?.trim()?.[0] ?? "";
+    const lastInitial = user?.lastName?.trim()?.[0] ?? "";
+    const initials = `${firstInitial}${lastInitial}`.toUpperCase();
+    if (initials) return initials;
+    return user?.username?.trim()?.[0]?.toUpperCase() || "U";
   }
 
   const hasSections = navItems.some(item => item.section);
@@ -99,6 +102,7 @@ export function DashboardLayout({
   const iconSz = "w-4 h-4";
   const sectionWrap = c ? "pt-2 pb-0.5 px-2" : "pt-4 pb-1 px-3";
   const sectionText = c ? "text-[10px] tracking-wider" : "text-[10px] tracking-widest";
+  const visibleBellBadge = bellItems.length > 0 ? bellBadge : 0;
 
   function renderNavItems(onNavigate?: () => void) {
     const linkCls = (isActive: boolean) =>
@@ -204,7 +208,7 @@ export function DashboardLayout({
         <div className={`border-t border-sidebar-border ${c ? "p-3" : "p-4"}`}>
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-bold shrink-0">
-              {user?.firstName?.[0] || user?.username?.[0] || "U"}
+              {getUserInitials()}
             </div>
             <div className="overflow-hidden">
               <p className="text-sm font-medium truncate">{user?.firstName} {user?.lastName}</p>
@@ -251,20 +255,23 @@ export function DashboardLayout({
               <div className="w-2 h-2 rounded-full bg-green-500" />
               System Healthy
             </div>
-            <Button variant="ghost" size="icon" onClick={toggleTheme}>
-              <Sun className="w-4 h-4 hidden dark:block" />
-              <Moon className="w-4 h-4 block dark:hidden" />
-            </Button>
+            {showThemeToggle && (
+              <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
+                <Sun className="w-4 h-4 hidden dark:block" />
+                <Moon className="w-4 h-4 block dark:hidden" />
+              </Button>
+            )}
 
             <div ref={bellRef} className="relative">
               <button
                 onClick={onBellOpen ? handleBellClick : undefined}
                 className={`relative inline-flex items-center justify-center w-9 h-9 rounded-md text-gray-600 hover:bg-gray-100 transition-colors ${onBellOpen ? "cursor-pointer" : "cursor-default"}`}
+                aria-label="Open notifications"
               >
                 <Bell className="w-4 h-4" />
-                {bellBadge > 0 && (
+                {visibleBellBadge > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
-                    {bellBadge > 99 ? "99+" : bellBadge}
+                    {visibleBellBadge > 99 ? "99+" : visibleBellBadge}
                   </span>
                 )}
               </button>
@@ -274,11 +281,11 @@ export function DashboardLayout({
                   <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50 bg-[#f8faf9]">
                     <div>
                       <span className="font-bold text-[#0e2118] text-sm">Notifications</span>
-                      {bellBadge > 0 && (
-                        <span className="ml-2 text-xs text-[#2a9d72] font-semibold">{bellBadge} new</span>
+                      {visibleBellBadge > 0 && (
+                        <span className="ml-2 text-xs text-[#2a9d72] font-semibold">{visibleBellBadge} new</span>
                       )}
                     </div>
-                    <button onClick={() => setBellOpen(false)} className="text-gray-400 hover:text-gray-700">
+                    <button onClick={() => setBellOpen(false)} className="text-gray-400 hover:text-gray-700" aria-label="Close notifications panel">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
@@ -320,7 +327,7 @@ export function DashboardLayout({
 
             {user?.role === "super_admin" && (
               <Link href="/superadmin/security">
-                <Button variant="ghost" size="icon" className="text-destructive">
+                <Button variant="ghost" size="icon" className="text-destructive" aria-label="Open security dashboard">
                   <Shield className="w-4 h-4" />
                 </Button>
               </Link>
@@ -390,7 +397,7 @@ export function DashboardLayout({
             <div className={`border-t border-sidebar-border ${c ? "p-3" : "p-4"}`}>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-bold shrink-0">
-                  {user?.firstName?.[0] || user?.username?.[0] || "U"}
+                  {getUserInitials()}
                 </div>
                 <div className="overflow-hidden">
                   <p className="text-sm font-medium truncate">{user?.firstName} {user?.lastName}</p>

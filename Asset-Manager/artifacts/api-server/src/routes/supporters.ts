@@ -25,12 +25,13 @@ router.get("/supporters/me", requireAuth, requireRoles("donor"), async (req, res
 router.patch("/supporters/me", requireAuth, requireRoles("donor"), async (req, res) => {
   try {
     if (!req.user!.supporterId) return res.status(404).json({ error: "Donor profile not found" });
-    const { firstName, lastName, phone, organizationName } = req.body as Partial<SupporterRow>;
+    const { firstName, lastName, phone, organizationName, acquisitionChannel } = req.body as Partial<SupporterRow>;
     const updates: Partial<typeof supportersTable.$inferInsert> = {};
     if (firstName !== undefined) updates.firstName = firstName;
     if (lastName !== undefined) updates.lastName = lastName;
     if (phone !== undefined) updates.phone = phone;
     if (organizationName !== undefined) updates.organizationName = organizationName;
+    if (acquisitionChannel !== undefined) updates.acquisitionChannel = acquisitionChannel;
     if (Object.keys(updates).length === 0) return res.status(400).json({ error: "No fields to update" });
     const [updated] = await db.update(supportersTable).set(updates).where(eq(supportersTable.supporterId, req.user!.supporterId!)).returning();
     return res.json(fmt(updated));

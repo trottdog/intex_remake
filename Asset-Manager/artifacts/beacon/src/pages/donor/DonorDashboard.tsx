@@ -7,8 +7,8 @@ import {
   PieChart, Pie, Cell, Legend,
 } from "recharts";
 import {
-  Heart, DollarSign, Calendar, TrendingUp, Users, Home, Award,
-  Loader2, AlertTriangle, BookOpen, Activity, ArrowUpRight, Sparkles, RefreshCw,
+  Heart, DollarSign, Calendar, TrendingUp, Award,
+  Loader2, AlertTriangle, ArrowUpRight, RefreshCw,
 } from "lucide-react";
 import { QuickDonateModal } from "@/components/donor/QuickDonateModal";
 
@@ -23,6 +23,15 @@ function fmt(n: number | null | undefined, prefix = "₱") {
 
 function fmtDate(d: string | null | undefined) {
   if (!d) return "—";
+
+  // Keep calendar dates stable for DATE-only values (YYYY-MM-DD) across time zones.
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d.trim());
+  if (dateOnlyMatch) {
+    const [, year, month, day] = dateOnlyMatch;
+    const localDate = new Date(Number(year), Number(month) - 1, Number(day));
+    return localDate.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
+  }
+
   return new Date(d).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
 }
 
@@ -53,23 +62,9 @@ function KpiCard({ label, value, sub, icon: Icon, accent = "#2a9d72", trend }: K
       </div>
       <div>
         <div className="text-2xl font-bold text-gray-900 tracking-tight">{value}</div>
-        <div className="text-xs font-semibold uppercase tracking-widest text-gray-400 mt-0.5">{label}</div>
+        <div className="text-xs font-semibold uppercase tracking-widest text-gray-500 mt-0.5">{label}</div>
       </div>
-      {sub && <div className="text-xs text-gray-400 border-t border-gray-50 pt-2">{sub}</div>}
-    </div>
-  );
-}
-
-function ImpactStatPill({
-  label, value, icon: Icon, color,
-}: { label: string; value: string | number; icon: React.ElementType; color: string }) {
-  return (
-    <div className="flex flex-col items-center text-center px-6 py-4">
-      <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-2" style={{ backgroundColor: `${color}20` }}>
-        <Icon className="w-6 h-6" style={{ color }} />
-      </div>
-      <div className="text-3xl font-black text-[#0e2118]">{value}</div>
-      <div className="text-xs text-gray-500 uppercase tracking-wider mt-1">{label}</div>
+      {sub && <div className="text-xs text-gray-500 border-t border-gray-50 pt-2">{sub}</div>}
     </div>
   );
 }
@@ -109,7 +104,7 @@ function SnapCard({ snap, fmtDate }: { snap: DonorRecentSnapshot; fmtDate: (d: s
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-1.5 h-1.5 rounded-full bg-[#2a9d72]" />
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-gray-500">
               {snap.snapshotDate ? fmtDate(snap.snapshotDate) : "—"}
             </span>
           </div>
@@ -124,7 +119,7 @@ function SnapCard({ snap, fmtDate }: { snap: DonorRecentSnapshot; fmtDate: (d: s
           {kpiItems.map(k => (
             <div key={k.label} className="bg-[#f8faf9] rounded-xl p-3">
               <div className="text-base font-black text-[#0e2118]">{String(k.value)}</div>
-              <div className="text-xs text-gray-400 mt-0.5">{k.label}</div>
+              <div className="text-xs text-gray-500 mt-0.5">{k.label}</div>
             </div>
           ))}
         </div>
@@ -145,10 +140,14 @@ function ImpactReportsSection({ snapshots, fmtDate }: { snapshots: DonorRecentSn
       <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
         <div className="flex items-center gap-2">
           <h3 className="font-bold text-gray-800">Impact Reports</h3>
-          <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{snapshots.length} available</span>
+          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{snapshots.length} available</span>
         </div>
         {older.length > 0 && (
+          <label htmlFor="older-impact-reports" className="sr-only">Browse older impact reports</label>
+        )}
+        {older.length > 0 && (
           <select
+            id="older-impact-reports"
             value={selectedId}
             onChange={e => setSelectedId(e.target.value === "" ? "" : Number(e.target.value))}
             className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 cursor-pointer"
@@ -173,7 +172,7 @@ function ImpactReportsSection({ snapshots, fmtDate }: { snapshots: DonorRecentSn
         <div className="mt-4">
           <div className="flex items-center gap-2 mb-3">
             <div className="h-px flex-1 bg-gray-100" />
-            <span className="text-xs text-gray-400 px-2">Selected report</span>
+            <span className="text-xs text-gray-500 px-2">Selected report</span>
             <div className="h-px flex-1 bg-gray-100" />
           </div>
           <div className="md:w-1/2">
@@ -206,13 +205,12 @@ export default function DonorDashboard() {
         <div className="text-center">
           <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-amber-500" />
           <p className="font-medium">Unable to load your donor portal</p>
-          <p className="text-sm text-gray-400 mt-1">Please refresh or contact support</p>
+          <p className="text-sm text-gray-500 mt-1">Please refresh or contact support</p>
         </div>
       </div>
     );
   }
 
-  const impact = data.impactStats ?? {};
   const snapshots = data.recentSnapshots ?? [];
   const givingTrend = (data.givingTrend ?? []).filter(p => p.amount > 0 || true);
   const allocation = data.allocationBreakdown ?? [];
@@ -256,7 +254,7 @@ export default function DonorDashboard() {
             <div className="text-3xl font-black text-[#0e2118]">{fmt(data.lifetimeGiving)}</div>
             <div className="text-gray-500 text-xs uppercase tracking-widest">Lifetime Contributions</div>
             {data.donationCount && data.donationCount > 0 && (
-              <div className="text-gray-400 text-xs mt-1">
+              <div className="text-gray-500 text-xs mt-1">
                 {data.donationCount} gift{data.donationCount !== 1 ? "s" : ""} to date
               </div>
             )}
@@ -272,11 +270,11 @@ export default function DonorDashboard() {
       } shadow-sm`}>
         <div className="flex items-center gap-3">
           <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${recurringData?.recurringEnabled ? "bg-[#2a9d72]/15" : "bg-gray-100"}`}>
-            <RefreshCw className={`w-4 h-4 ${recurringData?.recurringEnabled ? "text-[#2a9d72]" : "text-gray-400"}`} />
+            <RefreshCw className={`w-4 h-4 ${recurringData?.recurringEnabled ? "text-[#2a9d72]" : "text-gray-500"}`} />
           </div>
           <div>
             <div className="text-sm font-bold text-[#0e2118]">Monthly Recurring Donations</div>
-            <div className="text-xs text-gray-400 mt-0.5">
+            <div className="text-xs text-gray-500 mt-0.5">
               {recurringData?.recurringEnabled
                 ? "You are enrolled as a monthly recurring donor. Thank you!"
                 : "Turn on to automatically give every month and sustain our mission."}
@@ -287,6 +285,9 @@ export default function DonorDashboard() {
           type="button"
           disabled={togglingRecurring}
           onClick={() => toggleRecurring(!(recurringData?.recurringEnabled ?? false))}
+          role="switch"
+          aria-checked={recurringData?.recurringEnabled ?? false}
+          aria-label="Toggle monthly recurring donations"
           className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:opacity-60 ${
             recurringData?.recurringEnabled ? "bg-[#2a9d72]" : "bg-gray-200"
           }`}
@@ -327,45 +328,16 @@ export default function DonorDashboard() {
         />
       </div>
 
-      {/* ── LIVE ORG IMPACT ───────────────────────────────────────── */}
-      <div className="bg-gradient-to-r from-[#f0faf5] to-[#e8f5ee] border border-[#c8e6d4] rounded-2xl p-6 shadow-sm">
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-1">
-            <Sparkles className="w-4 h-4 text-[#2a9d72]" />
-            <span className="text-[#2a9d72] text-xs font-bold uppercase tracking-widest">Beacon Network — Live Data</span>
-          </div>
-          <p className="text-gray-500 text-sm">Real-time outcomes across our safehouse network, powered by your generosity.</p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-0 divide-x divide-[#c8e6d4]">
-          <ImpactStatPill label="Active Residents" value={impact.activeResidents ?? "—"} icon={Users} color="#2a9d72" />
-          <ImpactStatPill label="Total Served" value={`${impact.totalResidentsServed ?? 0}+`} icon={Heart} color="#f4a261" />
-          <ImpactStatPill label="Safehouses" value={impact.safehouses ?? "—"} icon={Home} color="#457b9d" />
-          <ImpactStatPill label="Reintegrations" value={impact.reintegrations ?? "—"} icon={Award} color="#e9c46a" />
-          <ImpactStatPill
-            label="Avg Health Score"
-            value={impact.avgHealthScore ? `${impact.avgHealthScore}/10` : "—"}
-            icon={Activity}
-            color="#e76f51"
-          />
-          <ImpactStatPill
-            label="Edu Progress"
-            value={impact.avgEducationProgress ? `${impact.avgEducationProgress}%` : "—"}
-            icon={BookOpen}
-            color="#2a9d72"
-          />
-        </div>
-      </div>
-
       {/* ── GIVING TREND + ALLOCATIONS ────────────────────────────── */}
       <div className="grid lg:grid-cols-5 gap-6">
 
         {/* Area chart — giving trend */}
         <div className="lg:col-span-3 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Your Giving Trend</h3>
-            <span className="text-xs text-gray-400">Last 12 months</span>
+            <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Your Giving Trend</h2>
+            <span className="text-xs text-gray-500">Last 12 months</span>
           </div>
-          <p className="text-xs text-gray-400 mb-5">Monthly donation amounts (₱ PHP)</p>
+          <p className="text-xs text-gray-500 mb-5">Monthly donation amounts (₱ PHP)</p>
           {givingTrend.length > 0 ? (
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={givingTrend} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
@@ -409,8 +381,8 @@ export default function DonorDashboard() {
         {/* Donut chart — allocation breakdown */}
         <div className="lg:col-span-2 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm flex flex-col">
           <div className="mb-1">
-            <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Where Gifts Go</h3>
-            <p className="text-xs text-gray-400 mt-0.5">Program area allocation</p>
+            <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Where Gifts Go</h2>
+            <p className="text-xs text-gray-500 mt-0.5">Program area allocation</p>
           </div>
           {allocation.length > 0 ? (
             <>
@@ -462,8 +434,8 @@ export default function DonorDashboard() {
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
             <div>
-              <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Recent Donations</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Your latest contributions on record</p>
+              <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Recent Donations</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Your latest contributions on record</p>
             </div>
             <DollarSign className="w-4 h-4 text-gray-300" />
           </div>
@@ -478,7 +450,7 @@ export default function DonorDashboard() {
                     <div className="text-sm font-semibold text-gray-800 truncate">
                       {d.campaignName ?? "General Donation"}
                     </div>
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-gray-500">
                       {fmtDate(d.donationDate)} · {d.channelSource ?? "direct"}
                     </div>
                   </div>
@@ -486,7 +458,7 @@ export default function DonorDashboard() {
                     <div className="text-sm font-bold text-[#0e2118]">
                       {fmt(d.amount ?? 0)}
                     </div>
-                    <div className="text-xs text-gray-400">{d.currencyCode ?? "PHP"}</div>
+                    <div className="text-xs text-gray-500">{d.currencyCode ?? "PHP"}</div>
                   </div>
                 </div>
               ))}

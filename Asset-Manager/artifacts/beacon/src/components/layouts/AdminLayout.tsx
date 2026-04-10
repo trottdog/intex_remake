@@ -6,6 +6,7 @@ import {
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch } from "@/services/api";
+import lighthouseLogo from "@assets/Minimalist_lighthouse_logo_design_1775623783267.png";
 
 const ADMIN_NAV = [
   { label: "Dashboard",           href: "/admin",                      icon: LayoutDashboard, section: "Overview" },
@@ -50,7 +51,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   return (
-    <DashboardLayout navItems={ADMIN_NAV} portalName="Admin Portal" safehouseLabel={safehouseLabel}>
+    <DashboardLayout navItems={ADMIN_NAV} portalName="Admin Portal" brandLogoSrc={lighthouseLogo} safehouseLabel={safehouseLabel} showThemeToggle={false}>
       {children}
     </DashboardLayout>
   );

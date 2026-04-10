@@ -6,6 +6,15 @@ import { QuickDonateModal } from "@/components/donor/QuickDonateModal";
 
 function fmtDate(d: string | null | undefined) {
   if (!d) return "—";
+
+  // Keep calendar dates stable for DATE-only values (YYYY-MM-DD) across time zones.
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d.trim());
+  if (dateOnlyMatch) {
+    const [, year, month, day] = dateOnlyMatch;
+    const localDate = new Date(Number(year), Number(month) - 1, Number(day));
+    return localDate.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
+  }
+
   return new Date(d).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
 }
 
@@ -36,7 +45,7 @@ function SummaryKpi({ icon: Icon, label, value, color }: { icon: React.ElementTy
       </div>
       <div>
         <div className="text-base font-bold text-gray-900">{value}</div>
-        <div className="text-xs text-gray-400">{label}</div>
+        <div className="text-xs text-gray-500">{label}</div>
       </div>
     </div>
   );
@@ -88,8 +97,8 @@ export default function GivingHistoryPage() {
       <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
           <div>
-            <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Donation Ledger</h3>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Donation Ledger</h2>
+            <p className="text-xs text-gray-500 mt-0.5">
               {total > 0 ? `${total} record${total !== 1 ? "s" : ""} found` : "No donations yet"}
             </p>
           </div>
@@ -103,7 +112,7 @@ export default function GivingHistoryPage() {
         ) : donations.length === 0 ? (
           <div className="py-16 text-center">
             <Heart className="w-8 h-8 text-gray-200 mx-auto mb-3" />
-            <div className="text-gray-400 text-sm font-medium">No donation history yet</div>
+            <div className="text-gray-500 text-sm font-medium">No donation history yet</div>
             <div className="text-gray-300 text-xs mt-1">Your contributions will appear here</div>
           </div>
         ) : (
@@ -112,13 +121,13 @@ export default function GivingHistoryPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-50">
-                    <th className="text-left px-6 py-3 font-semibold text-gray-400 text-xs uppercase tracking-wide">Date</th>
-                    <th className="text-left px-6 py-3 font-semibold text-gray-400 text-xs uppercase tracking-wide">Type</th>
-                    <th className="text-left px-6 py-3 font-semibold text-gray-400 text-xs uppercase tracking-wide">Campaign</th>
-                    <th className="text-left px-6 py-3 font-semibold text-gray-400 text-xs uppercase tracking-wide">Channel</th>
-                    <th className="text-left px-6 py-3 font-semibold text-gray-400 text-xs uppercase tracking-wide">Recurring</th>
-                    <th className="text-right px-6 py-3 font-semibold text-gray-400 text-xs uppercase tracking-wide">Amount</th>
-                    <th className="text-left px-6 py-3 font-semibold text-gray-400 text-xs uppercase tracking-wide">Currency</th>
+                    <th className="text-left px-6 py-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Date</th>
+                    <th className="text-left px-6 py-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Type</th>
+                    <th className="text-left px-6 py-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Campaign</th>
+                    <th className="text-left px-6 py-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Channel</th>
+                    <th className="text-left px-6 py-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Recurring</th>
+                    <th className="text-right px-6 py-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Amount</th>
+                    <th className="text-left px-6 py-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Currency</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -134,7 +143,7 @@ export default function GivingHistoryPage() {
                       <td className="px-6 py-4 text-gray-700 font-medium text-sm">
                         {d.campaignName ?? d.campaign ?? <span className="text-gray-300">—</span>}
                       </td>
-                      <td className="px-6 py-4 text-gray-400 text-xs capitalize">
+                      <td className="px-6 py-4 text-gray-500 text-xs capitalize">
                         {d.channelSource ?? "direct"}
                       </td>
                       <td className="px-6 py-4">
@@ -154,7 +163,7 @@ export default function GivingHistoryPage() {
                           <span className="text-sm font-bold text-[#457b9d]">~₱{Number(d.estimatedValue).toLocaleString()}</span>
                         ) : <span className="text-gray-300">—</span>}
                       </td>
-                      <td className="px-6 py-4 text-gray-400 text-xs">
+                      <td className="px-6 py-4 text-gray-500 text-xs">
                         {d.currencyCode ?? d.currency ?? "PHP"}
                       </td>
                     </tr>
@@ -172,7 +181,7 @@ export default function GivingHistoryPage() {
                       <div className="text-sm font-semibold text-gray-800">
                         {d.campaignName ?? d.campaign ?? "General Donation"}
                       </div>
-                      <div className="text-xs text-gray-400 mt-0.5">{fmtDate(d.donationDate)}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">{fmtDate(d.donationDate)}</div>
                     </div>
                   </div>
                   <div className="text-right flex flex-col items-end gap-1">
@@ -193,12 +202,13 @@ export default function GivingHistoryPage() {
 
             {pageCount > 1 && (
               <div className="px-6 py-4 border-t border-gray-50 flex items-center justify-between">
-                <span className="text-xs text-gray-400">Page {page} of {pageCount} · {total} total</span>
+                <span className="text-xs text-gray-500">Page {page} of {pageCount} · {total} total</span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setPage(Math.max(1, page - 1))}
                     disabled={page <= 1}
                     className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    aria-label="Previous page"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
@@ -206,6 +216,7 @@ export default function GivingHistoryPage() {
                     onClick={() => setPage(Math.min(pageCount, page + 1))}
                     disabled={page >= pageCount}
                     className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    aria-label="Next page"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>

@@ -34,8 +34,8 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 shadow-[0_8px_24px_rgba(15,23,42,0.06)] backdrop-blur-md">
         <div className="mx-auto flex h-[4.5rem] max-w-6xl items-center justify-between px-6">
           <Link href="/" onClick={scrollToTop} className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/85 shadow-[0_10px_22px_rgba(14,33,24,0.08)] ring-1 ring-[#dce7df]">
-              <img src={lighthouseLogo} alt="Beacon" className="h-9 w-9 object-contain shrink-0" />
+            <div className="mr-0 flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl border border-[#214636] bg-[#214636] ring-1 ring-[#214636]/35 shrink-0">
+              <img src={lighthouseLogo} alt="Beacon" className="h-8 w-8 object-contain shrink-0" />
             </div>
             <div className="flex flex-col justify-center leading-tight">
               <span className="font-bold text-[#214636] text-2xl tracking-tight leading-none">Beacon</span>

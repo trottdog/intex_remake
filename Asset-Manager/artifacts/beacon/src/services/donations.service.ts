@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiFetch, apiPost, apiPatch } from "./api";
+import { apiDelete, apiFetch, apiPost, apiPatch } from "./api";
 
 export interface Donation {
   donationId?: number | null;
@@ -89,6 +89,83 @@ export function useGiveDonation() {
       qc.invalidateQueries({ queryKey: ["donor", "dashboard"] });
     },
   });
+}
+
+export interface CreateDonationPayload {
+  supporterId?: number | null;
+  donationType?: string;
+  donationDate?: string;
+  isRecurring?: boolean;
+  channelSource?: string;
+  currencyCode?: string;
+  amount?: number;
+  estimatedValue?: number;
+  impactUnit?: string;
+  notes?: string;
+  safehouseId?: number | null;
+}
+
+export function useCreateDonation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateDonationPayload) => apiPost("/api/donations", payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["donations"] });
+      qc.invalidateQueries({ queryKey: ["admin-directed-donations"] });
+      qc.invalidateQueries({ queryKey: ["admin-safehouse-donations"] });
+      qc.invalidateQueries({ queryKey: ["supporters"] });
+    },
+  });
+}
+
+export function useUpdateDonation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: Record<string, unknown> }) => apiPatch(`/api/donations/${id}`, payload),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ["donations"] });
+      qc.invalidateQueries({ queryKey: ["donations", variables.id] });
+      qc.invalidateQueries({ queryKey: ["admin-directed-donations"] });
+      qc.invalidateQueries({ queryKey: ["admin-safehouse-donations"] });
+      qc.invalidateQueries({ queryKey: ["supporters"] });
+    },
+  });
+}
+
+export function useDeleteDonation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => apiDelete(`/api/donations/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["donations"] });
+      qc.invalidateQueries({ queryKey: ["admin-directed-donations"] });
+      qc.invalidateQueries({ queryKey: ["admin-safehouse-donations"] });
+      qc.invalidateQueries({ queryKey: ["supporters"] });
+    },
+  });
+}
+
+export interface PublicInKindDonationItemPayload {
+  itemName: string;
+  itemCategory?: string;
+  quantity: number;
+  unitOfMeasure?: string;
+  estimatedUnitValue?: number;
+  intendedUse?: string;
+  receivedCondition?: string;
+}
+
+export interface PublicInKindDonationPayload {
+  name: string;
+  email: string;
+  notes?: string;
+  safehouseId?: number | null;
+  supporterId?: number | null;
+  items: PublicInKindDonationItemPayload[];
+}
+
+export function createPublicInKindDonation(payload: PublicInKindDonationPayload) {
+  return apiPost("/api/donations/public/in-kind", payload);
 }
 
 export function useGetRecurringStatus() {

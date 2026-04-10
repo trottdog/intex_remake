@@ -143,6 +143,120 @@ public sealed class SupporterRepository(BeaconDbContext dbContext) : ISupporterR
             donationTypesMap);
     }
 
+    public async Task<IReadOnlyList<SupporterDonationHistoryRecord>> GetDonationHistoryAsync(long supporterId, CancellationToken cancellationToken = default)
+    {
+        var donations = await dbContext.Donations
+            .AsNoTracking()
+            .Where(donation => donation.SupporterId == supporterId)
+            .OrderByDescending(donation => donation.DonationDate)
+            .ThenByDescending(donation => donation.DonationId)
+            .ToListAsync(cancellationToken);
+
+        if (donations.Count == 0)
+        {
+            return [];
+        }
+
+        var donationIds = donations.Select(item => item.DonationId).ToList();
+        var allocations = await dbContext.DonationAllocations
+            .AsNoTracking()
+            .Where(item => item.DonationId.HasValue && donationIds.Contains(item.DonationId.Value))
+            .OrderBy(item => item.AllocationDate)
+            .ThenBy(item => item.AllocationId)
+            .ToListAsync(cancellationToken);
+        var allocationsByDonationId = allocations
+            .Where(item => item.DonationId.HasValue)
+            .GroupBy(item => item.DonationId!.Value)
+            .ToDictionary(group => group.Key, group => (IReadOnlyList<DonationAllocation>)group.ToList());
+
+        var inKindItems = await dbContext.InKindDonationItems
+            .AsNoTracking()
+            .Where(item => item.DonationId.HasValue && donationIds.Contains(item.DonationId.Value))
+            .OrderBy(item => item.ItemId)
+            .ToListAsync(cancellationToken);
+        var inKindItemsByDonationId = inKindItems
+            .Where(item => item.DonationId.HasValue)
+            .GroupBy(item => item.DonationId!.Value)
+            .ToDictionary(group => group.Key, group => (IReadOnlyList<InKindDonationItem>)group.ToList());
+
+        var safehouseIds = donations.Select(item => item.SafehouseId)
+            .Concat(allocations.Select(item => item.SafehouseId))
+            .Where(item => item.HasValue)
+            .Select(item => item!.Value)
+            .Distinct()
+            .ToList();
+
+        var safehouseNames = safehouseIds.Count == 0
+            ? new Dictionary<long, string?>()
+            : await dbContext.Safehouses
+                .AsNoTracking()
+                .Where(item => safehouseIds.Contains(item.SafehouseId))
+                .ToDictionaryAsync(item => item.SafehouseId, item => item.Name, cancellationToken);
+
+        return donations.Select(donation =>
+        {
+            allocationsByDonationId.TryGetValue(donation.DonationId, out var donationAllocations);
+            donationAllocations ??= [];
+
+            inKindItemsByDonationId.TryGetValue(donation.DonationId, out var donationItems);
+            donationItems ??= [];
+
+            var totalAllocated = decimal.Round(donationAllocations.Sum(item => item.AmountAllocated ?? 0m), 2);
+            var baseAmount = donation.Amount ?? donation.EstimatedValue;
+            var unallocated = baseAmount.HasValue
+                ? (decimal?)decimal.Round(baseAmount.Value - totalAllocated, 2)
+                : null;
+
+            return new SupporterDonationHistoryRecord(
+                donation.DonationId,
+                donation.SupporterId,
+                donation.DonationType,
+                donation.DonationDate,
+                donation.IsRecurring,
+                donation.CampaignName,
+                donation.ChannelSource,
+                donation.CurrencyCode,
+                donation.Amount.HasValue ? decimal.Round(donation.Amount.Value, 2) : null,
+                donation.EstimatedValue.HasValue ? decimal.Round(donation.EstimatedValue.Value, 2) : null,
+                donation.ImpactUnit,
+                donation.Notes,
+                donation.ReferralPostId,
+                donation.CampaignId,
+                donation.SafehouseId,
+                donation.SafehouseId.HasValue && safehouseNames.TryGetValue(donation.SafehouseId.Value, out var donationSafehouseName)
+                    ? donationSafehouseName
+                    : null,
+                totalAllocated,
+                unallocated,
+                !donation.SafehouseId.HasValue,
+                donationAllocations
+                    .Select(item => new SupporterDonationAllocationRecord(
+                        item.AllocationId,
+                        item.DonationId,
+                        item.SafehouseId,
+                        item.SafehouseId.HasValue && safehouseNames.TryGetValue(item.SafehouseId.Value, out var allocationSafehouseName)
+                            ? allocationSafehouseName
+                            : null,
+                        item.ProgramArea,
+                        item.AmountAllocated.HasValue ? decimal.Round(item.AmountAllocated.Value, 2) : null,
+                        item.AllocationDate,
+                        item.AllocationNotes))
+                    .ToList(),
+                donationItems
+                    .Select(item => new SupporterInKindDonationItemRecord(
+                        item.ItemId,
+                        item.DonationId,
+                        item.ItemName,
+                        item.ItemCategory,
+                        item.Quantity,
+                        item.UnitOfMeasure,
+                        item.EstimatedUnitValue.HasValue ? decimal.Round(item.EstimatedUnitValue.Value, 2) : null,
+                        item.IntendedUse,
+                        item.ReceivedCondition))
+                    .ToList());
+        }).ToList();
+    }
+
     public async Task<SupporterStatsRecord> GetSupporterStatsAsync(CancellationToken cancellationToken = default)
     {
         var monthStart = new DateOnly(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);

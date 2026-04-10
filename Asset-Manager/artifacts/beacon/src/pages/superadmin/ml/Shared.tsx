@@ -101,16 +101,18 @@ export function ScoreBar({
   invertColors?: boolean;
 }) {
   if (score == null) return <span className="text-gray-300 text-xs">—</span>;
-  const pct = Math.min(100, (score / max) * 100);
+  // Some sources return scores as 0..1 while others return 0..100.
+  const normalizedScore = score > max ? score / 100 : score;
+  const pct = Math.min(100, Math.max(0, (normalizedScore / max) * 100));
   const color = invertColors
-    ? score >= 0.7 * max ? "#22c55e" : score >= 0.4 * max ? "#f59e0b" : "#ef4444"
-    : score >= 0.7 * max ? "#ef4444" : score >= 0.4 * max ? "#f59e0b" : "#22c55e";
+    ? normalizedScore >= 0.7 * max ? "#22c55e" : normalizedScore >= 0.4 * max ? "#f59e0b" : "#ef4444"
+    : normalizedScore >= 0.7 * max ? "#ef4444" : normalizedScore >= 0.4 * max ? "#f59e0b" : "#22c55e";
   return (
     <div className="flex items-center gap-2 min-w-0">
       <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
         <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
       </div>
-      <span className="text-xs text-gray-600 shrink-0 w-10 text-right">{(score * 100).toFixed(0)}%</span>
+      <span className="text-xs text-gray-600 shrink-0 w-10 text-right">{(normalizedScore * 100).toFixed(0)}%</span>
     </div>
   );
 }
@@ -192,12 +194,19 @@ export function TabBar<T extends string>({
   active: T;
   onChange: (id: T) => void;
 }) {
+  const handleChange = (id: T) => {
+    onChange(id);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
+  };
+
   return (
     <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
       {tabs.map(t => (
         <button
           key={t.id}
-          onClick={() => onChange(t.id)}
+          onClick={() => handleChange(t.id)}
           className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
             active === t.id
               ? "bg-white text-gray-900 shadow-sm"

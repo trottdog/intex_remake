@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, apiPost } from "@/services/api";
+import lighthouseLogo from "@assets/Minimalist_lighthouse_logo_design_1775623783267.png";
 
 interface NotificationItem {
   id: number;
@@ -65,6 +66,8 @@ export function DonorLayout({ children }: { children: React.ReactNode }) {
     <DashboardLayout
       navItems={navItems}
       portalName="Donor Portal"
+      brandLogoSrc={lighthouseLogo}
+      showThemeToggle={false}
       bellBadge={notifs?.totalUnread ?? 0}
       bellItems={notifs?.items ?? []}
       onBellOpen={handleBellOpen}

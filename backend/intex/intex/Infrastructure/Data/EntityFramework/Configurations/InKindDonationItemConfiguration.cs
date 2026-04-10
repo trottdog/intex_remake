@@ -10,7 +10,7 @@ public sealed class InKindDonationItemConfiguration : IEntityTypeConfiguration<I
     {
         builder.ToTable("in_kind_donation_items");
         builder.HasKey(x => x.ItemId);
-        builder.Property(x => x.ItemId).HasColumnName("item_id").ValueGeneratedOnAdd();
+        builder.Property(x => x.ItemId).HasColumnName("item_id").ValueGeneratedNever();
         builder.Property(x => x.DonationId).HasColumnName("donation_id");
         builder.Property(x => x.ItemName).HasColumnName("item_name");
         builder.Property(x => x.ItemCategory).HasColumnName("item_category");

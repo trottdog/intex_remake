@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { PublicLayout } from "@/components/layouts/PublicLayout";
 import handsImg from "@assets/Hands_Circle_1775623133974.jpg";
-import { CheckCircle, Share2, Users, Package, Building2, Globe, ChevronRight } from "lucide-react";
+import { CheckCircle, Share2, Users, Package, Building2, Globe, ChevronRight, Eye, EyeOff } from "lucide-react";
 import { triggerDonationConfetti } from "@/lib/confetti";
 import { ApiError, apiFetch, apiPost } from "@/services/api";
 import { registerDonorApi } from "@/services/auth.service";
+import { createPublicInKindDonation, type PublicInKindDonationItemPayload } from "@/services/donations.service";
 
 const PRESET_AMOUNTS = [500, 1000, 2500, 5000, 10000];
 
@@ -60,16 +61,22 @@ export default function DonatePage() {
   const [safehousesError, setSafehousesError] = useState<string | null>(null);
   const [safehousesRetryToken, setSafehousesRetryToken] = useState(0);
   const [selectedAmount, setSelectedAmount] = useState<number | null>(2500);
+  const [donationMode, setDonationMode] = useState<"monetary" | "in-kind">("monetary");
   const [customAmount, setCustomAmount] = useState("");
   const [frequency, setFrequency] = useState<"once" | "monthly">("once");
+  const [inKindItems, setInKindItems] = useState<PublicInKindDonationItemPayload[]>([
+    { itemName: "", quantity: 1, itemCategory: "", unitOfMeasure: "pcs", estimatedUnitValue: undefined, intendedUse: "", receivedCondition: "new" },
+  ]);
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [createAccount, setCreateAccount] = useState(wantsAccountFromQuery);
   const [accountForm, setAccountForm] = useState({ username: "", password: "", confirmPassword: "" });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
+  const thankYouRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -106,27 +113,67 @@ export default function DonatePage() {
   }, [safehousesRetryToken]);
 
   useEffect(() => {
-    if (!submitted || !createAccount || redirectCountdown === null) return;
-    if (redirectCountdown <= 0) {
-      window.location.href = "/login";
+    if (!submitted || !thankYouRef.current) {
       return;
     }
 
-    const timer = window.setTimeout(() => {
-      setRedirectCountdown((count) => (count === null ? null : count - 1));
-    }, 1000);
+    const scrollToThankYou = () => {
+      const cardRect = thankYouRef.current!.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const verticalPadding = 16;
+      const canFullyFit = cardRect.height + verticalPadding * 2 <= viewportHeight;
 
-    return () => window.clearTimeout(timer);
-  }, [submitted, createAccount, redirectCountdown]);
+      const centeredTop = window.scrollY + cardRect.top - (viewportHeight - cardRect.height) / 2;
+      const topAligned = window.scrollY + cardRect.top - verticalPadding;
+      const scrollTargetY = canFullyFit ? centeredTop : topAligned;
+
+      window.scrollTo({
+        top: Math.max(scrollTargetY, 0),
+        behavior: "auto",
+      });
+    };
+
+    requestAnimationFrame(() => requestAnimationFrame(scrollToThankYou));
+  }, [submitted]);
 
   const finalAmount = selectedAmount ?? (customAmount ? parseInt(customAmount) : 0);
   const selectedSafehouse = destination !== "general" ? safehouses.find(s => s.safehouseId === destination) : null;
+  const safehouseDisplayName = (safehouse: Safehouse) => safehouse.safehouseName ?? `Safehouse #${safehouse.safehouseId}`;
+  const sortedSafehouses = useMemo(
+    () =>
+      [...safehouses].sort((a, b) => {
+        const byName = safehouseDisplayName(a).localeCompare(safehouseDisplayName(b), undefined, {
+          numeric: true,
+          sensitivity: "base",
+        });
+
+        if (byName !== 0) {
+          return byName;
+        }
+
+        return a.safehouseId - b.safehouseId;
+      }),
+    [safehouses],
+  );
   const unmetPasswordRules = PASSWORD_REQUIREMENTS.filter((rule) => !rule.test(accountForm.password));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
-    if (!finalAmount || !form.name || !form.email) return;
+    if (!form.name || !form.email) return;
+    if (donationMode === "monetary" && !finalAmount) return;
+    if (donationMode === "in-kind") {
+      const validItems = inKindItems.filter((item) => item.itemName.trim().length > 0);
+      if (validItems.length === 0) {
+        setSubmitError("Add at least one in-kind item.");
+        return;
+      }
+      const invalidQuantity = validItems.find((item) => !Number.isFinite(item.quantity) || item.quantity <= 0);
+      if (invalidQuantity) {
+        setSubmitError(`Quantity must be greater than zero for "${invalidQuantity.itemName}".`);
+        return;
+      }
+    }
     if (createAccount) {
       if (!accountForm.username.trim()) {
         setSubmitError("Username is required to create an account.");
@@ -160,20 +207,38 @@ export default function DonatePage() {
         supporterId = account.supporterId;
       }
 
-      await apiPost("/api/donations/public", {
-        amount: finalAmount,
-        name: form.name,
-        email: form.email,
-        notes: form.message || undefined,
-        isRecurring: frequency === "monthly",
-        safehouseId: destination !== "general" ? destination : null,
-        supporterId,
-      });
+      if (donationMode === "monetary") {
+        await apiPost("/api/donations/public", {
+          amount: finalAmount,
+          name: form.name,
+          email: form.email,
+          notes: form.message || undefined,
+          isRecurring: frequency === "monthly",
+          safehouseId: destination !== "general" ? destination : null,
+          supporterId,
+        });
+      } else {
+        await createPublicInKindDonation({
+          name: form.name,
+          email: form.email,
+          notes: form.message || undefined,
+          safehouseId: destination !== "general" ? destination : null,
+          supporterId,
+          items: inKindItems
+            .filter((item) => item.itemName.trim().length > 0)
+            .map((item) => ({
+              ...item,
+              itemName: item.itemName.trim(),
+              itemCategory: item.itemCategory?.trim() || undefined,
+              unitOfMeasure: item.unitOfMeasure?.trim() || undefined,
+              intendedUse: item.intendedUse?.trim() || undefined,
+              receivedCondition: item.receivedCondition?.trim() || undefined,
+              estimatedUnitValue: item.estimatedUnitValue ?? undefined,
+            })),
+        });
+      }
       triggerDonationConfetti();
       setSubmitted(true);
-      if (createAccount) {
-        setRedirectCountdown(5);
-      }
     } catch (err) {
       if (err instanceof ApiError) {
         setSubmitError(err.message);
@@ -208,13 +273,15 @@ export default function DonatePage() {
         <div className="max-w-5xl mx-auto grid md:grid-cols-5 gap-10">
           <div className="md:col-span-3">
             {submitted ? (
-              <div className="bg-white rounded-3xl border border-gray-100 p-10 text-center shadow-sm">
+              <div ref={thankYouRef} className="bg-white rounded-3xl border border-gray-100 p-10 text-center shadow-sm">
                 <div className="w-16 h-16 bg-[#f0faf6] rounded-full flex items-center justify-center mx-auto mb-5">
                   <CheckCircle className="w-8 h-8 text-[#2a9d72]" />
                 </div>
                 <h2 className="text-2xl font-bold text-[#214636] mb-3">Thank you, {form.name.split(" ")[0]}!</h2>
                 <p className="text-gray-600 mb-2">
-                  Your {frequency === "monthly" ? "monthly" : "one-time"} gift of <strong>₱{finalAmount?.toLocaleString()}</strong> is making a real difference.
+                  {donationMode === "monetary"
+                    ? <>Your {frequency === "monthly" ? "monthly" : "one-time"} gift of <strong>₱{finalAmount?.toLocaleString()}</strong> is making a real difference.</>
+                    : <>Your in-kind donation has been recorded and queued for coordination with our logistics team.</>}
                 </p>
                 {selectedSafehouse && (
                   <p className="text-sm text-[#2a9d72] font-medium mb-2">
@@ -225,21 +292,30 @@ export default function DonatePage() {
                   <p className="text-sm text-gray-500 mb-2">Going to the General Fund — our team will allocate it where it's needed most.</p>
                 )}
                 <p className="text-gray-500 text-sm mb-8">A receipt and impact report will be sent to <strong>{form.email}</strong> within 24 hours.</p>
-                {createAccount && redirectCountdown !== null && (
-                  <p className="text-sm text-[#214636] mb-6">
-                    Account created successfully. Redirecting to login in <strong>{redirectCountdown}</strong>...
-                  </p>
+                {createAccount && (
+                  <div className="mb-6 rounded-xl border border-[#c8e6d4] bg-[#f0faf6] px-4 py-4 text-sm text-[#214636]">
+                    <p className="font-semibold">Account created successfully. Welcome to Beacon Sanctuary PH!</p>
+                    <p className="mt-1 text-[#3f6a58]">You can log in whenever you are ready to view your donor account.</p>
+                  </div>
                 )}
                 <button
                   onClick={() => {
+                    if (createAccount) {
+                      window.location.href = "/login";
+                      return;
+                    }
+
                     setSubmitted(false);
-                    setRedirectCountdown(null);
                     setForm({ name: "", email: "", message: "" });
+                    setDonationMode("monetary");
+                    setSelectedAmount(2500);
+                    setCustomAmount("");
+                    setInKindItems([{ itemName: "", quantity: 1, itemCategory: "", unitOfMeasure: "pcs", estimatedUnitValue: undefined, intendedUse: "", receivedCondition: "new" }]);
                     setStep("destination");
                     setDestination("general");
                   }}
                   className="border-2 border-[#2a9d72] text-[#2a9d72] hover:bg-[#2a9d72] hover:text-white px-8 py-3 rounded-full font-semibold transition-colors"
-                >Give Again</button>
+                >{createAccount ? "Log In to Donate Again" : "Give Again"}</button>
               </div>
             ) : step === "destination" ? (
               /* ── Step 1: Choose Destination ── */
@@ -286,9 +362,9 @@ export default function DonatePage() {
                           Retry loading safehouses
                         </button>
                       </div>
-                    ) : safehouses.length === 0 ? (
+                    ) : sortedSafehouses.length === 0 ? (
                       <div className="text-sm text-gray-400 text-center py-4">No safehouses are available right now.</div>
-                    ) : safehouses.map(s => (
+                    ) : sortedSafehouses.map(s => (
                       <button
                         key={s.safehouseId}
                         type="button"
@@ -302,7 +378,7 @@ export default function DonatePage() {
                             <Building2 className={`w-5 h-5 ${destination === s.safehouseId ? "text-white" : "text-gray-400"}`} />
                           </div>
                           <div>
-                            <div className="font-bold text-[#214636] text-sm">{s.safehouseName ?? `Safehouse #${s.safehouseId}`}</div>
+                            <div className="font-bold text-[#214636] text-sm">{safehouseDisplayName(s)}</div>
                             <div className="text-xs text-gray-500 mt-0.5">Your full donation goes directly to this home</div>
                           </div>
                           {destination === s.safehouseId && <CheckCircle className="w-5 h-5 text-[#2a9d72] ml-auto shrink-0" />}
@@ -338,8 +414,31 @@ export default function DonatePage() {
 
                 <h2 className="text-xl font-bold text-[#214636]">Make your donation</h2>
 
-                {/* Frequency */}
+                {/* Donation mode */}
                 <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Donation Type</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {([
+                      { key: "monetary", label: "Monetary Donation" },
+                      { key: "in-kind", label: "In-Kind Donation" },
+                    ] as const).map((opt) => (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => setDonationMode(opt.key)}
+                        className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors ${
+                          donationMode === opt.key ? "bg-[#214636] border-[#214636] text-white" : "border-gray-200 text-gray-600 hover:border-gray-300"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Frequency */}
+                {donationMode === "monetary" && (
+                  <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Giving Frequency</label>
                   <div className="grid grid-cols-2 gap-3">
                     {(["once", "monthly"] as const).map((f) => (
@@ -350,32 +449,91 @@ export default function DonatePage() {
                     ))}
                   </div>
                   {frequency === "monthly" && <p className="text-xs text-[#2a9d72] mt-2 font-medium">Monthly donors provide sustained support — the most impactful way to give.</p>}
-                </div>
+                  </div>
+                )}
 
                 {/* Amount */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Donation Amount (PHP)</label>
-                  <div className="grid grid-cols-3 gap-3 mb-3">
-                    {PRESET_AMOUNTS.map((amt) => (
-                      <button key={amt} type="button" onClick={() => { setSelectedAmount(amt); setCustomAmount(""); }}
-                        className={`py-3 rounded-xl text-sm font-bold border-2 transition-colors ${
-                          selectedAmount === amt && !customAmount ? "bg-[#2a9d72] border-[#2a9d72] text-white" : "border-gray-200 text-gray-700 hover:border-[#2a9d72]"
-                        }`}>₱{amt.toLocaleString()}</button>
-                    ))}
-                    <div onClick={() => setSelectedAmount(null)}
-                      className={`col-span-3 border-2 rounded-xl px-3 py-2 flex items-center gap-2 transition-colors cursor-text ${customAmount ? "border-[#2a9d72]" : "border-gray-200"}`}>
-                      <span className="text-gray-400 text-sm font-medium">₱</span>
-                      <input type="number" min="100" placeholder="Custom amount" value={customAmount}
-                        onChange={(e) => { setCustomAmount(e.target.value); setSelectedAmount(null); }}
-                        className="flex-1 outline-none text-sm text-gray-800 bg-transparent" />
+                {donationMode === "monetary" ? (
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Donation Amount (PHP)</label>
+                    <div className="grid grid-cols-3 gap-3 mb-3">
+                      {PRESET_AMOUNTS.map((amt) => (
+                        <button key={amt} type="button" onClick={() => { setSelectedAmount(amt); setCustomAmount(""); }}
+                          className={`py-3 rounded-xl text-sm font-bold border-2 transition-colors ${
+                            selectedAmount === amt && !customAmount ? "bg-[#2a9d72] border-[#2a9d72] text-white" : "border-gray-200 text-gray-700 hover:border-[#2a9d72]"
+                          }`}>₱{amt.toLocaleString()}</button>
+                      ))}
+                      <div onClick={() => setSelectedAmount(null)}
+                        className={`col-span-3 border-2 rounded-xl px-3 py-2 flex items-center gap-2 transition-colors cursor-text ${customAmount ? "border-[#2a9d72]" : "border-gray-200"}`}>
+                        <span className="text-gray-400 text-sm font-medium">₱</span>
+                        <input type="number" min="100" placeholder="Custom amount" value={customAmount}
+                          onChange={(e) => { setCustomAmount(e.target.value); setSelectedAmount(null); }}
+                          className="flex-1 outline-none text-sm text-gray-800 bg-transparent" />
+                      </div>
+                    </div>
+                    {finalAmount > 0 && IMPACT_MAP[finalAmount] && (
+                      <div className="bg-[#f0faf6] border border-[#2a9d72]/20 rounded-xl px-4 py-3 text-sm text-[#214636]">
+                        <span className="font-semibold">Your impact: </span>{IMPACT_MAP[finalAmount].desc}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest">In-Kind Items</label>
+                      <button
+                        type="button"
+                        onClick={() => setInKindItems((items) => [...items, { itemName: "", quantity: 1, itemCategory: "", unitOfMeasure: "pcs", estimatedUnitValue: undefined, intendedUse: "", receivedCondition: "new" }])}
+                        className="text-xs font-semibold text-[#2a9d72] hover:underline"
+                      >
+                        + Add item
+                      </button>
+                    </div>
+                    <div className="space-y-3">
+                      {inKindItems.map((item, index) => (
+                        <div key={`in-kind-${index}`} className="grid grid-cols-12 gap-2 bg-[#f9f9f7] border border-gray-100 rounded-xl p-3">
+                          <input
+                            className="col-span-4 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                            placeholder="Item name"
+                            value={item.itemName}
+                            onChange={(e) => setInKindItems((items) => items.map((it, i) => i === index ? { ...it, itemName: e.target.value } : it))}
+                          />
+                          <input
+                            className="col-span-2 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                            placeholder="Qty"
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={item.quantity}
+                            onChange={(e) => setInKindItems((items) => items.map((it, i) => i === index ? { ...it, quantity: Number(e.target.value || 0) } : it))}
+                          />
+                          <input
+                            className="col-span-2 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                            placeholder="Unit"
+                            value={item.unitOfMeasure ?? ""}
+                            onChange={(e) => setInKindItems((items) => items.map((it, i) => i === index ? { ...it, unitOfMeasure: e.target.value } : it))}
+                          />
+                          <input
+                            className="col-span-2 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                            placeholder="Est. unit value"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={item.estimatedUnitValue ?? ""}
+                            onChange={(e) => setInKindItems((items) => items.map((it, i) => i === index ? { ...it, estimatedUnitValue: e.target.value ? Number(e.target.value) : undefined } : it))}
+                          />
+                          <button
+                            type="button"
+                            className="col-span-2 text-xs text-red-500 hover:underline"
+                            onClick={() => setInKindItems((items) => items.length === 1 ? items : items.filter((_, i) => i !== index))}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  {finalAmount > 0 && IMPACT_MAP[finalAmount] && (
-                    <div className="bg-[#f0faf6] border border-[#2a9d72]/20 rounded-xl px-4 py-3 text-sm text-[#214636]">
-                      <span className="font-semibold">Your impact: </span>{IMPACT_MAP[finalAmount].desc}
-                    </div>
-                  )}
-                </div>
+                )}
 
                 {/* Personal Info */}
                 <div>
@@ -407,6 +565,19 @@ export default function DonatePage() {
                     </span>
                   </label>
 
+                  <p className="text-xs text-[#3f6a58]">
+                    Already have an account?{" "}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        window.location.href = "/login";
+                      }}
+                      className="font-semibold text-[#2a9d72] hover:underline"
+                    >
+                      Log in
+                    </button>
+                  </p>
+
                   {createAccount && (
                     <div className="space-y-3 pt-1">
                       <input
@@ -417,22 +588,42 @@ export default function DonatePage() {
                         onChange={(e) => setAccountForm((f) => ({ ...f, username: e.target.value }))}
                         className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 focus:border-[#2a9d72] bg-white"
                       />
-                      <input
-                        required={createAccount}
-                        type="password"
-                        placeholder="Create a password"
-                        value={accountForm.password}
-                        onChange={(e) => setAccountForm((f) => ({ ...f, password: e.target.value }))}
-                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 focus:border-[#2a9d72] bg-white"
-                      />
-                      <input
-                        required={createAccount}
-                        type="password"
-                        placeholder="Confirm password"
-                        value={accountForm.confirmPassword}
-                        onChange={(e) => setAccountForm((f) => ({ ...f, confirmPassword: e.target.value }))}
-                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 focus:border-[#2a9d72] bg-white"
-                      />
+                      <div className="relative">
+                        <input
+                          required={createAccount}
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Create a password"
+                          value={accountForm.password}
+                          onChange={(e) => setAccountForm((f) => ({ ...f, password: e.target.value }))}
+                          className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 focus:border-[#2a9d72] bg-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((value) => !value)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#214636] hover:text-[#2a9d72]"
+                          aria-label={showPassword ? "Hide password" : "Show password"}
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <input
+                          required={createAccount}
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="Confirm password"
+                          value={accountForm.confirmPassword}
+                          onChange={(e) => setAccountForm((f) => ({ ...f, confirmPassword: e.target.value }))}
+                          className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 focus:border-[#2a9d72] bg-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword((value) => !value)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#214636] hover:text-[#2a9d72]"
+                          aria-label={showConfirmPassword ? "Hide confirmation password" : "Show confirmation password"}
+                        >
+                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
                       <p className="text-xs text-[#3f6a58]">
                         Password requirements: {PASSWORD_REQUIREMENTS.map((rule) => rule.label).join(", ")}.
                       </p>
@@ -446,11 +637,20 @@ export default function DonatePage() {
                   </div>
                 )}
 
-                <button type="submit" disabled={!finalAmount || !form.name || !form.email || submitting}
+                <button
+                  type="submit"
+                  disabled={
+                    !form.name
+                    || !form.email
+                    || submitting
+                    || (donationMode === "monetary" && !finalAmount)
+                  }
                   className="w-full bg-[#2a9d72] hover:bg-[#248c64] disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-base transition-colors shadow-md">
-                  {submitting ? "Processing..." : finalAmount > 0
-                    ? `Donate ₱${finalAmount.toLocaleString()}${frequency === "monthly" ? "/mo" : ""}`
-                    : "Select an Amount"}
+                  {submitting ? "Processing..." : donationMode === "monetary"
+                    ? (finalAmount > 0
+                      ? `Donate ₱${finalAmount.toLocaleString()}${frequency === "monthly" ? "/mo" : ""}`
+                      : "Select an Amount")
+                    : "Submit In-Kind Donation"}
                 </button>
                 <p className="text-center text-xs text-gray-400">Secure giving. Your information is never shared. You will receive a BIR receipt.</p>
               </form>

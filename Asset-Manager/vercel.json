@@ -34,7 +34,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://beacon-api.azurewebsites.net/api/$1"
+      "destination": "https://intex-gtgzecb5avarh7gg.centralus-01.azurewebsites.net/api/$1"
     },
     {
       "source": "/(.*)",
