@@ -88,19 +88,20 @@ function KpiCard({
   icon: React.ElementType;
   color?: string;
   emphasis?: boolean;
-  onClick: () => void;
+  onClick?: () => void;
 }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={`Open ${label}`}
-      className={`block w-full rounded-xl border p-5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2a9d72]/30 ${
-        emphasis
-          ? "border-red-100 bg-white hover:border-red-200 hover:shadow-md"
-          : "border-gray-100 bg-white hover:border-[#2a9d72]/30 hover:shadow-md"
-      }`}
-    >
+  const className = `block w-full rounded-xl border p-5 text-left transition-all ${
+    emphasis
+      ? onClick
+        ? "border-red-100 bg-white hover:border-red-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2a9d72]/30"
+        : "border-red-100 bg-white"
+      : onClick
+        ? "border-gray-100 bg-white hover:border-[#2a9d72]/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2a9d72]/30"
+        : "border-gray-100 bg-white"
+  }`;
+
+  const content = (
+    <>
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-xs font-bold uppercase tracking-widest text-gray-400">{label}</div>
@@ -115,6 +116,16 @@ function KpiCard({
           <Icon className="h-5 w-5" style={{ color }} />
         </div>
       </div>
+    </>
+  );
+
+  if (!onClick) {
+    return <div className={className}>{content}</div>;
+  }
+
+  return (
+    <button type="button" onClick={onClick} aria-label={`Open ${label}`} className={className}>
+      {content}
     </button>
   );
 }
@@ -126,17 +137,18 @@ function ChartPanel({
   className = "",
 }: {
   title: string;
-  onClick: () => void;
+  onClick?: () => void;
   children: React.ReactNode;
   className?: string;
 }) {
+  const panelClassName = `block w-full rounded-xl border border-gray-100 bg-white p-5 text-left transition-all ${onClick ? "hover:border-[#2a9d72]/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2a9d72]/30" : ""} ${className}`;
+
+  if (!onClick) {
+    return <div className={panelClassName}>{children}</div>;
+  }
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={`Open ${title}`}
-      className={`block w-full rounded-xl border border-gray-100 bg-white p-5 text-left transition-all hover:border-[#2a9d72]/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2a9d72]/30 ${className}`}
-    >
+    <button type="button" onClick={onClick} aria-label={`Open ${title}`} className={panelClassName}>
       {children}
     </button>
   );
@@ -239,7 +251,14 @@ export default function SuperAdminDashboard() {
     return { totalReferrals, platformBreakdown };
   }, [socialPosts]);
 
-  const goTo = (path: string) => () => setLocation(path);
+  const goTo = (path: string) => () => {
+    setLocation(path);
+    if (typeof window !== "undefined") {
+      window.requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -274,7 +293,6 @@ export default function SuperAdminDashboard() {
           icon={AlertTriangle}
           color="#dc2626"
           emphasis={dashboardKpis.casesAtRisk > 0}
-          onClick={goTo("/superadmin/ml?tab=regression")}
         />
         <KpiCard label="Total Donations" value={fmtPeso(dashboardKpis.totalDonations)} icon={DollarSign} onClick={goTo("/superadmin/fundraising")} />
         <KpiCard label="Returning Donors %" value={fmtPercent(dashboardKpis.returningDonorsPct)} icon={Repeat2} color="#457b9d" onClick={goTo("/superadmin/donors?tab=churn")} />
@@ -314,20 +332,14 @@ export default function SuperAdminDashboard() {
               icon: Building2,
               toneAlert: "border-[#bfe2cc] bg-[#eef8f3] text-[#2a9d72]",
               toneCalm: "border-gray-200 bg-white text-gray-500",
-              href: "/superadmin/ml?tab=safehouses",
             },
           ].map((item) => {
             const active = item.value > 0;
-            return (
-              <button
-                type="button"
-                key={item.label}
-                onClick={goTo(item.href)}
-                aria-label={`Open ${item.label}`}
-                className={`block w-full rounded-xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2a9d72]/30 ${
-                  active ? `${item.toneAlert} border-[1.5px]` : item.toneCalm
-                }`}
-              >
+            const cardClassName = `block w-full rounded-xl border p-4 text-left transition-colors ${item.href ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2a9d72]/30" : ""} ${
+              active ? `${item.toneAlert} border-[1.5px]` : item.toneCalm
+            }`;
+            const content = (
+              <>
                 <div className="flex items-center justify-between gap-2">
                   <span className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${active ? "" : "text-gray-400"}`}>
                     {item.label}
@@ -335,6 +347,22 @@ export default function SuperAdminDashboard() {
                   <item.icon className={`h-4 w-4 ${active ? "" : "text-gray-300"}`} />
                 </div>
                 <div className={`mt-3 font-bold ${active ? "text-4xl" : "text-3xl text-gray-500"}`}>{fmt(item.value)}</div>
+              </>
+            );
+
+            if (!item.href) {
+              return <div key={item.label} className={cardClassName}>{content}</div>;
+            }
+
+            return (
+              <button
+                type="button"
+                key={item.label}
+                onClick={goTo(item.href)}
+                aria-label={`Open ${item.label}`}
+                className={cardClassName}
+              >
+                {content}
               </button>
             );
           })}
@@ -343,7 +371,7 @@ export default function SuperAdminDashboard() {
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">Reintegration Progress</h2>
-        <ChartPanel title="reintegration progress" onClick={goTo("/superadmin/ml?tab=reintegration")} className="min-h-[320px]">
+        <ChartPanel title="reintegration progress" className="min-h-[320px]">
           {reintegrationData.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={reintegrationData} layout="vertical" margin={{ left: 0, right: 18 }}>

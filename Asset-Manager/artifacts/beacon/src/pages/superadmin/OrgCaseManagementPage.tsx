@@ -19,6 +19,13 @@ export default function OrgCaseManagementPage() {
   const defaultTab = (params.get("tab") as TabId) || "conferences";
   const [tab, setTab] = useState<TabId>(["conferences", "plans", "visits", "recordings"].includes(defaultTab) ? defaultTab : "conferences");
 
+  const handleTabChange = (nextTab: TabId) => {
+    setTab(nextTab);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
+  };
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
@@ -37,7 +44,7 @@ export default function OrgCaseManagementPage() {
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
-            onClick={() => setTab(id)}
+            onClick={() => handleTabChange(id)}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-colors ${
               tab === id ? "bg-white text-[#0e2118] shadow-sm" : "text-gray-500 hover:text-gray-700"
             }`}

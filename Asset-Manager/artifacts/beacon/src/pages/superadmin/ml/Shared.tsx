@@ -194,12 +194,19 @@ export function TabBar<T extends string>({
   active: T;
   onChange: (id: T) => void;
 }) {
+  const handleChange = (id: T) => {
+    onChange(id);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
+  };
+
   return (
     <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
       {tabs.map(t => (
         <button
           key={t.id}
-          onClick={() => onChange(t.id)}
+          onClick={() => handleChange(t.id)}
           className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
             active === t.id
               ? "bg-white text-gray-900 shadow-sm"
