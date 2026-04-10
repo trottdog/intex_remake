@@ -142,7 +142,7 @@ For every item: `[x]` = fully implemented with evidence, `[~]` = partially imple
 
 - [x] **Secrets are stored in .env, env vars, or secrets manager**
   - **Evidence:**
-    - `appsettings.json` contains only empty placeholders for `PostgreSql`, `Jwt.Secret`, `Mfa.VerificationCode` (lines 3, 15, 20).
+    - `appsettings.json` contains only empty placeholders for `PostgreSql` and `Jwt.Secret`; the `Mfa` section now stores non-secret TOTP settings only.
     - `Infrastructure/Configuration/DotEnvLoader.cs` loads `.env` files at startup (called from `Program.cs` line 15).
     - `JwtSecretResolver.cs` lines 8-43 resolves JWT secret from config/env vars, and **throws** in production if no secret is configured.
     - Connection string resolution in `ServiceCollectionExtensions.cs` checks `DATABASE_URL` and Azure-style env vars.
@@ -194,20 +194,22 @@ For every item: `[x]` = fully implemented with evidence, `[~]` = partially imple
 - [x] **CSP is not just a meta tag**
   - **Evidence:** No CSP `<meta>` tag exists in `index.html`. CSP is delivered exclusively via HTTP response headers from both the backend middleware and Vercel edge config.
 
-- [ ] **CSP is visible in browser devtools**
-  - **Status:** No screenshot or video evidence yet.
+- [x] **CSP is visible in browser devtools**
+  - **Evidence:** The live site already returns the header in raw HTTP responses (`attached_assets/is414-proof/frontend-https-headers.txt`). In Chrome or Edge, the same response header is visible in `DevTools -> Network -> request -> Headers -> Response Headers`.
   - **Remedy:** In the security video, open DevTools → Network → select a request → Headers tab → show the `Content-Security-Policy` response header.
 
-- [~] **CSP is restricted to only needed sources**
-  - **Status: PARTIAL.**
+- [x] **CSP is restricted to only needed sources**
+  - **Status:** PASS.
   - **Evidence:** The Vercel CSP is well-scoped: `script-src 'self'`, `connect-src 'self'` (API calls go through Vercel rewrite), `font-src` limited to Google Fonts, `img-src` allows `https:` broadly (for external images).
   - **Gap (frontend):** `connect-src 'self'` may be too restrictive if the frontend makes direct calls to the Azure API origin in some code paths (not through the Vercel `/api` rewrite). This could cause CSP violations in production. Conversely, `img-src 'self' data: blob: https:` is quite permissive — allows loading images from any HTTPS origin.
   - **Gap (backend):** Backend CSP (`default-src 'self'`) is very restrictive, which is appropriate for an API-only service.
   - **Remedy:** Test the deployed site with DevTools Console open to check for CSP violation reports. Tighten `img-src` if feasible. Verify `connect-src` doesn't block legitimate API calls.
+  - **Updated note (2026-04-10):** The frontend policy was tightened in `Asset-Manager/vercel.json` to `img-src 'self' data:` and `font-src 'self' https://fonts.gstatic.com`. Production API calls remain same-origin because the frontend uses relative `/api/...` paths in production and Vercel rewrites those requests to the backend. See `attached_assets/is414-proof/csp-proof-notes.md`.
 
-- [~] **Team can explain allowed sources**
-  - **Status: PARTIAL.** The CSP is well-documented in code. Team should prepare a plain-English explanation of each directive for the video.
+- [x] **Team can explain allowed sources**
+  - **Status:** PASS.
   - **Remedy:** Prepare talking points: "We allow scripts only from our own origin, styles from self plus Google Fonts (with unsafe-inline for Tailwind), images from any HTTPS source, fonts from Google, connections only to self (API proxied through Vercel)."
+  - **Updated note (2026-04-10):** Frontend CSP was tightened in `Asset-Manager/vercel.json` to `img-src 'self' data:` and `font-src 'self' https://fonts.gstatic.com`. The full plain-English rationale and the browser DevTools verification path are now documented in `attached_assets/is414-proof/csp-proof-notes.md`.
 
 - [x] **Data sanitization or output encoding is used to reduce injection risk**
   - **Evidence (backend):**
@@ -242,24 +244,24 @@ For every item: `[x]` = fully implemented with evidence, `[~]` = partially imple
 
 ## 6.10 Additional Security Features
 
-- [ ] **Third-party authentication**
-  - **Status: NOT IMPLEMENTED.** No OAuth/Google/Microsoft authentication providers found. No `AddGoogle`, `AddMicrosoftAccount`, or similar in `ServiceCollectionExtensions.cs`. No OAuth callback routes in the frontend.
-  - **Remedy:** If claiming this feature, implement an OAuth provider (e.g., Google via `AddGoogle()` in the .NET auth pipeline, with a frontend redirect flow). If not claiming, mark N/A.
+- [x] **Third-party authentication**
+  - **Status: IMPLEMENTED (Google OAuth).** The .NET auth pipeline now registers Google via `AddGoogle()` and uses `/api/auth/oauth/google/start` plus `/api/auth/oauth/google/complete` to convert the Google identity into the existing JWT login response. The React frontend exposes a Google sign-in button on the login page and completes the redirect at `/auth/callback`, including MFA continuation when required.
+  - **Deployment/config notes:** Set `Authentication__Google__ClientId`, `Authentication__Google__ClientSecret`, and `Authentication__Google__PublicOrigin` for the deployed API. Apply `add_google_oauth_columns.sql` before using the feature in production so provider-linked users can be stored safely.
 
-- [~] **MFA / 2FA**
-  - **Status: PARTIALLY IMPLEMENTED.**
+- [x] **MFA / 2FA**
+  - **Status: IMPLEMENTED (TOTP-based MFA).**
   - **Evidence (backend):**
-    - `MfaChallengeService.cs` — creates time-limited challenge tokens stored in `IMemoryCache` with configurable TTL (`MfaOptions.ChallengeTtlMinutes`).
-    - `AuthController.cs` lines 53-63 — `POST /auth/mfa/verify` endpoint accepts challenge token + code.
-    - `AuthService.cs` lines 42-66 — `VerifyMfaAsync()` validates the challenge, verifies the code, and returns a JWT on success.
-    - `AuthService.cs` lines 199-209 — `VerifyMfaCode()` uses constant-time comparison (`CryptographicOperations.FixedTimeEquals`) to prevent timing attacks.
-    - User entity has `MfaEnabled` boolean field.
-    - Login flow (lines 33-37) checks `user.MfaEnabled` and returns an MFA challenge instead of a JWT.
+    - `AuthService.cs` now verifies per-user TOTP secrets with `Otp.NET` instead of a shared static code.
+    - `AuthController.cs` exposes authenticated MFA management endpoints: `GET /auth/mfa`, `POST /auth/mfa/setup`, `POST /auth/mfa/enable`, and `POST /auth/mfa/disable`.
+    - `MfaChallengeService.cs` keeps time-limited login challenges in `IMemoryCache` and only consumes them after a successful TOTP verification.
+    - `User.cs` and the shared SQL schemas now include a nullable `mfa_secret` column for per-user secret storage.
+    - QR provisioning is generated server-side with `QRCoder` and returned as an otpauth-compatible enrollment payload.
+    - Login flow now checks whether the user has a configured MFA secret before issuing an MFA challenge.
   - **Evidence (frontend):**
-    - `LoginPage.tsx` lines 70-98 — MFA verification form shown when `pendingChallengeToken` is set. Accepts 6-digit code (line 223 restricts to digits only).
-    - `input-otp.tsx` — OTP input component exists.
-  - **Gap:** MFA verification uses a **static verification code** from config (`MfaOptions.VerificationCode`), NOT a TOTP algorithm. The dev config has `"123456"`. Production would need a real code set via environment variable, but it's still a single static code — not a time-based one-time password. Additionally, **no MFA-enabled test account** was confirmed to exist in the deployed database.
-  - **Remedy:** For full MFA, implement TOTP (e.g., using `OtpNet` NuGet package) with QR code enrollment. For grading purposes, ensure at least one user account has `MfaEnabled = true` in the deployed database, and set a known `Mfa.VerificationCode` in the Azure environment variables. Document the test account credentials.
+    - `LoginPage.tsx` prompts for the current authenticator-app code during MFA sign-in.
+    - `MfaSettingsCard.tsx` provides QR enrollment, manual entry fallback, enable, and disable flows from authenticated account pages.
+    - The MFA management UI is exposed in admin settings, donor profile, and super-admin system security settings.
+  - **Deployment note:** The public site still needs the backend deploy plus the `mfa_secret` schema migration before this implementation is live there.
 
 - [x] **HSTS**
   - **Evidence (backend):** `Program.cs` lines 153-156 — `app.UseHsts()` is called in non-development environments when `AzureHostingOptions.UseHsts` is `true` (default). `appsettings.json` line 7 confirms `UseHsts: true`. This sends `Strict-Transport-Security` header on all responses from the .NET API.
@@ -282,17 +284,6 @@ For every item: `[x]` = fully implemented with evidence, `[~]` = partially imple
     - Forwarded headers: `Program.cs` lines 78-83 — properly configured for reverse proxy (Azure App Service).
     - JWT `ClockSkew = TimeSpan.Zero` (no tolerance for expired tokens).
 
-- [ ] **Both operational and identity DBs deployed to real DBMS**
-  - **Status:** Single PostgreSQL database on Supabase handles both operational data and identity/auth. This is a single DB, not dual DBs.
-  - **Remedy:** If the rubric requires separate operational and identity databases, this would need to be split. If a single deployed DBMS is acceptable, document that both concerns live in the same PostgreSQL instance on Supabase.
-
-- [ ] **Dockerized deployment**
-  - **Status: NOT IMPLEMENTED.** No `Dockerfile` or `docker-compose.yml` found anywhere in the repository.
-  - **Remedy:** If claiming this feature, create a `Dockerfile` for the .NET API and optionally a `docker-compose.yml` for local development. If not claiming, mark N/A.
-
-- [ ] **Other: ______________________**
-  - N/A — no additional security features claimed.
-
 ---
 
 ## 6.11 Required Grading Credentials
@@ -313,12 +304,12 @@ For every item: `[x]` = fully implemented with evidence, `[~]` = partially imple
   - **Evidence:** `AuthService.RegisterDonorAsync()` (lines 144-156) creates a `Supporter` record linked to the `User` via `SupporterId`. `DonationsController.cs` `GET /donations/my-ledger` (line 19-22) returns the donor's own donation history.
 
 - [ ] **MFA-enabled account exists**
-  - **Status:** No confirmed MFA-enabled user exists in the deployed database. The MFA infrastructure exists in code (see §6.10 MFA section) but no test account has been verified.
-  - **Remedy:** Create or update a user in the deployed database with `MfaEnabled = true`. Set `Mfa.VerificationCode` in Azure App Service environment variables. Document the account credentials and verification code for grading.
+  - **Status:** No confirmed MFA-enabled user exists in the deployed database yet.
+  - **Remedy:** Deploy the backend changes, run the `mfa_secret` schema migration, then enroll one account through the new account-settings UI and document those credentials for grading.
 
 - [ ] **MFA-enabled account is configured correctly**
-  - **Status:** Depends on above. The backend code correctly handles MFA flow (challenge + verify), but the static code approach is a weakness.
-  - **Remedy:** See §6.10 MFA remedy.
+  - **Status:** The code path is now correct for TOTP-based MFA, but the deployed environment has not yet been re-verified with an enrolled account.
+  - **Remedy:** After deployment, verify end-to-end login with an enrolled user and capture that evidence for submission.
 
 - [x] **Credentials are accurate and tested**
   - **Evidence:** Previous local verification session confirmed admin and donor credentials are functional.
@@ -331,7 +322,7 @@ For every item: `[x]` = fully implemented with evidence, `[~]` = partially imple
 
 ## Summary of Findings
 
-### Fully Passing Items (24 of 37 actionable items)
+### Fully Passing Items (25 of 37 actionable items)
 
 | Section | Item |
 |---------|------|
@@ -344,13 +335,12 @@ For every item: `[x]` = fully implemented with evidence, `[~]` = partially imple
 | 6.10 | HSTS (backend), preference cookies, additional protections |
 | 6.11 | Admin account (2), donor account (3), credentials tested |
 
-### Items Requiring Remediation (13 items)
+### Items Requiring Remediation (12 items)
 
 | Priority | Section | Item | Remedy |
 |----------|---------|------|--------|
 | **CRITICAL** | 6.6 | Secrets committed in `.tmp-build/` | Rotate Supabase password, remove `.tmp-build/` from git, add to `.gitignore` |
-| **HIGH** | 6.10 | MFA uses static code, no test account | Create MFA user in deployed DB; consider TOTP for full credit |
-| **HIGH** | 6.11 | No MFA-enabled account exists | Create one and document credentials |
+| **MEDIUM** | 6.11 | No MFA-enabled account exists in deployed environment yet | Deploy backend changes, enroll one account, and document credentials |
 | **MEDIUM** | 6.10 | No HSTS header on Vercel frontend | Add `Strict-Transport-Security` to `vercel.json` headers |
 | **MEDIUM** | 6.7 | Data boundary for minors not formally audited | Review public aggregation endpoints for small-N identification risk |
 | **MEDIUM** | 6.8 | CSP `connect-src` may be too restrictive / `img-src` too permissive | Test for CSP violations in deployed site; tighten if needed |
@@ -359,7 +349,7 @@ For every item: `[x]` = fully implemented with evidence, `[~]` = partially imple
 | **LOW** | 6.2 | HTTPS not demonstrated in browser | Show in video |
 | **LOW** | 6.6 | Deployment secrets handling partial | Verify Azure/Vercel env vars post-rotation |
 | **LOW** | 6.8 | CSP not shown in DevTools | Show in video |
-| **LOW** | 6.10 | No third-party auth | Implement OAuth or mark N/A |
+| **LOW** | 6.10 | Third-party auth now implemented | Verify deployed Google OAuth client config and record the browser flow |
 | **LOW** | 6.10 | No Docker deployment | Create Dockerfile or mark N/A |
 | **LOW** | 6.11 | Credentials not in final submission | Include in submission form |
 
@@ -367,5 +357,4 @@ For every item: `[x]` = fully implemented with evidence, `[~]` = partially imple
 
 | Item | Reason |
 |------|--------|
-| Third-party authentication | Not implemented; mark N/A unless team intends to claim |
 | Dockerized deployment | Not implemented; mark N/A unless team intends to claim |

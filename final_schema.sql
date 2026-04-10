@@ -482,10 +482,14 @@ CREATE TABLE public.users (
   role text NOT NULL DEFAULT 'public'::text CHECK (role = ANY (ARRAY['public'::text, 'donor'::text, 'staff'::text, 'admin'::text, 'super_admin'::text])),
   is_active boolean NOT NULL DEFAULT true,
   mfa_enabled boolean NOT NULL DEFAULT false,
+  mfa_secret text,
+  external_auth_provider text,
+  external_auth_subject text,
   last_login timestamp with time zone,
   supporter_id bigint,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT users_pkey PRIMARY KEY (id),
+  CONSTRAINT users_external_auth_identity_key UNIQUE (external_auth_provider, external_auth_subject),
   CONSTRAINT users_supporter_id_fkey FOREIGN KEY (supporter_id) REFERENCES public.supporters(supporter_id)
 );

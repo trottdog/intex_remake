@@ -61,6 +61,9 @@ public sealed class UserRepository(BeaconDbContext dbContext) : IUserRepository
         var mutation = new UserMutation();
         mutate(mutation);
 
+        var nextMfaEnabled = mutation.MfaEnabled ?? user.MfaEnabled;
+        var nextMfaSecret = nextMfaEnabled ? user.MfaSecret : null;
+
         user = new User
         {
             Id = user.Id,
@@ -71,7 +74,10 @@ public sealed class UserRepository(BeaconDbContext dbContext) : IUserRepository
             LastName = mutation.LastName ?? user.LastName,
             Role = mutation.Role ?? user.Role,
             IsActive = mutation.IsActive ?? user.IsActive,
-            MfaEnabled = mutation.MfaEnabled ?? user.MfaEnabled,
+            MfaEnabled = nextMfaEnabled,
+            MfaSecret = nextMfaSecret,
+            ExternalAuthProvider = user.ExternalAuthProvider,
+            ExternalAuthSubject = user.ExternalAuthSubject,
             LastLogin = user.LastLogin,
             SupporterId = mutation.SupporterId ?? user.SupporterId,
             CreatedAt = user.CreatedAt,
@@ -122,6 +128,9 @@ public sealed class UserRepository(BeaconDbContext dbContext) : IUserRepository
             Role = user.Role,
             IsActive = isActive,
             MfaEnabled = user.MfaEnabled,
+            MfaSecret = user.MfaSecret,
+            ExternalAuthProvider = user.ExternalAuthProvider,
+            ExternalAuthSubject = user.ExternalAuthSubject,
             LastLogin = user.LastLogin,
             SupporterId = user.SupporterId,
             CreatedAt = user.CreatedAt,

@@ -214,146 +214,146 @@ Audit note (2026-04-09): Team confirmed Monday through Thursday IS401 deliverabl
 
 ## 5.1 Architecture and Platform
 
-- [x] Backend uses .NET 10 / C#
-- [x] Frontend uses React / TypeScript / Vite
-- [x] Database uses Azure SQL, MySQL, or PostgreSQL
-- [x] Database design follows good relational principles
-- [x] App is deployed
-- [x] Database is deployed
-- [x] App and DB both work together in deployed environment
-- [x] Data validation exists
-- [x] Error handling exists
-- [x] Titles/icons/branding/navigation are consistent
-- [x] Performance is acceptable for demo use
+- [x] Backend uses .NET 10 / C# (Evidence: [backend/intex/intex/intex.csproj](../../../backend/intex/intex/intex.csproj#L4), [backend/intex/intex/Program.cs](../../../backend/intex/intex/Program.cs#L1))
+- [x] Frontend uses React / TypeScript / Vite (Evidence: [Asset-Manager/artifacts/beacon/package.json](../../../Asset-Manager/artifacts/beacon/package.json#L7), [Asset-Manager/artifacts/beacon/vite.config.ts](../../../Asset-Manager/artifacts/beacon/vite.config.ts#L1))
+- [x] Database uses Azure SQL, MySQL, or PostgreSQL (Evidence: [schema.sql](../../../schema.sql#L4), [schema.sql](../../../schema.sql#L237))
+- [x] Database design follows good relational principles (Evidence: [schema.sql](../../../schema.sql#L61), [schema.sql](../../../schema.sql#L154))
+- [x] App is deployed (Evidence: [Asset-Manager/attached_assets/is414-proof/frontend-https-headers.txt](../../../Asset-Manager/attached_assets/is414-proof/frontend-https-headers.txt#L4), [Asset-Manager/attached_assets/is414-proof/frontend-https-headers.txt](../../../Asset-Manager/attached_assets/is414-proof/frontend-https-headers.txt#L18))
+- [x] Database is deployed (Evidence: [Asset-Manager/vercel.json](../../../Asset-Manager/vercel.json#L37), [Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L26))
+- [x] App and DB both work together in deployed environment (Evidence: [Asset-Manager/vercel.json](../../../Asset-Manager/vercel.json#L37), [Asset-Manager/attached_assets/is414-proof/frontend-https-headers.txt](../../../Asset-Manager/attached_assets/is414-proof/frontend-https-headers.txt#L9))
+- [x] Data validation exists (Evidence: [Asset-Manager/artifacts/beacon/src/pages/LoginPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/LoginPage.tsx#L43), [backend/intex/intex/Controllers/AuthController.cs](../../../backend/intex/intex/Controllers/AuthController.cs#L77))
+- [x] Error handling exists (Evidence: [Asset-Manager/artifacts/beacon/src/pages/LoginPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/LoginPage.tsx#L63), [Asset-Manager/artifacts/beacon/src/pages/admin/ReportsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ReportsPage.tsx#L173))
+- [x] Titles/icons/branding/navigation are consistent (Evidence: [Asset-Manager/artifacts/beacon/src/components/layouts/PublicLayout.tsx](../../../Asset-Manager/artifacts/beacon/src/components/layouts/PublicLayout.tsx#L128), [Asset-Manager/artifacts/beacon/src/App.tsx](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L85))
+- [x] Performance is acceptable for demo use (Evidence: [Asset-Manager/artifacts/beacon/src/App.tsx](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L74), [Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx#L31))
 
 Deployment note (2026-04-09): public pages are live, but authenticated deployed proof was blocked by two frontend issues until this patch set: `Asset-Manager/vercel.json` rewrote `/api/*` requests to `index.html`, and `Asset-Manager/artifacts/beacon/src/contexts/AuthContext.tsx` did not persist auth across refreshes. The current frontend patch adds an Azure API fallback, restores `/api/*` proxying to Azure, and persists the JWT/user session so deployed CRUD refresh flows can be re-verified.
 
 ## 5.2 Public Experience
 
 ### Home / Landing Page
-- [x] Modern, professional landing page exists
-- [x] Mission is clearly explained
-- [x] Clear calls to action exist
-- [x] Trust/credibility signals are present
-- [x] Page works unauthenticated
+- [x] Modern, professional landing page exists (Evidence: [Asset-Manager/artifacts/beacon/src/pages/LandingPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/LandingPage.tsx#L27), [Asset-Manager/artifacts/beacon/src/pages/LandingPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/LandingPage.tsx#L30))
+- [x] Mission is clearly explained (Evidence: [Asset-Manager/artifacts/beacon/src/pages/LandingPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/LandingPage.tsx#L82), [Asset-Manager/artifacts/beacon/src/pages/LandingPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/LandingPage.tsx#L83))
+- [x] Clear calls to action exist (Evidence: [Asset-Manager/artifacts/beacon/src/pages/LandingPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/LandingPage.tsx#L51), [Asset-Manager/artifacts/beacon/src/pages/LandingPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/LandingPage.tsx#L58))
+- [x] Trust/credibility signals are present (Evidence: [Asset-Manager/artifacts/beacon/src/pages/LandingPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/LandingPage.tsx#L170), [Asset-Manager/artifacts/beacon/src/pages/LandingPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/LandingPage.tsx#L173))
+- [x] Page works unauthenticated (Evidence: [Asset-Manager/artifacts/beacon/src/App.tsx](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L85), [Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L16))
 
 ### Impact / Donor-Facing Dashboard
-- [x] Public impact dashboard exists
-- [x] Data is aggregated
-- [x] Data is anonymized
-- [x] Outcomes/progress/resource use are explained clearly
-- [x] Visualizations are understandable
-- [x] Dashboard helps build donor trust
+- [x] Public impact dashboard exists (Evidence: [Asset-Manager/artifacts/beacon/src/pages/PublicImpactPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/PublicImpactPage.tsx#L54), [Asset-Manager/artifacts/beacon/src/App.tsx](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L87))
+- [x] Data is aggregated (Evidence: [Asset-Manager/artifacts/beacon/src/pages/PublicImpactPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/PublicImpactPage.tsx#L55), [backend/intex/intex/Controllers/DashboardController.cs](../../../backend/intex/intex/Controllers/DashboardController.cs#L13))
+- [x] Data is anonymized (Evidence: [backend/intex/intex/Controllers/DashboardController.cs](../../../backend/intex/intex/Controllers/DashboardController.cs#L13), [backend/intex/intex/Controllers/DashboardController.cs](../../../backend/intex/intex/Controllers/DashboardController.cs#L52))
+- [x] Outcomes/progress/resource use are explained clearly (Evidence: [Asset-Manager/artifacts/beacon/src/pages/PublicImpactPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/PublicImpactPage.tsx#L64), [Asset-Manager/artifacts/beacon/src/pages/PublicImpactPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/PublicImpactPage.tsx#L165))
+- [x] Visualizations are understandable (Evidence: [Asset-Manager/artifacts/beacon/src/pages/PublicImpactPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/PublicImpactPage.tsx#L93), [Asset-Manager/artifacts/beacon/src/pages/PublicImpactPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/PublicImpactPage.tsx#L159))
+- [x] Dashboard helps build donor trust (Evidence: [Asset-Manager/artifacts/beacon/src/pages/PublicImpactPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/PublicImpactPage.tsx#L165), [Asset-Manager/artifacts/beacon/src/pages/LandingPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/LandingPage.tsx#L173))
 
 ### Login Page
-- [x] Login page exists
-- [x] Username/password auth works
-- [x] Validation messages appear for invalid input
-- [x] Error handling is understandable
+- [x] Login page exists (Evidence: [Asset-Manager/artifacts/beacon/src/pages/LoginPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/LoginPage.tsx#L18), [Asset-Manager/artifacts/beacon/src/App.tsx](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L92))
+- [x] Username/password auth works (Evidence: [backend/intex/intex/Controllers/AuthController.cs](../../../backend/intex/intex/Controllers/AuthController.cs#L39), [Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L24))
+- [x] Validation messages appear for invalid input (Evidence: [Asset-Manager/artifacts/beacon/src/pages/LoginPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/LoginPage.tsx#L43), [Asset-Manager/artifacts/beacon/src/pages/LoginPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/LoginPage.tsx#L73))
+- [x] Error handling is understandable (Evidence: [Asset-Manager/artifacts/beacon/src/pages/LoginPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/LoginPage.tsx#L61), [Asset-Manager/artifacts/beacon/src/pages/LoginPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/LoginPage.tsx#L93))
 
 ### Privacy Policy + Cookie Consent
-- [x] Privacy policy page exists
-- [x] Privacy policy is linked from footer
-- [x] Cookie consent appears on public site
-- [x] Team knows whether cookie consent is cosmetic or functional
+- [x] Privacy policy page exists (Evidence: [Asset-Manager/artifacts/beacon/src/pages/PrivacyPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/PrivacyPage.tsx#L20), [Asset-Manager/artifacts/beacon/src/App.tsx](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L90))
+- [x] Privacy policy is linked from footer (Evidence: [Asset-Manager/artifacts/beacon/src/components/layouts/PublicLayout.tsx](../../../Asset-Manager/artifacts/beacon/src/components/layouts/PublicLayout.tsx#L213), [Asset-Manager/artifacts/beacon/src/components/layouts/PublicLayout.tsx](../../../Asset-Manager/artifacts/beacon/src/components/layouts/PublicLayout.tsx#L214))
+- [x] Cookie consent appears on public site (Evidence: [Asset-Manager/artifacts/beacon/src/components/CookieConsent.tsx](../../../Asset-Manager/artifacts/beacon/src/components/CookieConsent.tsx#L6), [Asset-Manager/artifacts/beacon/src/App.tsx](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L327))
+- [x] Team knows whether cookie consent is cosmetic or functional (Evidence: [Asset-Manager/artifacts/beacon/src/pages/PrivacyPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/PrivacyPage.tsx#L37), [Asset-Manager/artifacts/beacon/src/lib/consent.ts](../../../Asset-Manager/artifacts/beacon/src/lib/consent.ts#L5))
 
 ## 5.3 Admin / Staff Experience
 
 ### Admin Dashboard
-- [x] High-level overview page exists
-- [x] Active residents metric is shown
+- [x] High-level overview page exists (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx#L31), [Asset-Manager/artifacts/beacon/src/App.tsx](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L99))
+- [x] Active residents metric is shown (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx#L84), [Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx#L247))
 - [ ] Recent donations metric or feed is shown
-- [x] Upcoming case conferences are shown
-- [x] Progress summary / trend data is shown
-- [x] Dashboard helps staff know what to do next, not just what exists
+- [x] Upcoming case conferences are shown (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx#L110), [Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx#L356))
+- [x] Progress summary / trend data is shown (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx#L243), [Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx#L287))
+- [x] Dashboard helps staff know what to do next, not just what exists (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx#L354), [Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx#L359))
 
 ### Donors & Contributions
-- [x] Staff can view supporter profiles
+- [x] Staff can view supporter profiles (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx#L514), [Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx#L724))
 - [ ] Staff can create supporter profiles
 - [ ] Staff can update supporter profiles
 - [ ] Staff can carefully delete supporter profiles if allowed
-- [x] Supporter classification by type exists
-- [x] Supporter active/inactive status exists
-- [x] Monetary donations can be recorded/viewed
+- [x] Supporter classification by type exists (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx#L343), [Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx#L739))
+- [x] Supporter active/inactive status exists (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx#L350), [Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx#L750))
+- [x] Monetary donations can be recorded/viewed (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx#L418), [Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx#L517))
 - [~] In-kind donations can be recorded/viewed
 - [ ] Time contributions can be recorded/viewed
 - [ ] Skills contributions can be recorded/viewed
 - [~] Social media advocacy contributions can be recorded/viewed
-- [x] Donation allocations across safehouses/program areas are viewable
-- [x] Filtering works on donor/contribution data
-- [x] Search works on donor/contribution data
-- [x] Donor history is understandable
-- [x] Donation impact is understandable
+- [x] Donation allocations across safehouses/program areas are viewable (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx#L88), [Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx#L909))
+- [x] Filtering works on donor/contribution data (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx#L874), [Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx#L909))
+- [x] Search works on donor/contribution data (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx#L874), [Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx#L724))
+- [x] Donor history is understandable (Evidence: [Asset-Manager/artifacts/beacon/src/pages/donor/DonorDashboard.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/donor/DonorDashboard.tsx#L468), [backend/intex/intex/Controllers/DonationsController.cs](../../../backend/intex/intex/Controllers/DonationsController.cs#L20))
+- [x] Donation impact is understandable (Evidence: [Asset-Manager/artifacts/beacon/src/pages/donor/DonorDashboard.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/donor/DonorDashboard.tsx#L142), [Asset-Manager/artifacts/beacon/src/pages/donor/DonorDashboard.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/donor/DonorDashboard.tsx#L243))
 
 ### Donor Role Experience
-- [x] Donor-role user can access donor-specific donation history if implemented
-- [x] Donor-role user can access donor-specific impact if implemented
-- [x] Donor cannot access admin-only data
+- [x] Donor-role user can access donor-specific donation history if implemented (Evidence: [Asset-Manager/artifacts/beacon/src/App.tsx](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L289), [Asset-Manager/artifacts/beacon/src/pages/donor/DonorDashboard.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/donor/DonorDashboard.tsx#L468))
+- [x] Donor-role user can access donor-specific impact if implemented (Evidence: [Asset-Manager/artifacts/beacon/src/App.tsx](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L294), [Asset-Manager/artifacts/beacon/src/pages/donor/DonorDashboard.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/donor/DonorDashboard.tsx#L477))
+- [x] Donor cannot access admin-only data (Evidence: [Asset-Manager/artifacts/beacon/src/App.tsx](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L98), [Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L14))
 
 ### Caseload Inventory
-- [x] Caseload inventory page exists
-- [x] Staff can view resident records
-- [x] Staff can create resident records
-- [x] Staff can update resident records
-- [x] Staff can carefully delete resident records if allowed
-- [x] Demographics are captured
-- [x] Case category and subcategories are captured
-- [x] Disability/special-needs fields are captured
-- [x] Family socio-demographic fields are captured
-- [x] Admission details are captured
-- [x] Referral details are captured
-- [x] Assigned social workers are captured
-- [x] Reintegration tracking is captured
-- [x] Filtering by case status works
-- [x] Filtering by safehouse works
+- [x] Caseload inventory page exists (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/CaseloadPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/CaseloadPage.tsx#L42), [Asset-Manager/artifacts/beacon/src/App.tsx](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L114))
+- [x] Staff can view resident records (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx#L73), [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx#L256))
+- [x] Staff can create resident records (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx#L3), [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx#L56))
+- [x] Staff can update resident records (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentDetailPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentDetailPage.tsx#L43), [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentDetailPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentDetailPage.tsx#L173))
+- [x] Staff can carefully delete resident records if allowed (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentDetailPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentDetailPage.tsx#L171), [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentDetailPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentDetailPage.tsx#L173))
+- [x] Demographics are captured (Evidence: [schema.sql](../../../schema.sql#L293), [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentDetailPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentDetailPage.tsx#L256))
+- [x] Case category and subcategories are captured (Evidence: [schema.sql](../../../schema.sql#L310), [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentDetailPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentDetailPage.tsx#L268))
+- [x] Disability/special-needs fields are captured (Evidence: [schema.sql](../../../schema.sql#L300), [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentDetailPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentDetailPage.tsx#L276))
+- [x] Family socio-demographic fields are captured (Evidence: [schema.sql](../../../schema.sql#L304), [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentDetailPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentDetailPage.tsx#L281))
+- [x] Admission details are captured (Evidence: [schema.sql](../../../schema.sql#L318), [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentDetailPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentDetailPage.tsx#L293))
+- [x] Referral details are captured (Evidence: [schema.sql](../../../schema.sql#L319), [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentDetailPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentDetailPage.tsx#L309))
+- [x] Assigned social workers are captured (Evidence: [schema.sql](../../../schema.sql#L311), [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx#L77))
+- [x] Reintegration tracking is captured (Evidence: [schema.sql](../../../schema.sql#L312), [Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/AdminDashboard.tsx#L243))
+- [x] Filtering by case status works (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx#L81), [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx#L329))
+- [x] Filtering by safehouse works (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx#L66), [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx#L147))
 - [ ] Filtering by case category works
-- [x] Search works on key fields
+- [x] Search works on key fields (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx#L48), [Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ResidentsPage.tsx#L189))
 
 ### Process Recording
-- [x] Process recording form exists
-- [x] Session date is captured
-- [x] Social worker is captured
-- [x] Session type is captured
-- [x] Emotional state observed is captured
-- [x] Narrative summary is captured
-- [x] Interventions applied are captured
-- [x] Follow-up actions are captured
-- [x] Full chronological history per resident can be viewed
+- [x] Process recording form exists (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx#L216), [Asset-Manager/artifacts/beacon/src/App.tsx](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L119))
+- [x] Session date is captured (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx#L30), [Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx#L482))
+- [x] Social worker is captured (Evidence: [schema.sql](../../../schema.sql#L257), [Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx#L395))
+- [x] Session type is captured (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx#L32), [Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx#L516))
+- [x] Emotional state observed is captured (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx#L34), [Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx#L536))
+- [x] Narrative summary is captured (Evidence: [schema.sql](../../../schema.sql#L262), [Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx#L406))
+- [x] Interventions applied are captured (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx#L37), [Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx#L573))
+- [x] Follow-up actions are captured (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx#L38), [Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx#L583))
+- [x] Full chronological history per resident can be viewed (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx#L279), [Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ProcessRecordingsPage.tsx#L669))
 
 ### Home Visitation & Case Conferences
-- [x] Home visitation logging exists
-- [x] Visit type is captured
-- [x] Home environment observations are captured
-- [x] Family cooperation level is captured
-- [x] Safety concerns are captured
-- [x] Follow-up actions are captured
-- [x] Case conference history is viewable
-- [x] Upcoming case conferences are viewable
+- [x] Home visitation logging exists (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/HomeVisitationsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/HomeVisitationsPage.tsx#L107), [Asset-Manager/artifacts/beacon/src/App.tsx](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L124))
+- [x] Visit type is captured (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/HomeVisitationsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/HomeVisitationsPage.tsx#L49), [Asset-Manager/artifacts/beacon/src/pages/admin/HomeVisitationsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/HomeVisitationsPage.tsx#L306))
+- [x] Home environment observations are captured (Evidence: [schema.sql](../../../schema.sql#L117), [Asset-Manager/artifacts/beacon/src/pages/admin/HomeVisitationsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/HomeVisitationsPage.tsx#L318))
+- [x] Family cooperation level is captured (Evidence: [schema.sql](../../../schema.sql#L121), [Asset-Manager/artifacts/beacon/src/pages/admin/HomeVisitationsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/HomeVisitationsPage.tsx#L321))
+- [x] Safety concerns are captured (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/HomeVisitationsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/HomeVisitationsPage.tsx#L39), [Asset-Manager/artifacts/beacon/src/pages/admin/HomeVisitationsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/HomeVisitationsPage.tsx#L322))
+- [x] Follow-up actions are captured (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/HomeVisitationsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/HomeVisitationsPage.tsx#L323), [Asset-Manager/artifacts/beacon/src/pages/admin/HomeVisitationsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/HomeVisitationsPage.tsx#L458))
+- [x] Case conference history is viewable (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/CaseConferencesPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/CaseConferencesPage.tsx#L80), [Asset-Manager/artifacts/beacon/src/pages/admin/CaseConferencesPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/CaseConferencesPage.tsx#L204))
+- [x] Upcoming case conferences are viewable (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/CaseConferencesPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/CaseConferencesPage.tsx#L28), [Asset-Manager/artifacts/beacon/src/pages/admin/CaseConferencesPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/CaseConferencesPage.tsx#L265))
 
 ### Reports & Analytics
-- [x] Reports page exists
-- [x] Donation trends over time are shown
+- [x] Reports page exists (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/ReportsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ReportsPage.tsx#L126), [Asset-Manager/artifacts/beacon/src/App.tsx](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L149))
+- [x] Donation trends over time are shown (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/ReportsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ReportsPage.tsx#L268), [Asset-Manager/artifacts/beacon/src/pages/admin/ReportsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ReportsPage.tsx#L319))
 - [~] Resident outcome metrics are shown
 - [ ] Education progress metrics are shown
 - [ ] Health improvement metrics are shown
 - [~] Safehouse performance comparisons are shown
-- [x] Reintegration success rates are shown
+- [x] Reintegration success rates are shown (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/ReportsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ReportsPage.tsx#L260), [Asset-Manager/artifacts/beacon/src/pages/admin/ReportsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ReportsPage.tsx#L587))
 - [~] Reports align reasonably with Annual Accomplishment Report style
 
 ### Social Media / Outreach Support
-- [x] Social media data is represented somewhere meaningful
-- [x] Engagement metrics are shown
+- [x] Social media data is represented somewhere meaningful (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/SocialOutreachPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/SocialOutreachPage.tsx#L4), [Asset-Manager/artifacts/beacon/src/App.tsx](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L278))
+- [x] Engagement metrics are shown (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/SocialOutreachPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/SocialOutreachPage.tsx#L33), [Asset-Manager/artifacts/beacon/src/pages/admin/SocialOutreachPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/SocialOutreachPage.tsx#L78))
 - [~] Social content performance is interpretable
-- [x] Social-to-donation linkage exists or is reasonably approximated
+- [x] Social-to-donation linkage exists or is reasonably approximated (Evidence: [schema.sql](../../../schema.sql#L62), [Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/DonorsPage.tsx#L909))
 - [~] Feature helps answer what content/platform/timing works
 
 ## 5.4 Finish Quality
 
 - [~] Extra support pages required by the solution exist
-- [x] Pagination exists where needed
-- [x] Empty states exist where needed
-- [x] Not-found state exists
-- [x] Failure states exist where needed
+- [x] Pagination exists where needed (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/CaseConferencesPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/CaseConferencesPage.tsx#L138), [Asset-Manager/artifacts/beacon/src/pages/admin/CaseConferencesPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/CaseConferencesPage.tsx#L221))
+- [x] Empty states exist where needed (Evidence: [Asset-Manager/artifacts/beacon/src/pages/admin/CaseConferencesPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/CaseConferencesPage.tsx#L180), [Asset-Manager/artifacts/beacon/src/pages/admin/SocialOutreachPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/SocialOutreachPage.tsx#L51))
+- [x] Not-found state exists (Evidence: [Asset-Manager/artifacts/beacon/src/App.tsx](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L314), [Asset-Manager/artifacts/beacon/src/pages/not-found.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/not-found.tsx#L3))
+- [x] Failure states exist where needed (Evidence: [Asset-Manager/artifacts/beacon/src/pages/LoginPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/LoginPage.tsx#L63), [Asset-Manager/artifacts/beacon/src/pages/admin/ReportsPage.tsx](../../../Asset-Manager/artifacts/beacon/src/pages/admin/ReportsPage.tsx#L173))
 - [~] Mobile layout remains usable on major pages
 - [~] App feels like a product, not just an assignment
 
@@ -422,9 +422,9 @@ Audit note (2026-04-09 local verification): headless Chrome verified anonymous a
 
 - [x] CSP is sent as an HTTP response header (Evidence: [runtime CSP header](../../../Asset-Manager/attached_assets/is414-proof/frontend-https-headers.txt#L12), [middleware sets CSP header](../../../backend/intex/intex/Infrastructure/Middleware/SecurityHeadersMiddleware.cs#L15))
 - [x] CSP is not just a meta tag (Evidence: [server middleware injects header](../../../backend/intex/intex/Infrastructure/Middleware/SecurityHeadersMiddleware.cs#L13), [header observed in response](../../../Asset-Manager/attached_assets/is414-proof/frontend-https-headers.txt#L12))
-- [ ] CSP is visible in browser devtools
-- [ ] CSP is restricted to only needed sources
-- [ ] Team can explain allowed sources
+- [x] CSP is visible in browser devtools (Evidence: [live response header capture](../../../Asset-Manager/attached_assets/is414-proof/frontend-https-headers.txt#L12), [DevTools verification note](../../../Asset-Manager/attached_assets/is414-proof/csp-proof-notes.md#browser--devtools-proof))
+- [x] CSP is restricted to only needed sources (Evidence: [frontend CSP header](../../../Asset-Manager/vercel.json), [allowed-source rationale](../../../Asset-Manager/attached_assets/is414-proof/csp-proof-notes.md#allowed-sources-and-why-they-are-needed), [same-origin API usage](../../../Asset-Manager/artifacts/beacon/src/services/api.ts), [Google Fonts usage](../../../Asset-Manager/artifacts/beacon/src/index.css))
+- [x] Team can explain allowed sources (Evidence: [plain-English CSP talking points](../../../Asset-Manager/attached_assets/is414-proof/csp-proof-notes.md#allowed-sources-and-why-they-are-needed))
 - [x] Data sanitization or output encoding is used to reduce injection risk (Evidence: [sanitizeInput middleware](../../../Asset-Manager/artifacts/api-server/src/middleware/security.ts#L49), [script/javascript stripping](../../../Asset-Manager/artifacts/api-server/src/middleware/security.ts#L53))
 
 ## 6.9 Availability
@@ -438,7 +438,7 @@ Audit note (2026-04-09 local verification): headless Chrome verified anonymous a
 
 Mark only what was actually completed and can be proved.
 
-- [ ] Third-party authentication
+- [x] Third-party authentication (Evidence: [Google auth registration](../../../backend/intex/intex/Infrastructure/Extensions/ServiceCollectionExtensions.cs#L227), [OAuth start + completion endpoints](../../../backend/intex/intex/Controllers/AuthController.cs#L216), [frontend callback route](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L96))
 - [ ] MFA / 2FA
 - [x] HSTS (Evidence: [HSTS response header](../../../Asset-Manager/attached_assets/is414-proof/frontend-https-headers.txt#L20), [HSTS enabled in backend pipeline](../../../backend/intex/intex/Program.cs#L158))
 - [x] Browser-accessible preference cookie used by React (Evidence: [cookie set with SameSite + Secure](../../../Asset-Manager/artifacts/beacon/src/lib/cookies.ts#L19), [consent cookie key](../../../Asset-Manager/artifacts/beacon/src/lib/consent.ts#L5))

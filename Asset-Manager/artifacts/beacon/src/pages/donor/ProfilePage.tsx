@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useGetMyDonorProfile, useListMyDonations, updateMyDonorProfile } from "@/services/donor.service";
 import { useAuth } from "@/contexts/AuthContext";
+import { MfaSettingsCard } from "@/components/account/MfaSettingsCard";
 import { applyConsent, getConsentLevel } from "@/lib/consent";
 import { User, Mail, Phone, MapPin, Building, Shield, Bell, CreditCard, Edit3, Save, X, Lock, CheckCircle, ChevronDown } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -408,6 +409,8 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      <MfaSettingsCard />
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
         <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 flex items-center gap-2">

@@ -13,6 +13,16 @@ public sealed class AuthRepository(BeaconDbContext dbContext) : IAuthRepository
     public Task<User?> FindUserByIdAsync(int userId, CancellationToken cancellationToken = default) =>
         dbContext.Users.AsNoTracking().FirstOrDefaultAsync(user => user.Id == userId, cancellationToken);
 
+    public Task<User?> FindUserByEmailAsync(string email, CancellationToken cancellationToken = default) =>
+        dbContext.Users.AsNoTracking()
+            .FirstOrDefaultAsync(user => user.Email.ToLower() == email.ToLower(), cancellationToken);
+
+    public Task<User?> FindUserByExternalLoginAsync(string provider, string subject, CancellationToken cancellationToken = default) =>
+        dbContext.Users.AsNoTracking()
+            .FirstOrDefaultAsync(
+                user => user.ExternalAuthProvider == provider && user.ExternalAuthSubject == subject,
+                cancellationToken);
+
     public Task<bool> UserExistsByUsernameOrEmailAsync(string username, string email, CancellationToken cancellationToken = default) =>
         dbContext.Users.AsNoTracking().AnyAsync(user =>
             user.Username.ToLower() == username.ToLower() || user.Email.ToLower() == email.ToLower(), cancellationToken);
@@ -39,6 +49,9 @@ public sealed class AuthRepository(BeaconDbContext dbContext) : IAuthRepository
                 Role = user.Role,
                 IsActive = user.IsActive,
                 MfaEnabled = user.MfaEnabled,
+                MfaSecret = user.MfaSecret,
+                ExternalAuthProvider = user.ExternalAuthProvider,
+                ExternalAuthSubject = user.ExternalAuthSubject,
                 SupporterId = supporter.SupporterId,
                 CreatedAt = user.CreatedAt,
                 UpdatedAt = user.UpdatedAt,
@@ -58,6 +71,18 @@ public sealed class AuthRepository(BeaconDbContext dbContext) : IAuthRepository
             .Select(assignment => assignment.SafehouseId)
             .ToListAsync(cancellationToken);
 
+    public async Task LinkExternalLoginAsync(int userId, string provider, string subject, CancellationToken cancellationToken = default)
+    {
+        await dbContext.Users
+            .Where(user => user.Id == userId)
+            .ExecuteUpdateAsync(
+                setters => setters
+                    .SetProperty(user => user.ExternalAuthProvider, provider)
+                    .SetProperty(user => user.ExternalAuthSubject, subject)
+                    .SetProperty(user => user.UpdatedAt, DateTimeOffset.UtcNow),
+                cancellationToken);
+    }
+
     public async Task UpdateLastLoginAsync(int userId, DateTimeOffset timestamp, CancellationToken cancellationToken = default)
     {
         await dbContext.Users
@@ -70,5 +95,17 @@ public sealed class AuthRepository(BeaconDbContext dbContext) : IAuthRepository
         await dbContext.Users
             .Where(user => user.Id == userId)
             .ExecuteUpdateAsync(setters => setters.SetProperty(user => user.PasswordHash, passwordHash), cancellationToken);
+    }
+
+    public async Task UpdateMfaAsync(int userId, bool isEnabled, string? secret, CancellationToken cancellationToken = default)
+    {
+        await dbContext.Users
+            .Where(user => user.Id == userId)
+            .ExecuteUpdateAsync(
+                setters => setters
+                    .SetProperty(user => user.MfaEnabled, isEnabled)
+                    .SetProperty(user => user.MfaSecret, secret)
+                    .SetProperty(user => user.UpdatedAt, DateTimeOffset.UtcNow),
+                cancellationToken);
     }
 }

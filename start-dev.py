@@ -9,10 +9,14 @@ import subprocess
 import sys
 import threading
 import time
+import ssl
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 FRONTEND_URL = "http://127.0.0.1:5173"
 BACKEND_URL = "https://localhost:7194"
+BACKEND_HEALTHCHECK_URL = f"{BACKEND_URL}/api/healthz"
 
 
 def start_process(command: str, cwd: Path) -> subprocess.Popen:
@@ -53,6 +57,42 @@ def run_frontend():
     print(f"Starting frontend from {frontend_path}...")
     print("   Running: corepack pnpm --filter @workspace/beacon dev")
     return start_process("corepack pnpm --filter @workspace/beacon dev", frontend_path)
+
+
+def wait_for_backend_ready(timeout_seconds: int = 90) -> bool:
+    """Wait until the backend health endpoint responds successfully."""
+    deadline = time.time() + timeout_seconds
+    ssl_context = ssl._create_unverified_context()
+    last_error: str | None = None
+
+    while time.time() < deadline:
+        try:
+            with urllib.request.urlopen(BACKEND_HEALTHCHECK_URL, context=ssl_context, timeout=5) as response:
+                if 200 <= response.status < 300:
+                    return True
+                last_error = f"HTTP {response.status}"
+        except urllib.error.URLError as error:
+            last_error = str(error.reason)
+        except Exception as error:  # pragma: no cover - best effort for local dev
+            last_error = str(error)
+
+        time.sleep(1)
+
+    if last_error:
+        print(f"ERROR Backend did not become ready at {BACKEND_HEALTHCHECK_URL}: {last_error}")
+    else:
+        print(f"ERROR Backend did not become ready at {BACKEND_HEALTHCHECK_URL}")
+    return False
+
+
+def is_backend_ready_now() -> bool:
+    """Quick check for an already-running backend instance."""
+    ssl_context = ssl._create_unverified_context()
+    try:
+        with urllib.request.urlopen(BACKEND_HEALTHCHECK_URL, context=ssl_context, timeout=2) as response:
+            return 200 <= response.status < 300
+    except Exception:
+        return False
 
 
 def clean_output(name: str, line: str) -> str | None:
@@ -107,11 +147,41 @@ def main():
     print("=" * 60)
     print()
 
-    backend_process = run_backend()
-    frontend_process = run_frontend()
+    backend_managed = False
+    backend_process = None
 
-    if not backend_process or not frontend_process:
+    if is_backend_ready_now():
+        print(f"Backend already running at {BACKEND_URL}; reusing existing process.")
+    else:
+        backend_process = run_backend()
+        if not backend_process:
+            print("\nERROR Failed to start processes")
+            return 1
+
+        backend_thread = threading.Thread(
+            target=log_output,
+            args=(backend_process, "Backend"),
+            daemon=True,
+        )
+        backend_thread.start()
+        backend_managed = True
+
+        print(f"Waiting for backend readiness at {BACKEND_HEALTHCHECK_URL}...")
+        if not wait_for_backend_ready():
+            try:
+                backend_process.terminate()
+            except Exception:
+                pass
+            return 1
+
+    frontend_process = run_frontend()
+    if not frontend_process:
         print("\nERROR Failed to start processes")
+        try:
+            if backend_managed and backend_process is not None:
+                backend_process.terminate()
+        except Exception:
+            pass
         return 1
 
     print("\nBoth processes started.")
@@ -121,41 +191,39 @@ def main():
     print("\nPress Ctrl+C to stop all services...\n")
 
     try:
-        time.sleep(2)
-
-        backend_thread = threading.Thread(
-            target=log_output,
-            args=(backend_process, "Backend"),
-            daemon=True,
-        )
         frontend_thread = threading.Thread(
             target=log_output,
             args=(frontend_process, "Frontend"),
             daemon=True,
         )
 
-        backend_thread.start()
         frontend_thread.start()
 
-        while backend_process.poll() is None or frontend_process.poll() is None:
+        while frontend_process.poll() is None and (not backend_managed or (backend_process is not None and backend_process.poll() is None)):
             time.sleep(1)
 
-        print("\nWARNING One or more processes have exited")
+        if backend_managed and backend_process is not None and backend_process.poll() is not None:
+            print("\nWARNING Backend process exited")
+        else:
+            print("\nWARNING Frontend process exited")
         return 1
 
     except KeyboardInterrupt:
         print("\n\nShutting down...")
         try:
             frontend_process.terminate()
-            backend_process.terminate()
+            if backend_managed and backend_process is not None:
+                backend_process.terminate()
             frontend_process.wait(timeout=5)
-            backend_process.wait(timeout=5)
+            if backend_managed and backend_process is not None:
+                backend_process.wait(timeout=5)
             print("All processes stopped gracefully")
             return 0
         except subprocess.TimeoutExpired:
             print("WARNING Force killing processes...")
             frontend_process.kill()
-            backend_process.kill()
+            if backend_managed and backend_process is not None:
+                backend_process.kill()
             return 0
 
 

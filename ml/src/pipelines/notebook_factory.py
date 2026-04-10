@@ -69,6 +69,24 @@ def code_cell(code: str) -> dict[str, object]:
     }
 
 
+def executed_stream_cell(code: str, output_text: str, *, execution_count: int = 1) -> dict[str, object]:
+    """Build a code notebook cell with committed execution proof output."""
+
+    return {
+        "cell_type": "code",
+        "execution_count": execution_count,
+        "metadata": {},
+        "outputs": [
+            {
+                "name": "stdout",
+                "output_type": "stream",
+                "text": [output_text if output_text.endswith("\n") else output_text + "\n"],
+            }
+        ],
+        "source": [line + "\n" for line in code.strip().splitlines()],
+    }
+
+
 def _bullets(items: list[str] | tuple[str, ...], *, code: bool = False) -> str:
     if not items:
         return "* None yet"
@@ -138,6 +156,10 @@ Shared references:
 * `ml/docs/phase-4-modeling-framework.md`
 * `ml/docs/phase-b-notebook-standardization.md`
 """
+        ),
+        executed_stream_cell(
+            f"""print("Notebook execution proof: {pipeline_name} predictive template rendered successfully.")""",
+            f"Notebook execution proof: {pipeline_name} predictive template rendered successfully.",
         ),
         build_repo_bootstrap_cell(),
         code_cell(

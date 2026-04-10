@@ -48,6 +48,7 @@ CREATE TABLE users (
                              CHECK (role IN ('public','donor','staff','admin','super_admin')),
   is_active     BOOLEAN      NOT NULL DEFAULT TRUE,
   mfa_enabled   BOOLEAN      NOT NULL DEFAULT FALSE,
+  mfa_secret    TEXT,
   last_login    TIMESTAMPTZ,
   supporter_id  BIGINT,
   created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),

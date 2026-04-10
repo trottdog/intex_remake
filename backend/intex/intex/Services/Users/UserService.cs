@@ -67,6 +67,9 @@ public sealed class UserService(
                 Role = request.Role,
                 IsActive = request.IsActive ?? true,
                 MfaEnabled = request.MfaEnabled ?? false,
+                MfaSecret = null,
+                ExternalAuthProvider = null,
+                ExternalAuthSubject = null,
                 SupporterId = request.SupporterId,
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
@@ -83,6 +86,20 @@ public sealed class UserService(
         if (request.Role is not null && !BeaconRoles.All.Contains(request.Role))
         {
             return (null, "Invalid role");
+        }
+
+        if (request.MfaEnabled is true)
+        {
+            var existingUser = await userRepository.FindByIdAsync(userId, cancellationToken);
+            if (existingUser is null)
+            {
+                return (null, "Not found");
+            }
+
+            if (!MfaState.IsConfigured(existingUser))
+            {
+                return (null, "MFA must be enrolled by the user before it can be enabled.");
+            }
         }
 
         var updated = await userRepository.UpdateAsync(
@@ -143,7 +160,7 @@ public sealed class UserService(
             user.Role,
             user.IsActive,
             user.LastLogin?.ToUniversalTime().ToString("O"),
-            user.MfaEnabled,
+            MfaState.IsConfigured(user),
             user.SupporterId,
             assignedSafehouses);
 

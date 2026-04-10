@@ -19,7 +19,7 @@ public sealed class MfaChallengeService(
         return challengeToken;
     }
 
-    public bool TryConsumeChallenge(string challengeToken, out int userId)
+    public bool TryGetChallenge(string challengeToken, out int userId)
     {
         userId = 0;
         if (string.IsNullOrWhiteSpace(challengeToken))
@@ -33,14 +33,22 @@ public sealed class MfaChallengeService(
             return false;
         }
 
-        cache.Remove(cacheKey);
         if (entry.ExpiresAt <= DateTimeOffset.UtcNow)
         {
+            cache.Remove(cacheKey);
             return false;
         }
 
         userId = entry.UserId;
         return true;
+    }
+
+    public void ConsumeChallenge(string challengeToken)
+    {
+        if (!string.IsNullOrWhiteSpace(challengeToken))
+        {
+            cache.Remove(GetCacheKey(challengeToken));
+        }
     }
 
     private static string GetCacheKey(string challengeToken) => $"mfa:challenge:{challengeToken}";

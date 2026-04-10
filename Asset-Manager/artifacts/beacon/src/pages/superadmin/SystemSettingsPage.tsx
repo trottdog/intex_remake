@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { MfaSettingsCard } from "@/components/account/MfaSettingsCard";
 import { Settings, Shield, Bell, Database, Lock, Globe, Save, CheckCircle } from "lucide-react";
 
 interface SettingSection {
@@ -62,13 +63,14 @@ export default function SystemSettingsPage() {
                   onChange={e => setSettings(s => ({ ...s, loginAttempts: parseInt(e.target.value) }))}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]" />
               </div>
-              <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-                <p className="text-sm font-medium text-amber-900">MFA enforcement is not active yet</p>
-                <p className="mt-1 text-xs leading-relaxed text-amber-800">
-                  Leave MFA out of security claims until the login challenge, recovery flow, and enforcement rules are implemented end-to-end.
+              <div className="rounded-lg border border-[#d6ebe0] bg-[#f4fbf7] px-4 py-3">
+                <p className="text-sm font-medium text-[#214636]">TOTP-based MFA is available per account</p>
+                <p className="mt-1 text-xs leading-relaxed text-[#355848]">
+                  Users can enroll with an authenticator app, then the login flow requires a current 6-digit TOTP code whenever MFA is enabled.
                 </p>
               </div>
             </div>
+            <MfaSettingsCard />
           </div>
         );
       case "notifications":

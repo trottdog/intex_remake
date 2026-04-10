@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { changePasswordApi } from "@/services/auth.service";
+import { MfaSettingsCard } from "@/components/account/MfaSettingsCard";
 import { Settings, Lock, User, Bell, Shield, CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function AdminSettingsPage() {
   const { user, token } = useAuth();
-  const [tab, setTab] = useState<"profile" | "password" | "notifications">("profile");
+  const [tab, setTab] = useState<"profile" | "password" | "security" | "notifications">("profile");
 
   const [pwForm, setPwForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [pwStatus, setPwStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -44,6 +45,7 @@ export default function AdminSettingsPage() {
   const tabs = [
     { id: "profile", label: "Profile", icon: User },
     { id: "password", label: "Password", icon: Lock },
+    { id: "security", label: "Security", icon: Shield },
     { id: "notifications", label: "Notifications", icon: Bell },
   ] as const;
 
@@ -198,6 +200,8 @@ export default function AdminSettingsPage() {
               </div>
             </div>
           )}
+
+          {tab === "security" && <MfaSettingsCard />}
         </div>
       </div>
     </div>

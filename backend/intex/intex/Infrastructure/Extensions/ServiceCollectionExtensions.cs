@@ -3,8 +3,12 @@ using backend.intex.Infrastructure.Auth;
 using backend.intex.Infrastructure.Configuration;
 using backend.intex.Infrastructure.Data;
 using backend.intex.Infrastructure.Data.EntityFramework;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -43,6 +47,7 @@ public static class ServiceCollectionExtensions
             });
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.Configure<MfaOptions>(configuration.GetSection(MfaOptions.SectionName));
+        services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
         services.Configure<SupabaseOptions>(configuration.GetSection(SupabaseOptions.SectionName));
         return services;
     }
@@ -86,12 +91,23 @@ public static class ServiceCollectionExtensions
 
         var connectionBuilder = new NpgsqlConnectionStringBuilder(connectionString)
         {
-            Pooling = true,
             MinPoolSize = 0,
             MaxPoolSize = 20,
-            Timeout = 15,
-            CommandTimeout = 15
+            Timeout = 6,
+            CommandTimeout = 8,
+            KeepAlive = 15
         };
+
+        if (IsSupabasePoolerConnection(connectionBuilder))
+        {
+            // Supabase pooler already multiplexes server sessions; disabling local pooling
+            // avoids stale connector reads that can manifest as long command hangs.
+            connectionBuilder.Pooling = false;
+        }
+        else
+        {
+            connectionBuilder.Pooling = true;
+        }
         var normalizedConnectionString = connectionBuilder.ConnectionString;
 
         var dataSourceBuilder = new NpgsqlDataSourceBuilder(normalizedConnectionString);
@@ -99,9 +115,10 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton(dataSource);
         services.AddSingleton<IPostgresConnectionFactory, PostgresConnectionFactory>();
-        services.AddPooledDbContextFactory<BeaconDbContext>(options =>
+        services.AddPooledDbContextFactory<BeaconDbContext>((sp, options) =>
         {
-            options.UseNpgsql(normalizedConnectionString, npgsql =>
+            var sharedDataSource = sp.GetRequiredService<NpgsqlDataSource>();
+            options.UseNpgsql(sharedDataSource, npgsql =>
             {
                 npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery);
                 npgsql.CommandTimeout(15);
@@ -135,8 +152,23 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton(signingKey);
 
-        services
-            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        var googleOptions = configuration.GetSection(GoogleAuthOptions.SectionName).Get<GoogleAuthOptions>() ?? new GoogleAuthOptions();
+        var authenticationBuilder = services
+            .AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultSignInScheme = ExternalAuthSchemes.ExternalCookie;
+            })
+            .AddCookie(ExternalAuthSchemes.ExternalCookie, options =>
+            {
+                options.Cookie.Name = "__Host-beacon.external";
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
+                options.SlidingExpiration = false;
+            })
             .AddJwtBearer(options =>
             {
                 options.MapInboundClaims = false;
@@ -201,6 +233,47 @@ public static class ServiceCollectionExtensions
                     NameClaimType = "username"
                 };
             });
+
+        if (googleOptions.IsConfigured)
+        {
+            authenticationBuilder.AddGoogle(ExternalAuthSchemes.Google, options =>
+            {
+                options.ClientId = googleOptions.ClientId;
+                options.ClientSecret = googleOptions.ClientSecret;
+                options.SignInScheme = ExternalAuthSchemes.ExternalCookie;
+                options.CallbackPath = googleOptions.CallbackPath;
+                options.SaveTokens = false;
+                options.AccessType = "offline";
+                options.Scope.Add("email");
+                options.Scope.Add("profile");
+                options.Events = new OAuthEvents
+                {
+                    OnRedirectToAuthorizationEndpoint = context =>
+                    {
+                        if (string.IsNullOrWhiteSpace(googleOptions.PublicOrigin))
+                        {
+                            context.Response.Redirect(context.RedirectUri);
+                            return Task.CompletedTask;
+                        }
+
+                        var authorizationUri = new Uri(context.RedirectUri);
+                        var callbackUri = new Uri(new Uri(googleOptions.PublicOrigin.TrimEnd('/') + "/"), googleOptions.CallbackPath.TrimStart('/'));
+                        var query = QueryHelpers.ParseQuery(authorizationUri.Query)
+                            .ToDictionary(
+                                pair => pair.Key,
+                                pair => pair.Value.ToString(),
+                                StringComparer.OrdinalIgnoreCase);
+                        query["redirect_uri"] = callbackUri.ToString();
+
+                        var rewrittenUri = QueryHelpers.AddQueryString(
+                            $"{authorizationUri.Scheme}://{authorizationUri.Authority}{authorizationUri.AbsolutePath}",
+                            query!);
+                        context.Response.Redirect(rewrittenUri);
+                        return Task.CompletedTask;
+                    }
+                };
+            });
+        }
 
         return services;
     }
@@ -284,5 +357,17 @@ public static class ServiceCollectionExtensions
         };
 
         return candidates.FirstOrDefault(candidate => !string.IsNullOrWhiteSpace(candidate));
+    }
+
+    private static bool IsSupabasePoolerConnection(NpgsqlConnectionStringBuilder connectionBuilder)
+    {
+        if (connectionBuilder.Port == 6543)
+        {
+            return true;
+        }
+
+        var host = connectionBuilder.Host;
+        return !string.IsNullOrWhiteSpace(host)
+            && host.Contains(".pooler.supabase.com", StringComparison.OrdinalIgnoreCase);
     }
 }

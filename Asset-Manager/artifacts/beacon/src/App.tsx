@@ -17,6 +17,7 @@ import { DonorLayout } from "@/components/layouts/DonorLayout";
 // Public pages
 import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/LoginPage";
+import AuthCallbackPage from "@/pages/AuthCallbackPage";
 import PrivacyPage from "@/pages/PrivacyPage";
 import PublicImpactPage from "@/pages/PublicImpactPage";
 import AboutPage from "@/pages/AboutPage";
@@ -91,6 +92,9 @@ function Router() {
       <Route path="/forbidden"><ForbiddenPage /></Route>
       <Route path="/login">
         <PublicRoute><LoginPage /></PublicRoute>
+      </Route>
+      <Route path="/auth/callback">
+        <AuthCallbackPage />
       </Route>
 
       {/* ── Admin / Staff Routes ───────────────────────────────────── */}

@@ -80,17 +80,18 @@ Implication:
 ### CSP grading risk
 
 - [x] CSP is sent as an HTTP response header
-- [ ] CSP is visible in browser devtools
-- [ ] CSP is restricted to only needed sources
-- [ ] Team can explain allowed sources cleanly
+- [x] CSP is visible in browser devtools
+- [x] CSP is restricted to only needed sources
+- [x] Team can explain allowed sources cleanly
 
 Repo reference:
 - `Asset-Manager/vercel.json`
 
-Risk note:
-- The deployed HTML requests Google Fonts from `fonts.googleapis.com` and `fonts.gstatic.com`.
-- The live CSP allows `style-src 'self' 'unsafe-inline'` and `font-src 'self' data:` only.
-- Until that mismatch is fixed or fonts are self-hosted, do not claim the current CSP is perfectly aligned to all required sources.
+Evidence note:
+- The deployed HTML requests Google Fonts from `fonts.googleapis.com` and `fonts.gstatic.com`, and `Asset-Manager/vercel.json` now allows those exact origins.
+- Production API calls stay same-origin because the frontend uses relative `/api/...` paths in production and Vercel rewrites those requests to the backend, so `connect-src 'self'` is sufficient.
+- `img-src` was tightened to `'self' data:` because the audited frontend uses bundled local images rather than arbitrary remote HTTPS image hosts.
+- Plain-English source rationale and the DevTools verification path are documented in `Asset-Manager/attached_assets/is414-proof/csp-proof-notes.md`.
 
 ### Credentials / secrets
 

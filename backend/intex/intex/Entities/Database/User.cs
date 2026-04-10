@@ -11,6 +11,9 @@ public sealed class User
     public string Role { get; init; } = string.Empty;
     public bool IsActive { get; init; }
     public bool MfaEnabled { get; init; }
+    public string? MfaSecret { get; init; }
+    public string? ExternalAuthProvider { get; init; }
+    public string? ExternalAuthSubject { get; init; }
     public DateTimeOffset? LastLogin { get; init; }
     public long? SupporterId { get; init; }
     public DateTimeOffset CreatedAt { get; init; }

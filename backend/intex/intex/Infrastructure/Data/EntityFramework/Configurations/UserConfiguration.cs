@@ -19,9 +19,15 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.Role).HasColumnName("role").IsRequired();
         builder.Property(x => x.IsActive).HasColumnName("is_active").IsRequired();
         builder.Property(x => x.MfaEnabled).HasColumnName("mfa_enabled").IsRequired();
+        builder.Property(x => x.MfaSecret).HasColumnName("mfa_secret");
+        builder.Property(x => x.ExternalAuthProvider).HasColumnName("external_auth_provider");
+        builder.Property(x => x.ExternalAuthSubject).HasColumnName("external_auth_subject");
         builder.Property(x => x.LastLogin).HasColumnName("last_login");
         builder.Property(x => x.SupporterId).HasColumnName("supporter_id");
         builder.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
         builder.Property(x => x.UpdatedAt).HasColumnName("updated_at").IsRequired();
+
+        builder.HasIndex(x => new { x.ExternalAuthProvider, x.ExternalAuthSubject })
+            .IsUnique();
     }
 }

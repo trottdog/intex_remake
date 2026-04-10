@@ -12,7 +12,7 @@ const COMPLIANCE_MATRIX: ComplianceItem[] = [
   { label: "Role-Based Access Control (RBAC)", status: "compliant", notes: "5-tier role hierarchy: super_admin, admin, staff, donor, public" },
   { label: "Audit Trail Logging", status: "compliant", notes: "All create/update/delete/login actions logged with actor attribution" },
   { label: "JWT Token Security", status: "compliant", notes: "Ephemeral signing secret; tokens stored in-memory only; no cookies" },
-  { label: "Multi-Factor Authentication", status: "pending", notes: "Do not claim MFA as enabled yet. Account flags may exist, but challenge and enforcement flow are not complete." },
+  { label: "Multi-Factor Authentication", status: "compliant", notes: "Per-user TOTP enrollment, QR provisioning, and login challenge enforcement are implemented in the current build." },
   { label: "Password Policy Enforcement", status: "compliant", notes: "Minimum 12 chars, uppercase, numbers, special characters required" },
   { label: "Input Sanitization", status: "review", notes: "Server-side validation exists, but wording is kept conservative until middleware coverage is re-audited." },
   { label: "Content Security Policy (CSP)", status: "review", notes: "Frontend CSP headers are configured for Vercel deployment. Backend API CSP still needs runtime confirmation." },

@@ -1,16 +1,24 @@
 using backend.intex.DTOs.Auth;
 using backend.intex.DTOs.Common;
 using backend.intex.Infrastructure.Auth;
+using backend.intex.Infrastructure.Configuration;
 using backend.intex.Services.Abstractions;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Options;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
 
 namespace backend.intex.Controllers;
 
 [Route("auth")]
-public sealed class AuthController(IAuthService authService) : ApiControllerBase
+public sealed class AuthController(
+    IAuthService authService,
+    IOptions<GoogleAuthOptions> googleAuthOptions,
+    IOptions<FrontendCorsOptions> frontendCorsOptions) : ApiControllerBase
 {
     [AllowAnonymous]
     [HttpPost("register-donor")]
@@ -63,6 +71,99 @@ public sealed class AuthController(IAuthService authService) : ApiControllerBase
     }
 
     [Authorize]
+    [HttpGet("mfa")]
+    [ProducesResponseType<MfaStatusResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<MfaStatusResponse>> GetMfaStatus(CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+        if (!userId.HasValue)
+        {
+            return Unauthorized(new ErrorResponse("Authentication required"));
+        }
+
+        var response = await authService.GetMfaStatusAsync(userId.Value, cancellationToken);
+        return response is null
+            ? Unauthorized(new ErrorResponse("Authentication required"))
+            : Ok(response);
+    }
+
+    [Authorize]
+    [HttpPost("mfa/setup")]
+    [ProducesResponseType<MfaSetupResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<MfaSetupResponse>> SetupMfa(CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+        if (!userId.HasValue)
+        {
+            return Unauthorized(new ErrorResponse("Authentication required"));
+        }
+
+        var result = await authService.BeginMfaSetupAsync(userId.Value, cancellationToken);
+        if (result.Response is null)
+        {
+            if (result.IsConflict)
+            {
+                return Conflict(new ErrorResponse(result.ErrorMessage ?? "MFA is already enabled."));
+            }
+
+            return BadRequest(new ErrorResponse(result.ErrorMessage ?? "Unable to start MFA setup."));
+        }
+
+        return Ok(result.Response);
+    }
+
+    [Authorize]
+    [HttpPost("mfa/enable")]
+    [ProducesResponseType<MfaStatusResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<MfaStatusResponse>> EnableMfa([FromBody] MfaCodeRequest request, CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+        if (!userId.HasValue)
+        {
+            return Unauthorized(new ErrorResponse("Authentication required"));
+        }
+
+        var result = await authService.EnableMfaAsync(userId.Value, request, cancellationToken);
+        if (result.Response is null)
+        {
+            if (result.IsConflict)
+            {
+                return Conflict(new ErrorResponse(result.ErrorMessage ?? "MFA is already enabled."));
+            }
+
+            return BadRequest(new ErrorResponse(result.ErrorMessage ?? "Unable to enable MFA."));
+        }
+
+        return Ok(result.Response);
+    }
+
+    [Authorize]
+    [HttpPost("mfa/disable")]
+    [ProducesResponseType<MfaStatusResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<MfaStatusResponse>> DisableMfa([FromBody] MfaCodeRequest request, CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+        if (!userId.HasValue)
+        {
+            return Unauthorized(new ErrorResponse("Authentication required"));
+        }
+
+        var result = await authService.DisableMfaAsync(userId.Value, request, cancellationToken);
+        return result.Response is null
+            ? BadRequest(new ErrorResponse(result.ErrorMessage ?? "Unable to disable MFA."))
+            : Ok(result.Response);
+    }
+
+    [Authorize]
     [HttpPost("change-password")]
     [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ErrorResponse>(StatusCodes.Status400BadRequest)]
@@ -110,4 +211,133 @@ public sealed class AuthController(IAuthService authService) : ApiControllerBase
     [HttpPost("logout")]
     [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
     public ActionResult<MessageResponse> Logout() => Ok(new MessageResponse("Logged out successfully"));
+
+    [AllowAnonymous]
+    [HttpGet("oauth/google/start")]
+    [ProducesResponseType(StatusCodes.Status302Found)]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status503ServiceUnavailable)]
+    public IActionResult StartGoogleLogin([FromQuery] string? returnUrl)
+    {
+        if (!googleAuthOptions.Value.IsConfigured)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new ErrorResponse("Google authentication is not configured"));
+        }
+
+        var frontendCallbackUrl = ResolveFrontendCallbackUrl(returnUrl);
+        var completionUrl = Url.ActionLink(
+            nameof(CompleteGoogleLogin),
+            values: new { returnUrl = frontendCallbackUrl });
+
+        if (string.IsNullOrWhiteSpace(completionUrl))
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse("Failed to start Google authentication"));
+        }
+
+        var properties = new AuthenticationProperties
+        {
+            RedirectUri = completionUrl
+        };
+        properties.Items["returnUrl"] = frontendCallbackUrl;
+
+        return Challenge(properties, ExternalAuthSchemes.Google);
+    }
+
+    [AllowAnonymous]
+    [HttpGet("oauth/google/complete")]
+    public async Task<IActionResult> CompleteGoogleLogin([FromQuery] string? returnUrl, CancellationToken cancellationToken)
+    {
+        var authResult = await HttpContext.AuthenticateAsync(ExternalAuthSchemes.ExternalCookie);
+        var frontendCallbackUrl = authResult.Properties?.Items.TryGetValue("returnUrl", out var storedReturnUrl) == true
+            ? ResolveFrontendCallbackUrl(storedReturnUrl)
+            : ResolveFrontendCallbackUrl(returnUrl);
+
+        if (!authResult.Succeeded || authResult.Principal is null)
+        {
+            await HttpContext.SignOutAsync(ExternalAuthSchemes.ExternalCookie);
+            return Redirect(BuildFrontendRedirect(frontendCallbackUrl, new Dictionary<string, string>
+            {
+                ["error"] = "Google sign-in could not be completed"
+            }));
+        }
+
+        var subject = authResult.Principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        var email = authResult.Principal.FindFirstValue(ClaimTypes.Email);
+        var firstName = authResult.Principal.FindFirstValue(ClaimTypes.GivenName);
+        var lastName = authResult.Principal.FindFirstValue(ClaimTypes.Surname);
+        var displayName = authResult.Principal.FindFirstValue(ClaimTypes.Name);
+
+        var response = string.IsNullOrWhiteSpace(subject)
+            ? null
+            : await authService.LoginWithGoogleAsync(subject, email, firstName, lastName, displayName, cancellationToken);
+
+        await HttpContext.SignOutAsync(ExternalAuthSchemes.ExternalCookie);
+
+        if (response is null)
+        {
+            return Redirect(BuildFrontendRedirect(frontendCallbackUrl, new Dictionary<string, string>
+            {
+                ["error"] = "This Google account is not authorized"
+            }));
+        }
+
+        if (response.MfaRequired && !string.IsNullOrWhiteSpace(response.ChallengeToken))
+        {
+            return Redirect(BuildFrontendRedirect(frontendCallbackUrl, new Dictionary<string, string>
+            {
+                ["mfaRequired"] = "true",
+                ["challengeToken"] = response.ChallengeToken
+            }));
+        }
+
+        if (string.IsNullOrWhiteSpace(response.Token) || response.User is null)
+        {
+            return Redirect(BuildFrontendRedirect(frontendCallbackUrl, new Dictionary<string, string>
+            {
+                ["error"] = "Google sign-in returned an incomplete session"
+            }));
+        }
+
+        var serializedUser = JsonSerializer.Serialize(response.User);
+        var encodedUser = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(serializedUser));
+        return Redirect(BuildFrontendRedirect(frontendCallbackUrl, new Dictionary<string, string>
+        {
+            ["token"] = response.Token,
+            ["user"] = encodedUser
+        }));
+    }
+
+    private string ResolveFrontendCallbackUrl(string? returnUrl)
+    {
+        var configuredOrigins = frontendCorsOptions.Value.AllowedOrigins
+            .Where(static origin => !string.IsNullOrWhiteSpace(origin))
+            .Select(origin => origin.TrimEnd('/'))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (Uri.TryCreate(returnUrl, UriKind.Absolute, out var returnUri)
+            && (returnUri.Scheme == Uri.UriSchemeHttps || returnUri.Scheme == Uri.UriSchemeHttp))
+        {
+            var candidateOrigin = returnUri.GetLeftPart(UriPartial.Authority).TrimEnd('/');
+            if (configuredOrigins.Contains(candidateOrigin, StringComparer.OrdinalIgnoreCase))
+            {
+                return $"{candidateOrigin}/auth/callback";
+            }
+        }
+
+        var fallbackOrigin = configuredOrigins.FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(fallbackOrigin))
+        {
+            return $"{fallbackOrigin}/auth/callback";
+        }
+
+        return $"{Request.Scheme}://{Request.Host}/auth/callback";
+    }
+
+    private static string BuildFrontendRedirect(string callbackUrl, IReadOnlyDictionary<string, string> values)
+    {
+        var fragment = string.Join(
+            "&",
+            values.Select(pair => $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value)}"));
+        return $"{callbackUrl}#{fragment}";
+    }
 }

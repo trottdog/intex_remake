@@ -9,6 +9,7 @@ using backend.intex.Infrastructure.Middleware;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 
@@ -117,6 +118,8 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+await EnsureRuntimeSchemaAsync(app);
+
 if (azureHostingOptions.UseForwardedHeaders)
 {
     app.UseForwardedHeaders();
@@ -172,5 +175,27 @@ if (app.Environment.IsDevelopment())
 app.MapControllers();
 
 app.Run();
+
+static async Task EnsureRuntimeSchemaAsync(WebApplication app)
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var logger = scope.ServiceProvider
+        .GetRequiredService<ILoggerFactory>()
+        .CreateLogger("SchemaBootstrap");
+
+    try
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<BeaconDbContext>();
+        await dbContext.Database.ExecuteSqlRawAsync("""
+            ALTER TABLE public.users
+            ADD COLUMN IF NOT EXISTS mfa_secret text;
+            """);
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Failed to apply runtime schema bootstrap for auth columns.");
+        throw;
+    }
+}
 
 public partial class Program;

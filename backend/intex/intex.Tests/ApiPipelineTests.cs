@@ -54,6 +54,19 @@ public sealed class ApiPipelineTests(ApiPipelineTests.TestAppFactory factory) : 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    [Fact]
+    public async Task GoogleOauthStart_WithoutConfiguredProvider_ReturnsServiceUnavailable()
+    {
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
+
+        using var response = await client.GetAsync("/api/auth/oauth/google/start?returnUrl=http://127.0.0.1:5173/auth/callback");
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+    }
+
     public sealed class TestAppFactory : WebApplicationFactory<Program>
     {
         public TestAppFactory()

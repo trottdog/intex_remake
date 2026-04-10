@@ -1,62 +1,323 @@
+using System.Globalization;
+using System.Text.Json;
 using backend.intex.Infrastructure.Auth;
+using backend.intex.Infrastructure.Data;
 using backend.intex.Infrastructure.Data.EntityFramework;
 using backend.intex.Services.Abstractions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace backend.intex.Controllers;
 
 [Route("dashboard")]
-public sealed class DashboardController(IDbContextFactory<BeaconDbContext> dbFactory, IUserScopeService userScopeService) : ApiControllerBase
+public sealed class DashboardController(
+    IDbContextFactory<BeaconDbContext> dbFactory,
+    IUserScopeService userScopeService,
+    IPostgresConnectionFactory connectionFactory,
+    IMemoryCache cache,
+    ILogger<DashboardController> logger) : ApiControllerBase
 {
+    private const string PublicImpactCacheKey = "dashboard.public-impact";
+
     [AllowAnonymous]
     [HttpGet("public-impact")]
     public async Task<IActionResult> GetPublicImpact(CancellationToken cancellationToken)
     {
-        var payload = await RunAsync(async db =>
+        try
         {
-            var residentsServedTotal = await db.Residents.AsNoTracking().CountAsync(cancellationToken);
-            var totalDonationsRaised = await db.Donations.AsNoTracking().SumAsync(item => (decimal?)item.Amount, cancellationToken);
-            var reintegrationCount = await db.Residents.AsNoTracking()
-                .CountAsync(item => item.ReintegrationStatus != null && EF.Functions.ILike(item.ReintegrationStatus, "completed"), cancellationToken);
-            var safehouseCount = await db.Safehouses.AsNoTracking().CountAsync(cancellationToken);
-            var programAreasActive = await db.PartnerAssignments.AsNoTracking()
-                .Where(item => item.ProgramArea != null)
-                .Select(item => item.ProgramArea!)
-                .Distinct()
-                .CountAsync(cancellationToken);
-            var recentSnapshots = await db.PublicImpactSnapshots.AsNoTracking()
-                .Where(item => item.IsPublished == true)
-                .OrderByDescending(item => item.SnapshotId)
-                .Take(5)
-                .Select(item => new
-                {
-                    item.SnapshotId,
-                    Id = item.SnapshotId,
-                    item.Headline,
-                    Title = item.Headline,
-                    item.SummaryText,
-                    Summary = item.SummaryText,
-                    SnapshotDate = item.SnapshotDate.HasValue ? item.SnapshotDate.Value.ToString("yyyy-MM-dd") : null,
-                    PublishedAt = item.PublishedAt,
-                    item.IsPublished
-                })
-                .ToListAsync(cancellationToken);
+            var payload = await LoadPublicImpactPayloadAsync(cancellationToken);
+            cache.Set(PublicImpactCacheKey, payload, TimeSpan.FromMinutes(5));
+            return Ok(payload);
+        }
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested && IsPublicImpactDataException(exception))
+        {
+            logger.LogWarning(exception, "Failed to load public impact payload from PostgreSQL. Falling back to cached/default response.");
 
-            return new
+            if (cache.TryGetValue<PublicImpactPayload>(PublicImpactCacheKey, out var cachedPayload) && cachedPayload is not null)
             {
+                return Ok(cachedPayload);
+            }
+
+            return Ok(CreateFallbackPublicImpactPayload());
+        }
+    }
+
+    private async Task<PublicImpactPayload> LoadPublicImpactPayloadAsync(CancellationToken cancellationToken)
+    {
+        await using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+
+        var latestPublishedMetricsJson = await ExecuteScalarStringAsync(connection, """
+            SELECT metric_payload_json::text
+            FROM public_impact_snapshots
+            WHERE is_published = true
+              AND metric_payload_json IS NOT NULL
+            ORDER BY COALESCE(published_at, TIMESTAMP '0001-01-01') DESC,
+                     COALESCE(snapshot_date, DATE '0001-01-01') DESC,
+                     snapshot_id DESC
+            LIMIT 1;
+            """, cancellationToken);
+
+        JsonDocument? latestPublishedMetrics = null;
+        if (!string.IsNullOrWhiteSpace(latestPublishedMetricsJson))
+        {
+            latestPublishedMetrics = JsonDocument.Parse(latestPublishedMetricsJson);
+        }
+
+        try
+        {
+            var totalDonationsRaised = ExtractSnapshotMetricDecimal(
+                latestPublishedMetrics,
+                "donationsRaised",
+                "totalDonationsAmount",
+                "totalDonationsRaised");
+            var residentsServedTotal = ExtractSnapshotMetricInt(
+                latestPublishedMetrics,
+                "residentsServedTotal",
+                "residentsServed",
+                "residents_total")
+                ?? await ExecuteScalarIntAsync(connection, "SELECT count(*)::int FROM residents;", cancellationToken, commandTimeoutSeconds: 3);
+
+            var reintegrationCount = ExtractSnapshotMetricInt(
+                latestPublishedMetrics,
+                "reintegrationCount",
+                "reintegrationCompleted",
+                "completedReintegrations")
+                ?? await ExecuteScalarIntAsync(connection, """
+                SELECT count(*)::int
+                FROM residents
+                WHERE reintegration_status IS NOT NULL
+                  AND reintegration_status ILIKE 'completed';
+                """, cancellationToken, commandTimeoutSeconds: 3);
+
+            var safehouseCount = ExtractSnapshotMetricInt(
+                latestPublishedMetrics,
+                "safehouseCount",
+                "safehousesCount",
+                "safehouse_total")
+                ?? await ExecuteScalarIntAsync(connection, "SELECT count(*)::int FROM safehouses;", cancellationToken, commandTimeoutSeconds: 3);
+
+            var programAreasActive = ExtractSnapshotMetricInt(
+                latestPublishedMetrics,
+                "programAreasActive",
+                "programAreaCount")
+                ?? await ExecuteScalarIntAsync(connection, """
+                SELECT count(*)::int
+                FROM (
+                    SELECT DISTINCT program_area
+                    FROM partner_assignments
+                    WHERE program_area IS NOT NULL
+                ) AS program_areas;
+                """, cancellationToken, commandTimeoutSeconds: 3);
+            var recentSnapshots = await GetRecentPublicSnapshotsAsync(connection, cancellationToken);
+            return new PublicImpactPayload(
                 residentsServedTotal,
-                totalDonationsRaised = decimal.Round(totalDonationsRaised ?? 0m, 2),
+                decimal.Round(totalDonationsRaised ?? 0m, 2),
                 reintegrationCount,
                 safehouseCount,
                 programAreasActive,
-                recentSnapshots
-            };
-        });
-
-        return Ok(payload);
+                recentSnapshots);
+        }
+        finally
+        {
+            latestPublishedMetrics?.Dispose();
+        }
     }
+
+    private static async Task<List<PublicImpactSnapshotSummary>> GetRecentPublicSnapshotsAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT snapshot_id,
+                   headline,
+                   summary_text,
+                   snapshot_date,
+                   published_at,
+                   is_published
+            FROM public_impact_snapshots
+            WHERE is_published = true
+            ORDER BY snapshot_id DESC
+            LIMIT 5;
+            """;
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var snapshots = new List<PublicImpactSnapshotSummary>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var snapshotId = reader.GetInt64(0);
+            var headline = reader.IsDBNull(1) ? null : reader.GetString(1);
+            var summaryText = reader.IsDBNull(2) ? null : reader.GetString(2);
+            var snapshotDate = reader.IsDBNull(3) ? (DateOnly?)null : reader.GetFieldValue<DateOnly>(3);
+            var publishedAt = reader.IsDBNull(4) ? (DateTime?)null : reader.GetFieldValue<DateTime>(4);
+            var isPublished = !reader.IsDBNull(5) && reader.GetBoolean(5);
+
+            snapshots.Add(new PublicImpactSnapshotSummary(
+                snapshotId,
+                snapshotId,
+                headline,
+                headline,
+                summaryText,
+                summaryText,
+                snapshotDate?.ToString("yyyy-MM-dd"),
+                publishedAt,
+                isPublished));
+        }
+
+        return snapshots;
+    }
+
+    private static bool IsPublicImpactDataException(Exception exception) =>
+        exception is TimeoutException
+        || exception is NpgsqlException
+        || exception.InnerException is not null && IsPublicImpactDataException(exception.InnerException);
+
+    private static PublicImpactPayload CreateFallbackPublicImpactPayload() =>
+        new(0, 0m, 0, 0, 0, []);
+
+    private static async Task<int> ExecuteScalarIntAsync(
+        NpgsqlConnection connection,
+        string commandText,
+        CancellationToken cancellationToken,
+        int? commandTimeoutSeconds = null)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = commandText;
+        if (commandTimeoutSeconds is > 0)
+        {
+            command.CommandTimeout = commandTimeoutSeconds.Value;
+        }
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return result switch
+        {
+            null => 0,
+            DBNull => 0,
+            int value => value,
+            long value => checked((int)value),
+            decimal value => checked((int)value),
+            _ => Convert.ToInt32(result, CultureInfo.InvariantCulture)
+        };
+    }
+
+    private static async Task<string?> ExecuteScalarStringAsync(
+        NpgsqlConnection connection,
+        string commandText,
+        CancellationToken cancellationToken,
+        int? commandTimeoutSeconds = null)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = commandText;
+        if (commandTimeoutSeconds is > 0)
+        {
+            command.CommandTimeout = commandTimeoutSeconds.Value;
+        }
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return result is null or DBNull ? null : Convert.ToString(result, CultureInfo.InvariantCulture);
+    }
+
+    private static int? ExtractSnapshotMetricInt(JsonDocument? document, params string[] propertyNames)
+    {
+        if (document?.RootElement.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        foreach (var propertyName in propertyNames)
+        {
+            if (!TryGetDecimalProperty(document.RootElement, propertyName, out var decimalValue))
+            {
+                continue;
+            }
+
+            var rounded = decimal.Truncate(decimalValue);
+            if (rounded < int.MinValue || rounded > int.MaxValue)
+            {
+                continue;
+            }
+
+            return (int)rounded;
+        }
+
+        return null;
+    }
+
+    private static decimal? ExtractSnapshotMetricDecimal(JsonDocument? document, params string[] propertyNames)
+    {
+        if (document?.RootElement.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        foreach (var propertyName in propertyNames)
+        {
+            if (TryGetDecimalProperty(document.RootElement, propertyName, out var value))
+            {
+                return value;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool TryGetDecimalProperty(JsonElement element, string propertyName, out decimal value)
+    {
+        if (element.TryGetProperty(propertyName, out var propertyValue) && TryConvertToDecimal(propertyValue, out value))
+        {
+            return true;
+        }
+
+        foreach (var property in element.EnumerateObject())
+        {
+            if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase)
+                && TryConvertToDecimal(property.Value, out value))
+            {
+                return true;
+            }
+        }
+
+        value = default;
+        return false;
+    }
+
+    private static bool TryConvertToDecimal(JsonElement element, out decimal value)
+    {
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Number:
+                return element.TryGetDecimal(out value);
+            case JsonValueKind.String:
+                return decimal.TryParse(
+                    element.GetString(),
+                    NumberStyles.Number,
+                    CultureInfo.InvariantCulture,
+                    out value);
+            default:
+                value = default;
+                return false;
+        }
+    }
+
+    private sealed record PublicImpactPayload(
+        int ResidentsServedTotal,
+        decimal TotalDonationsRaised,
+        int ReintegrationCount,
+        int SafehouseCount,
+        int ProgramAreasActive,
+        List<PublicImpactSnapshotSummary> RecentSnapshots);
+
+    private sealed record PublicImpactSnapshotSummary(
+        long SnapshotId,
+        long Id,
+        string? Headline,
+        string? Title,
+        string? SummaryText,
+        string? Summary,
+        string? SnapshotDate,
+        DateTime? PublishedAt,
+        bool IsPublished);
 
     [Authorize(Policy = PolicyNames.DonorOnly)]
     [HttpGet("donor-summary")]
@@ -1202,6 +1463,7 @@ public sealed class DashboardController(IDbContextFactory<BeaconDbContext> dbFac
     private async Task<T> RunAsync<T>(Func<BeaconDbContext, Task<T>> work)
     {
         await using var db = await dbFactory.CreateDbContextAsync();
+        await db.Database.OpenConnectionAsync();
         return await work(db);
     }
 

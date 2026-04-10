@@ -10,6 +10,7 @@ export const usersTable = pgTable("users", {
   role:         text("role", { enum: ["public", "donor", "staff", "admin", "super_admin"] }).notNull().default("public"),
   isActive:     boolean("is_active").notNull().default(true),
   mfaEnabled:   boolean("mfa_enabled").notNull().default(false),
+  mfaSecret:    text("mfa_secret"),
   lastLogin:    timestamp("last_login", { withTimezone: true }),
   supporterId:  bigint("supporter_id", { mode: "number" }),
   createdAt:    timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

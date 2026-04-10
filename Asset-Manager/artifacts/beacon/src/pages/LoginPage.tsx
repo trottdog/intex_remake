@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
-import { loginApi, verifyMfaApi } from "@/services/auth.service";
+import { loginApi, startGoogleLogin, verifyMfaApi } from "@/services/auth.service";
 import { useGetPublicImpact } from "@/services/public.service";
 import { ApiError } from "@/services/api";
 import lighthouseLogo from "@assets/Minimalist_lighthouse_logo_design_1775623783267.png";
@@ -31,6 +31,7 @@ export default function LoginPage() {
   const [mfaCode, setMfaCode] = useState("");
   const [pendingChallengeToken, setPendingChallengeToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const impactStats = useMemo(() => ([
@@ -113,6 +114,22 @@ export default function LoginPage() {
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setIsGoogleLoading(true);
+    try {
+      await startGoogleLogin();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError("Unable to start Google sign in. Please try again.");
+      }
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -228,7 +245,7 @@ export default function LoginPage() {
               ) : (
                 <>
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">
-                    MFA is enabled on this account. Enter the 6-digit verification code to complete sign in.
+                    MFA is enabled on this account. Enter the current 6-digit code from your authenticator app to complete sign in.
                   </div>
                   <div>
                     <Label htmlFor="mfaCode" className="text-sm font-medium text-gray-700">Verification code</Label>
@@ -280,6 +297,37 @@ export default function LoginPage() {
                 </Button>
               )}
             </form>
+
+            {!pendingChallengeToken && (
+              <>
+                <div className="my-5 flex items-center gap-3">
+                  <div className="h-px flex-1 bg-gray-200" />
+                  <span className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">or</span>
+                  <div className="h-px flex-1 bg-gray-200" />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-11 border-gray-200 text-gray-800 hover:bg-gray-50"
+                  disabled={isGoogleLoading}
+                  onClick={handleGoogleLogin}
+                >
+                  {isGoogleLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Continue with Google
+                    </>
+                  ) : (
+                    <>
+                      <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 text-xs font-semibold text-gray-700">
+                        G
+                      </span>
+                      Continue with Google
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
 
             <div className="mt-5 rounded-lg border border-[#c8e6d4] bg-[#f0faf6] px-4 py-3 text-sm text-[#214636]">
               <span className="font-medium">Don't have an account?</span>{" "}
