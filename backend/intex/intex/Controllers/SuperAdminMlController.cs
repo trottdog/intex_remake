@@ -783,28 +783,74 @@ public sealed class SuperAdminMlController(BeaconDbContext dbContext) : ApiContr
     [HttpGet("ml/pipelines")]
     public async Task<IActionResult> GetMlPipelines(CancellationToken cancellationToken)
     {
-        var rows = await dbContext.MlPipelineRuns.AsNoTracking()
+        var latestRuns = (await dbContext.MlPipelineRuns.AsNoTracking()
             .OrderByDescending(item => item.TrainedAt)
-            .GroupBy(item => item.PipelineName)
-            .Select(group => group.First())
             .Select(item => new
             {
+                item.RunId,
                 pipelineName = item.PipelineName,
                 displayName = item.DisplayName ?? item.PipelineName,
+                item.TrainedAt,
+                item.Status,
+                item.ScoredEntityCount,
+                item.FeatureImportanceJson
+            })
+            .ToListAsync(cancellationToken))
+            .GroupBy(item => item.pipelineName)
+            .Select(group => group.First())
+            .ToList();
+
+        var latestRunIds = latestRuns.Select(item => item.RunId).ToList();
+        var pipelineNames = latestRuns.Select(item => item.pipelineName).ToList();
+
+        var snapshotStatsByRunId = await dbContext.MlPredictionSnapshots.AsNoTracking()
+            .Where(item => latestRunIds.Contains(item.RunId))
+            .GroupBy(item => item.RunId)
+            .Select(group => new
+            {
+                runId = group.Key,
+                avgScore = group.Average(item => (double?)item.PredictionScore),
+                minScore = group.Min(item => (double?)item.PredictionScore),
+                maxScore = group.Max(item => (double?)item.PredictionScore)
+            })
+            .ToDictionaryAsync(item => item.runId, cancellationToken);
+
+        var totalSnapshotsByPipeline = await dbContext.MlPredictionSnapshots.AsNoTracking()
+            .Where(item => pipelineNames.Contains(item.PipelineName))
+            .GroupBy(item => item.PipelineName)
+            .Select(group => new
+            {
+                pipelineName = group.Key,
+                totalSnapshots = group.Count()
+            })
+            .ToDictionaryAsync(item => item.pipelineName, item => item.totalSnapshots, cancellationToken);
+
+        var freshnessCutoff = DateTimeOffset.UtcNow.AddDays(-7);
+        var now = DateTimeOffset.UtcNow;
+
+        var rows = latestRuns.Select(item =>
+        {
+            snapshotStatsByRunId.TryGetValue(item.RunId, out var snapshotStats);
+            totalSnapshotsByPipeline.TryGetValue(item.pipelineName, out var totalSnapshots);
+
+            return new
+            {
+                pipelineName = item.pipelineName,
+                displayName = item.displayName,
                 lastRunId = item.RunId,
                 lastRunAt = item.TrainedAt,
                 lastRunStatus = item.Status,
                 scoredEntityCount = item.ScoredEntityCount,
-                avgScore = dbContext.MlPredictionSnapshots.Where(p => p.RunId == item.RunId).Average(p => (double?)p.PredictionScore),
-                minScore = dbContext.MlPredictionSnapshots.Where(p => p.RunId == item.RunId).Min(p => (double?)p.PredictionScore),
-                maxScore = dbContext.MlPredictionSnapshots.Where(p => p.RunId == item.RunId).Max(p => (double?)p.PredictionScore),
-                totalSnapshots = dbContext.MlPredictionSnapshots.Count(p => p.PipelineName == item.PipelineName),
-                freshness = item.TrainedAt >= DateTimeOffset.UtcNow.AddDays(-7) ? "ok" : "stale",
-                daysSinceLastRun = (int?)(DateTimeOffset.UtcNow - item.TrainedAt).TotalDays,
-                featureImportanceJson = item.FeatureImportanceJson != null ? item.FeatureImportanceJson.RootElement : (object?)null,
+                avgScore = snapshotStats?.avgScore,
+                minScore = snapshotStats?.minScore,
+                maxScore = snapshotStats?.maxScore,
+                totalSnapshots,
+                freshness = item.TrainedAt >= freshnessCutoff ? "ok" : "stale",
+                daysSinceLastRun = (int?)(now - item.TrainedAt).TotalDays,
+                featureImportanceJson = item.FeatureImportanceJson?.RootElement,
                 latestRunId = item.RunId
-            })
-            .ToListAsync(cancellationToken);
+            };
+        }).ToList();
 
         return Ok(new { data = rows });
     }
