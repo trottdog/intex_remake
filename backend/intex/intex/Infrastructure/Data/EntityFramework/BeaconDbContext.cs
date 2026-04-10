@@ -1,5 +1,6 @@
 using backend.intex.Entities.Database;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace backend.intex.Infrastructure.Data.EntityFramework;
 
@@ -34,6 +35,62 @@ public sealed class BeaconDbContext(DbContextOptions<BeaconDbContext> options) :
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(BeaconDbContext).Assembly);
+        ApplyTimestampWithoutTimeZoneConverters(modelBuilder);
         base.OnModelCreating(modelBuilder);
+    }
+
+    private static void ApplyTimestampWithoutTimeZoneConverters(ModelBuilder modelBuilder)
+    {
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (!string.Equals(property.GetColumnType(), "timestamp", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (property.ClrType == typeof(DateTime))
+                {
+                    property.SetValueConverter(TimestampWithoutTimeZoneDateTimeConverter.Instance);
+                }
+                else if (property.ClrType == typeof(DateTime?))
+                {
+                    property.SetValueConverter(NullableTimestampWithoutTimeZoneDateTimeConverter.Instance);
+                }
+            }
+        }
+    }
+
+    private sealed class TimestampWithoutTimeZoneDateTimeConverter : ValueConverter<DateTime, DateTime>
+    {
+        public static readonly TimestampWithoutTimeZoneDateTimeConverter Instance = new();
+
+        private TimestampWithoutTimeZoneDateTimeConverter()
+            : base(
+                value => value.Kind == DateTimeKind.Unspecified
+                    ? value
+                    : DateTime.SpecifyKind(value, DateTimeKind.Unspecified),
+                value => DateTime.SpecifyKind(value, DateTimeKind.Utc))
+        {
+        }
+    }
+
+    private sealed class NullableTimestampWithoutTimeZoneDateTimeConverter : ValueConverter<DateTime?, DateTime?>
+    {
+        public static readonly NullableTimestampWithoutTimeZoneDateTimeConverter Instance = new();
+
+        private NullableTimestampWithoutTimeZoneDateTimeConverter()
+            : base(
+                value => value.HasValue
+                    ? value.Value.Kind == DateTimeKind.Unspecified
+                        ? value
+                        : DateTime.SpecifyKind(value.Value, DateTimeKind.Unspecified)
+                    : value,
+                value => value.HasValue
+                    ? DateTime.SpecifyKind(value.Value, DateTimeKind.Utc)
+                    : value)
+        {
+        }
     }
 }

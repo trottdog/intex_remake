@@ -92,22 +92,13 @@ public static class ServiceCollectionExtensions
         var connectionBuilder = new NpgsqlConnectionStringBuilder(connectionString)
         {
             MinPoolSize = 0,
-            MaxPoolSize = 20,
+            MaxPoolSize = 40,
             Timeout = 6,
             CommandTimeout = 8,
             KeepAlive = 15
         };
 
-        if (IsSupabasePoolerConnection(connectionBuilder))
-        {
-            // Supabase pooler already multiplexes server sessions; disabling local pooling
-            // avoids stale connector reads that can manifest as long command hangs.
-            connectionBuilder.Pooling = false;
-        }
-        else
-        {
-            connectionBuilder.Pooling = true;
-        }
+        connectionBuilder.Pooling = true;
         var normalizedConnectionString = connectionBuilder.ConnectionString;
 
         var dataSourceBuilder = new NpgsqlDataSourceBuilder(normalizedConnectionString);
