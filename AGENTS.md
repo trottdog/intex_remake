@@ -17,3 +17,18 @@ Database: PostgreSQL (used by both Node and .NET backend paths. Deployed in Supa
 ML pipeline: Python with pandas, numpy, scikit-learn, matplotlib, psycopg, pytest
 
 Frontend hosting/deploy behavior: frontend appears Vercel/static, backend deploy is separate
+
+## Run Locally (Windows)
+
+1. Backend (.NET API):
+	- `cd backend/intex/intex`
+	- `dotnet run --launch-profile https`
+
+2. Frontend (Vite):
+	- `cd Asset-Manager`
+	- `corepack pnpm install`
+	- `corepack pnpm --filter @workspace/beacon dev`
+
+3. Open:
+	- Frontend: http://127.0.0.1:5173
+	- Backend: https://localhost:7194
