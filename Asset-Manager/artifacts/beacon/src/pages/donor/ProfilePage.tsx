@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useGetMyDonorProfile, updateMyDonorProfile } from "@/services/donor.service";
 import { useAuth } from "@/contexts/AuthContext";
 import { getCookie, setCookie } from "@/lib/cookies";
+import { applyConsent, getConsentLevel } from "@/lib/consent";
 import { User, Mail, Phone, MapPin, Building, Shield, Bell, CreditCard, Edit3, Save, X, Lock, CheckCircle, Sun, Moon, Monitor } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -35,8 +36,7 @@ export default function ProfilePage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [themePref, setThemePref] = useState<ThemePref>(getThemePref);
   const [consentLevel, setConsentLevel] = useState<"all" | "essential">(() => {
-    const c = getCookie("beacon_consent");
-    return c === "all" ? "all" : "essential";
+    return getConsentLevel() === "all" ? "all" : "essential";
   });
   const [consentSaved, setConsentSaved] = useState(false);
 
@@ -99,7 +99,7 @@ export default function ProfilePage() {
   };
 
   const saveConsent = (level: "all" | "essential") => {
-    setCookie("beacon_consent", level);
+    applyConsent(level);
     setConsentLevel(level);
     setConsentSaved(true);
     setTimeout(() => setConsentSaved(false), 2000);
@@ -309,12 +309,12 @@ export default function ProfilePage() {
           Privacy &amp; Consent Preferences
         </h3>
         <p className="text-sm text-gray-500 mb-4">
-          Control how Beacon stores on-device preferences. Essential preferences keep your theme, sidebar, and consent choices consistent. Optional consent is reserved for analytics or personalization if those features are enabled.
+          Control how Beacon stores on-device preferences. Essential preferences keep your theme, sidebar, and consent choices consistent. Accept All also enables a non-essential <code>beacon_personalization</code> cookie.
         </p>
         <div className="space-y-3 mb-4">
           {([
             { id: "essential", label: "Essential Only", desc: "Stores only Beacon preference cookies such as theme, consent, and sidebar state. No analytics or cross-site tracking.", locked: true },
-            { id: "all", label: "Accept All", desc: "Allows optional analytics or personalization features if Beacon enables them in the future." },
+            { id: "all", label: "Accept All", desc: "Allows optional personalization and enables the non-essential beacon_personalization cookie." },
           ] as const).map((opt) => (
             <label key={opt.id} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${consentLevel === opt.id ? "border-[#2a9d72] bg-[#f0faf6]" : "border-gray-100 hover:border-gray-200"}`}>
               <input

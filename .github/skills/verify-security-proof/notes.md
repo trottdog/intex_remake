@@ -55,18 +55,18 @@ Missing proof: Clear demonstration that production secrets are only in secure en
 Exact blocker: Mixed posture; production JWT handling is good, but committed plaintext connection-string passwords create grading risk.
 
 Privacy policy
-Status: FAIL
-Repo/runtime evidence: Not evidenced in the requested backend files.
+Status: RISK
+Repo/runtime evidence: Implemented in frontend with public route and links: PrivacyPage.tsx (Asset-Manager/artifacts/beacon/src/pages/PrivacyPage.tsx), route registration in App.tsx:90 (Asset-Manager/artifacts/beacon/src/App.tsx), footer links in PublicLayout.tsx:213 and DashboardLayout.tsx:281, plus cookie-banner link in CookieConsent.tsx:39.
 Video proof evidence: None provided.
 Missing proof: Public privacy policy page and footer link demonstration.
-Exact blocker: No implementation proof in provided scope.
+Exact blocker: Implementation exists, but deployed runtime/video proof is missing in this request scope.
 
 Cookie consent
-Status: FAIL
-Repo/runtime evidence: Not evidenced in the requested backend files.
+Status: RISK
+Repo/runtime evidence: Implemented in frontend: consent banner with essential/all choices (Asset-Manager/artifacts/beacon/src/components/CookieConsent.tsx), centralized consent enforcement with optional-cookie cleanup/enablement (Asset-Manager/artifacts/beacon/src/lib/consent.ts), startup reconciliation (Asset-Manager/artifacts/beacon/src/main.tsx), and profile consent controls (Asset-Manager/artifacts/beacon/src/pages/donor/ProfilePage.tsx).
 Video proof evidence: None provided.
-Missing proof: Banner behavior and explanation of cosmetic vs functional consent.
-Exact blocker: No implementation/proof in provided scope.
+Missing proof: Runtime demonstration that beacon_personalization is created only after Accept All and removed when Essential Only is selected.
+Exact blocker: Code implementation exists, but deployed runtime/video proof is still missing. Use .github/skills/verify-security-proof/COOKIE_CONSENT_PROOF_SCRIPT.md for the recording sequence.
 
 CSP response header
 Status: FAIL

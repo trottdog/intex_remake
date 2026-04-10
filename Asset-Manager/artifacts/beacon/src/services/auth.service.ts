@@ -4,12 +4,18 @@ import type { AuthUser } from "@/contexts/AuthContext";
 export type { AuthUser };
 
 export interface LoginResponse {
-  token: string;
-  user: AuthUser;
+  token: string | null;
+  user: AuthUser | null;
+  mfaRequired: boolean;
+  challengeToken: string | null;
 }
 
 export function loginApi(username: string, password: string): Promise<LoginResponse> {
   return apiPost<LoginResponse>("/api/auth/login", { username, password });
+}
+
+export function verifyMfaApi(challengeToken: string, code: string): Promise<LoginResponse> {
+  return apiPost<LoginResponse>("/api/auth/mfa/verify", { challengeToken, code });
 }
 
 export function changePasswordApi(

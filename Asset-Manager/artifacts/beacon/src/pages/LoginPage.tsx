@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
-import { loginApi } from "@/services/auth.service";
+import { loginApi, verifyMfaApi } from "@/services/auth.service";
 import { ApiError } from "@/services/api";
 import lighthouseLogo from "@assets/Minimalist_lighthouse_logo_design_1775623783267.png";
 
@@ -16,8 +16,21 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [mfaCode, setMfaCode] = useState("");
+  const [pendingChallengeToken, setPendingChallengeToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const completeLogin = (token: string, role: string, user: Parameters<typeof login>[1]) => {
+    flushSync(() => {
+      login(token, user);
+    });
+
+    if (role === "super_admin") setLocation("/superadmin");
+    else if (role === "admin" || role === "staff") setLocation("/admin");
+    else if (role === "donor") setLocation("/donor");
+    else setLocation("/");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,19 +38,59 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const data = await loginApi(username, password);
-      flushSync(() => {
-        login(data.token, data.user);
-      });
-      const role = data.user.role;
-      if (role === "super_admin") setLocation("/superadmin");
-      else if (role === "admin" || role === "staff") setLocation("/admin");
-      else if (role === "donor") setLocation("/donor");
-      else setLocation("/");
+      if (data.mfaRequired) {
+        if (!data.challengeToken) {
+          setError("MFA challenge was not created. Contact support.");
+          return;
+        }
+
+        setPendingChallengeToken(data.challengeToken);
+        setPassword("");
+        setMfaCode("");
+        return;
+      }
+
+      if (!data.token || !data.user) {
+        setError("Login response was incomplete.");
+        return;
+      }
+
+      completeLogin(data.token, data.user.role, data.user);
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
         setError("Unable to connect to server. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyMfa = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendingChallengeToken) {
+      setError("MFA session expired. Please sign in again.");
+      return;
+    }
+
+    setError(null);
+    setIsLoading(true);
+    try {
+      const data = await verifyMfaApi(pendingChallengeToken, mfaCode);
+      if (!data.token || !data.user) {
+        setError("MFA verification response was incomplete.");
+        return;
+      }
+
+      setPendingChallengeToken(null);
+      setMfaCode("");
+      completeLogin(data.token, data.user.role, data.user);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError("Unable to verify MFA code. Please try again.");
       }
     } finally {
       setIsLoading(false);
@@ -112,46 +165,69 @@ export default function LoginPage() {
               <p className="text-gray-500 text-sm mt-2">Authorized personnel only — all access is logged and audited.</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <Label htmlFor="username" className="text-sm font-medium text-gray-700">Username</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  autoComplete="username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter username"
-                  required
-                  className="mt-1.5"
-                />
-              </div>
+            <form onSubmit={pendingChallengeToken ? handleVerifyMfa : handleSubmit} className="space-y-5">
+              {!pendingChallengeToken ? (
+                <>
+                  <div>
+                    <Label htmlFor="username" className="text-sm font-medium text-gray-700">Username</Label>
+                    <Input
+                      id="username"
+                      type="text"
+                      autoComplete="username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Enter username"
+                      required
+                      className="mt-1.5"
+                    />
+                  </div>
 
-              <div>
-                <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password</Label>
-                <div className="relative mt-1.5">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((p) => !p)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
+                  <div>
+                    <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password</Label>
+                    <div className="relative mt-1.5">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((p) => !p)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
 
-              <p className="text-xs text-gray-400">
-                Password requirements: 12+ characters with uppercase, lowercase, digit, and special character.
-              </p>
+                  <p className="text-xs text-gray-400">
+                    Password requirements: 12+ characters with uppercase, lowercase, digit, and special character.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">
+                    MFA is enabled on this account. Enter the 6-digit verification code to complete sign in.
+                  </div>
+                  <div>
+                    <Label htmlFor="mfaCode" className="text-sm font-medium text-gray-700">Verification code</Label>
+                    <Input
+                      id="mfaCode"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      value={mfaCode}
+                      onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      placeholder="6-digit code"
+                      required
+                      className="mt-1.5"
+                    />
+                  </div>
+                </>
+              )}
 
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
@@ -167,10 +243,25 @@ export default function LoginPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Signing in...
+                    {pendingChallengeToken ? "Verifying..." : "Signing in..."}
                   </>
-                ) : "Sign in"}
+                ) : pendingChallengeToken ? "Verify code" : "Sign in"}
               </Button>
+
+              {pendingChallengeToken && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-11"
+                  onClick={() => {
+                    setPendingChallengeToken(null);
+                    setMfaCode("");
+                    setError(null);
+                  }}
+                >
+                  Back to password login
+                </Button>
+              )}
             </form>
 
             <div className="mt-6 pt-6 border-t border-gray-100 text-center">

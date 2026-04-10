@@ -34,7 +34,7 @@ export default function PrivacyPage() {
         <p>Beacon authentication does not depend on cookies. Login uses a bearer token held in application memory rather than a persistent browser cookie.</p>
 
         <h2>5. Essential vs Optional Consent</h2>
-        <p>The consent banner lets you choose between essential preferences only and optional analytics or personalization. Essential preferences keep the application usable and remember interface choices. Optional consent is only used for non-essential features when those features are enabled.</p>
+        <p>The consent banner lets you choose between essential preferences only and optional personalization. Essential preferences keep the application usable and remember interface choices. If you choose Accept All, Beacon also enables the non-essential <code>beacon_personalization</code> cookie. If you choose Essential Only, Beacon removes that non-essential cookie.</p>
 
         <h2>6. Resident Data Protection</h2>
         <p>Resident information is stored with the highest level of protection. Identifiable information is accessible only to authorized staff. Resident codes (not names) are used in reports to protect identities.</p>
