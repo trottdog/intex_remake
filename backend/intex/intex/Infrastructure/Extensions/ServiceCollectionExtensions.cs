@@ -77,15 +77,7 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddDatabaseInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("PostgreSql");
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            connectionString = configuration.GetConnectionString("DefaultConnection");
-        }
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            connectionString = configuration["DATABASE_URL"];
-        }
+        var connectionString = ResolvePostgresConnectionString(configuration);
 
         if (string.IsNullOrWhiteSpace(connectionString))
         {
@@ -274,5 +266,23 @@ public static class ServiceCollectionExtensions
             .Where(static origin => !string.IsNullOrWhiteSpace(origin))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
+    }
+
+    private static string? ResolvePostgresConnectionString(IConfiguration configuration)
+    {
+        var candidates = new[]
+        {
+            configuration.GetConnectionString("PostgreSql"),
+            configuration.GetConnectionString("DefaultConnection"),
+            configuration["ConnectionStrings:PostgreSql"],
+            configuration["ConnectionStrings:DefaultConnection"],
+            configuration["POSTGRESQLCONNSTR_PostgreSql"],
+            configuration["POSTGRESQLCONNSTR_DefaultConnection"],
+            configuration["CUSTOMCONNSTR_PostgreSql"],
+            configuration["CUSTOMCONNSTR_DefaultConnection"],
+            configuration["DATABASE_URL"]
+        };
+
+        return candidates.FirstOrDefault(candidate => !string.IsNullOrWhiteSpace(candidate));
     }
 }
