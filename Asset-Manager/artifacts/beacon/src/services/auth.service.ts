@@ -10,12 +10,29 @@ export interface LoginResponse {
   challengeToken: string | null;
 }
 
+export interface RegisterDonorResponse {
+  id: number;
+  username: string;
+  email: string;
+  supporterId: number | null;
+}
+
 export function loginApi(username: string, password: string): Promise<LoginResponse> {
   return apiPost<LoginResponse>("/api/auth/login", { username, password });
 }
 
 export function verifyMfaApi(challengeToken: string, code: string): Promise<LoginResponse> {
   return apiPost<LoginResponse>("/api/auth/mfa/verify", { challengeToken, code });
+}
+
+export function registerDonorApi(payload: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  username: string;
+  password: string;
+}): Promise<RegisterDonorResponse> {
+  return apiPost<RegisterDonorResponse>("/api/auth/register-donor", payload);
 }
 
 export function changePasswordApi(

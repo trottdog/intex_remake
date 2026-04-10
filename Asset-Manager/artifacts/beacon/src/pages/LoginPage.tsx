@@ -264,6 +264,13 @@ export default function LoginPage() {
               )}
             </form>
 
+            <div className="mt-5 rounded-lg border border-[#c8e6d4] bg-[#f0faf6] px-4 py-3 text-sm text-[#214636]">
+              <span className="font-medium">Don't have an account?</span>{" "}
+              <a href="/donate?createAccount=1" className="font-semibold text-[#2a9d72] hover:underline">
+                Create an account
+              </a>
+            </div>
+
             <div className="mt-6 pt-6 border-t border-gray-100 text-center">
               <p className="text-xs text-gray-400">
                 By signing in, you agree to Beacon's security and data handling policies.

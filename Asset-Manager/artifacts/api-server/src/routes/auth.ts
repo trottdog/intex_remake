@@ -2,10 +2,95 @@ import { Router } from "express";
 import bcrypt from "bcrypt";
 import { eq, sql } from "drizzle-orm";
 import { db } from "../lib/db";
-import { usersTable, staffSafehouseAssignmentsTable } from "@workspace/db/schema";
+import { usersTable, staffSafehouseAssignmentsTable, supportersTable } from "@workspace/db/schema";
 import { signToken, requireAuth, optionalAuth, AuthUser } from "../middleware/auth";
 
 const router = Router();
+
+function validatePassword(pw: string | undefined): string | null {
+  if (!pw || pw.length < 12) return "Password must be at least 12 characters";
+  if (!/[A-Z]/.test(pw)) return "Password must contain at least one uppercase letter";
+  if (!/[a-z]/.test(pw)) return "Password must contain at least one lowercase letter";
+  if (!/[0-9]/.test(pw)) return "Password must contain at least one digit";
+  if (!/[^A-Za-z0-9]/.test(pw)) return "Password must contain at least one special character";
+  return null;
+}
+
+router.post("/auth/register-donor", async (req, res) => {
+  try {
+    const {
+      firstName,
+      lastName,
+      email,
+      username,
+      password,
+    } = req.body as {
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      username?: string;
+      password?: string;
+    };
+
+    const cleanFirstName = firstName?.trim();
+    const cleanLastName = lastName?.trim();
+    const cleanEmail = email?.trim().toLowerCase();
+    const cleanUsername = username?.trim().toLowerCase();
+
+    if (!cleanFirstName || !cleanLastName || !cleanEmail || !cleanUsername || !password) {
+      return res.status(400).json({ error: "firstName, lastName, email, username, and password are required" });
+    }
+
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      return res.status(400).json({ error: passwordError });
+    }
+
+    const [duplicateUser] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(sql`lower(${usersTable.username}) = ${cleanUsername} or lower(${usersTable.email}) = ${cleanEmail}`)
+      .limit(1);
+
+    if (duplicateUser) {
+      return res.status(409).json({ error: "Username or email already exists" });
+    }
+
+    const [supporter] = await db
+      .insert(supportersTable)
+      .values({
+        supporterType: "individual",
+        displayName: `${cleanFirstName} ${cleanLastName}`,
+        firstName: cleanFirstName,
+        lastName: cleanLastName,
+        email: cleanEmail,
+        status: "active",
+        createdAt: new Date().toISOString(),
+        canLogin: true,
+      })
+      .returning({ supporterId: supportersTable.supporterId });
+
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    const [user] = await db
+      .insert(usersTable)
+      .values({
+        username: cleanUsername,
+        email: cleanEmail,
+        passwordHash,
+        firstName: cleanFirstName,
+        lastName: cleanLastName,
+        role: "donor",
+        supporterId: supporter.supporterId,
+      })
+      .returning({ id: usersTable.id, username: usersTable.username, email: usersTable.email, supporterId: usersTable.supporterId });
+
+    return res.status(201).json(user);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Failed to create donor account" });
+  }
+});
 
 router.post("/auth/login", async (req, res) => {
   try {

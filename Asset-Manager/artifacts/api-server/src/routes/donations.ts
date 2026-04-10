@@ -218,20 +218,48 @@ router.post("/donations/give", requireAuth, requireRoles("donor"), async (req, r
 // ── Public donate (no auth, for landing page) ─────────────────────────────────
 router.post("/donations/public", async (req, res) => {
   try {
-    const { amount, name, email, notes, isRecurring = false, safehouseId, currencyCode = "PHP" } = req.body as {
+    const { amount, name, email, notes, isRecurring = false, safehouseId, currencyCode = "PHP", supporterId } = req.body as {
       amount?: number; name?: string; email?: string; notes?: string;
-      isRecurring?: boolean; safehouseId?: number | null; currencyCode?: string;
+      isRecurring?: boolean; safehouseId?: number | null; currencyCode?: string; supporterId?: number;
     };
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
       return res.status(400).json({ error: "A valid donation amount is required" });
     }
+
+    let linkedSupporterId: number | null = null;
+    let resolvedName = name;
+    let resolvedEmail = email;
+
+    if (supporterId && Number.isFinite(Number(supporterId))) {
+      const [supporter] = await db
+        .select({
+          supporterId: supportersTable.supporterId,
+          displayName: supportersTable.displayName,
+          firstName: supportersTable.firstName,
+          lastName: supportersTable.lastName,
+          email: supportersTable.email,
+        })
+        .from(supportersTable)
+        .where(eq(supportersTable.supporterId, Number(supporterId)))
+        .limit(1);
+
+      if (!supporter) {
+        return res.status(400).json({ error: "Invalid supporterId" });
+      }
+
+      linkedSupporterId = supporter.supporterId;
+      resolvedName = supporter.displayName || `${supporter.firstName ?? ""} ${supporter.lastName ?? ""}`.trim() || name;
+      resolvedEmail = supporter.email ?? email;
+    }
+
     const [row] = await db.insert(donationsTable).values({
+      supporterId: linkedSupporterId,
       donationType: "monetary",
       donationDate: new Date().toISOString().slice(0, 10),
       amount: String(Number(amount).toFixed(2)),
       currencyCode,
       channelSource: "online",
-      notes: [name ? `From: ${name}` : null, email ? `Email: ${email}` : null, notes ?? null].filter(Boolean).join(" | ") || null,
+      notes: [resolvedName ? `From: ${resolvedName}` : null, resolvedEmail ? `Email: ${resolvedEmail}` : null, notes ?? null].filter(Boolean).join(" | ") || null,
       isRecurring: Boolean(isRecurring),
       safehouseId: safehouseId ?? null,
     }).returning();
