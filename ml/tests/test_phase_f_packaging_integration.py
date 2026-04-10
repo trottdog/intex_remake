@@ -1,6 +1,12 @@
+import json
+
 import pandas as pd
 
-from ml.scripts.refresh_supabase_ml import build_prediction_rows, current_scoring_frame
+from ml.scripts.refresh_supabase_ml import (
+    build_prediction_rows,
+    current_scoring_frame,
+    json_dumps_safe,
+)
 from ml.src.data.loaders import load_raw_tables
 from ml.src.inference.predict import predict_dataframe
 from ml.src.inference.predict import load_model_bundle
@@ -106,3 +112,14 @@ def test_phase_f_excludes_adjacent_future_labels_from_manifests_and_models() -> 
         run_predictive_pipeline(pipeline_name)
         bundle = load_model_bundle(pipeline_name)
         assert all("label_" not in str(feature_name) for feature_name in bundle["feature_names"])
+
+
+def test_json_dumps_safe_converts_nan_to_null() -> None:
+    payload = {
+        "topReferralPlatform": float("nan"),
+        "nested": {"value": pd.NA},
+    }
+    decoded = json.loads(json_dumps_safe(payload))
+
+    assert decoded["topReferralPlatform"] is None
+    assert decoded["nested"]["value"] is None

@@ -340,6 +340,29 @@ def context_payload(row: pd.Series, keys: list[str], *, extras: dict[str, Any] |
     return payload
 
 
+def sanitize_json_value(value: Any) -> Any:
+    """Recursively convert pandas/numpy values into strict JSON-safe values."""
+
+    if isinstance(value, dict):
+        return {str(key): sanitize_json_value(inner) for key, inner in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [sanitize_json_value(inner) for inner in value]
+
+    sanitized = to_jsonable(value)
+
+    if isinstance(sanitized, dict):
+        return {str(key): sanitize_json_value(inner) for key, inner in sanitized.items()}
+    if isinstance(sanitized, (list, tuple)):
+        return [sanitize_json_value(inner) for inner in sanitized]
+    return sanitized
+
+
+def json_dumps_safe(value: Any) -> str:
+    """Serialize values to strict JSON that PostgreSQL jsonb always accepts."""
+
+    return json.dumps(sanitize_json_value(value), allow_nan=False)
+
+
 def score_payload(row: pd.Series, *, task_type: str) -> dict[str, Any]:
     """Map scored prediction columns into snapshot-ready value and score fields."""
 
@@ -2183,10 +2206,10 @@ def insert_pipeline_run(
                 model_name,
                 data_source,
                 source_commit,
-                json.dumps(metrics),
-                json.dumps(manifest),
+                json_dumps_safe(metrics),
+                json_dumps_safe(manifest),
                 scored_entity_count,
-                json.dumps(feature_importance),
+                json_dumps_safe(feature_importance),
             ),
         )
         run_id = int(cursor.fetchone()[0])
@@ -2218,7 +2241,7 @@ def insert_prediction_rows(
             row["prediction_value"],
             row["prediction_score"],
             row["rank_order"],
-            json.dumps(row["context"]),
+            json_dumps_safe(row["context"]),
             row.get("band_label"),
             row.get("action_code"),
         )
@@ -2275,7 +2298,7 @@ def apply_table_updates(
                     (
                         row["churn_risk_score"],
                         row["churn_band"],
-                        json.dumps(row["churn_top_drivers"]),
+                        json_dumps_safe(row["churn_top_drivers"]),
                         row["churn_recommended_action"],
                         row["churn_score_updated_at"],
                         row["supporter_id"],
@@ -2300,7 +2323,7 @@ def apply_table_updates(
                     (
                         row["upgrade_likelihood_score"],
                         row["upgrade_band"],
-                        json.dumps(row["upgrade_top_drivers"]),
+                        json_dumps_safe(row["upgrade_top_drivers"]),
                         row["upgrade_recommended_ask_band"],
                         row["upgrade_score_updated_at"],
                         row["supporter_id"],
@@ -2325,7 +2348,7 @@ def apply_table_updates(
                     (
                         row["regression_risk_score"],
                         row["regression_risk_band"],
-                        json.dumps(row["regression_risk_drivers"]),
+                        json_dumps_safe(row["regression_risk_drivers"]),
                         row["regression_recommended_action"],
                         row["regression_score_updated_at"],
                         row["resident_id"],
@@ -2350,7 +2373,7 @@ def apply_table_updates(
                     (
                         row["reintegration_readiness_score"],
                         row["reintegration_readiness_band"],
-                        json.dumps(row["reintegration_readiness_drivers"]),
+                        json_dumps_safe(row["reintegration_readiness_drivers"]),
                         row["reintegration_recommended_action"],
                         row["reintegration_score_updated_at"],
                         row["resident_id"],
@@ -2379,8 +2402,8 @@ def apply_table_updates(
                         row["predicted_referral_count"],
                         row["predicted_donation_value_php"],
                         row["conversion_band"],
-                        json.dumps(row["conversion_top_drivers"]),
-                        json.dumps(row["conversion_comparable_post_ids"]),
+                        json_dumps_safe(row["conversion_top_drivers"]),
+                        json_dumps_safe(row["conversion_comparable_post_ids"]),
                         row["conversion_score_updated_at"],
                         row["post_id"],
                     )
@@ -2409,8 +2432,8 @@ def apply_table_updates(
                         row["peer_rank"],
                         row["health_band"],
                         row["trend_direction"],
-                        json.dumps(row["health_score_drivers"]),
-                        json.dumps(row["incident_severity_distribution"]),
+                        json_dumps_safe(row["health_score_drivers"]),
+                        json_dumps_safe(row["incident_severity_distribution"]),
                         row["health_score_computed_at"],
                         run_id,
                         row["metric_id"],
@@ -2455,7 +2478,7 @@ def apply_table_updates(
                     (
                         row["effectiveness_outcome_score"],
                         row["effectiveness_band"],
-                        json.dumps(row["effectiveness_outcome_drivers"]),
+                        json_dumps_safe(row["effectiveness_outcome_drivers"]),
                         row["effectiveness_score_updated_at"],
                         row["plan_id"],
                     )
