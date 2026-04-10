@@ -124,15 +124,15 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
     evidence: "adjacent",
     caveat: "caution",
     summary: "Supported by resident decision workflows, but not yet called out as a dedicated routed board.",
-    limitation: "UI proof is still indirect and should be demonstrated through adjacent resident workflows or model ops.",
     links: [
       { label: "Residents: Reintegration Context", href: "/superadmin/residents?tab=reintegration" },
       { label: "ML Control Center", href: "/superadmin/ml?pipeline=case_prioritization" },
     ],
     auditStatus: "risk",
-    complete: "Framing, manifests, metrics, and resident integration references are present.",
-    weak: "The evaluate entrypoint is placeholder-only and the notebook is not executed.",
-    missing: "An implemented evaluation script and executed notebook proof.",
+    complete:
+      "Framing, manifests, metrics, resident integration references, runtime evaluation automation, and executed notebook evidence are present.",
+    weak: "No pipeline-specific implementation blockers are currently flagged.",
+    missing: "No critical evidence gaps identified for this pipeline entry.",
     videoSafety: "Cautious yes, with explicit limitations.",
   },
   {
@@ -183,15 +183,15 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
     evidence: "adjacent",
     caveat: "caution",
     summary: "Supports reintegration planning context, but lacks a dedicated page-level widget.",
-    limitation: "Endpoint-to-widget proof is still indirect in the active routed app flow.",
     links: [
       { label: "Residents: Reintegration Context", href: "/superadmin/residents?tab=reintegration" },
       { label: "ML Control Center", href: "/superadmin/ml?pipeline=home_visitation_outcome" },
     ],
     auditStatus: "risk",
-    complete: "Framing, artifacts, and resident integration references are present.",
-    weak: "The evaluation entrypoint is placeholder-only and notebook execution proof is absent.",
-    missing: "An executable evaluation script and reproducible notebook run outputs.",
+    complete:
+      "Framing, artifacts, resident integration references, runtime evaluation automation, and executed notebook evidence are present.",
+    weak: "No pipeline-specific implementation blockers are currently flagged.",
+    missing: "No critical evidence gaps identified for this pipeline entry.",
     videoSafety: "Cautious yes, with explicit limitations.",
   },
   {

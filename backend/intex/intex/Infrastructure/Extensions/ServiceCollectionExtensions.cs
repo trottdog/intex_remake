@@ -92,14 +92,24 @@ public static class ServiceCollectionExtensions
             throw new InvalidOperationException("A PostgreSQL connection string must be configured.");
         }
 
-        var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+        var connectionBuilder = new NpgsqlConnectionStringBuilder(connectionString)
+        {
+            Pooling = true,
+            MinPoolSize = 0,
+            MaxPoolSize = 20,
+            Timeout = 15,
+            CommandTimeout = 15
+        };
+        var normalizedConnectionString = connectionBuilder.ConnectionString;
+
+        var dataSourceBuilder = new NpgsqlDataSourceBuilder(normalizedConnectionString);
         var dataSource = dataSourceBuilder.Build();
 
         services.AddSingleton(dataSource);
         services.AddSingleton<IPostgresConnectionFactory, PostgresConnectionFactory>();
         services.AddPooledDbContextFactory<BeaconDbContext>(options =>
         {
-            options.UseNpgsql(connectionString, npgsql =>
+            options.UseNpgsql(normalizedConnectionString, npgsql =>
             {
                 npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery);
                 npgsql.CommandTimeout(15);

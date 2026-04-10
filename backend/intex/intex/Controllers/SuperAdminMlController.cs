@@ -536,69 +536,89 @@ public sealed class SuperAdminMlController(BeaconDbContext dbContext) : ApiContr
         var total = await query.CountAsync(cancellationToken);
         var rows = await query.OrderByDescending(item => item.ReintegrationReadinessScore).ThenBy(item => item.ResidentId)
             .Skip((resolvedPage - 1) * resolvedPageSize).Take(resolvedPageSize)
-            .Select(item => new
+            .ToListAsync(cancellationToken);
+
+        var data = rows.Select(item =>
+        {
+            var topPositiveIndicator = ExtractDriverLabel(item.ReintegrationReadinessDrivers as JsonElement?, "positive");
+            var topBarrier = ExtractDriverLabel(item.ReintegrationReadinessDrivers as JsonElement?, "barriers");
+            var readinessScore = item.ReintegrationReadinessScore ?? DeriveReadinessScore(item.ReintegrationStatus);
+            var readinessBand = item.ReintegrationReadinessBand ?? DeriveReadinessBand(item.ReintegrationStatus);
+
+            return new
             {
                 residentId = item.ResidentId,
                 caseCode = item.CaseCode,
                 caseCategory = item.CaseCategory,
                 safehouseName = item.SafehouseName,
                 reintegrationStatus = item.ReintegrationStatus,
-                reintegrationReadinessScore = item.ReintegrationReadinessScore,
-                reintegrationReadinessBand = item.ReintegrationReadinessBand,
+                reintegrationReadinessScore = readinessScore,
+                reintegrationReadinessBand = readinessBand,
                 reintegrationReadinessDrivers = item.ReintegrationReadinessDrivers,
                 reintegrationRecommendedAction = item.ReintegrationRecommendedAction,
                 reintegrationScoreUpdatedAt = item.ReintegrationScoreUpdatedAt,
-                topPositiveIndicator = (string?)null,
-                topBarrier = (string?)null,
+                topPositiveIndicator,
+                topBarrier,
                 regressionRiskBand = item.RegressionRiskBand,
                 lengthOfStayDays = ParseLengthOfStayDays(item.LengthOfStay)
-            })
-            .ToListAsync(cancellationToken);
+            };
+        }).ToList();
 
-        return Ok(new { data = rows, meta = new { page = resolvedPage, pageSize = resolvedPageSize, total, totalRestricted = 0 } });
+        return Ok(new { data, meta = new { page = resolvedPage, pageSize = resolvedPageSize, total, totalRestricted = 0 } });
     }
 
     [HttpGet("interventions/effectiveness")]
     public async Task<IActionResult> GetInterventionEffectiveness(CancellationToken cancellationToken)
     {
-        var rows = await dbContext.InterventionPlans.AsNoTracking()
-            .GroupBy(item => item.PlanCategory ?? "Uncategorized")
-            .Select(group => new
+        var plans = await dbContext.InterventionPlans.AsNoTracking()
+            .Where(item => item.Status != null && EF.Functions.ILike(item.Status, "completed"))
+            .Where(item => item.EffectivenessOutcomeScore != null)
+            .Select(item => new
             {
-                planCategory = group.Key,
-                planCount = group.Count(),
-                avgEffectivenessScore = group.Average(item => (double?)item.EffectivenessOutcomeScore),
-                avgHealthScoreDelta = (double?)null,
-                avgEducationProgressDelta = (double?)null,
-                avgSessionProgressRate = (double?)null,
-                effectivenessBandDistribution = new
-                {
-                    highimpact = group.Count(item => item.EffectivenessBand != null && EF.Functions.ILike(item.EffectivenessBand, "high-impact")),
-                    moderate = group.Count(item => item.EffectivenessBand != null && EF.Functions.ILike(item.EffectivenessBand, "moderate")),
-                    lowimpact = group.Count(item => item.EffectivenessBand != null && EF.Functions.ILike(item.EffectivenessBand, "low-impact")),
-                    insufficientdata = group.Count(item => item.EffectivenessBand == null)
-                }
+                planCategory = item.PlanCategory ?? "Uncategorized",
+                effectivenessOutcomeScore = item.EffectivenessOutcomeScore,
+                effectivenessBand = item.EffectivenessBand,
+                effectivenessOutcomeDrivers = item.EffectivenessOutcomeDrivers != null
+                    ? item.EffectivenessOutcomeDrivers.RootElement
+                    : (JsonElement?)null
             })
             .ToListAsync(cancellationToken);
 
-        var normalized = rows.Select(item => new
-        {
-            item.planCategory,
-            item.planCount,
-            item.avgEffectivenessScore,
-            item.avgHealthScoreDelta,
-            item.avgEducationProgressDelta,
-            item.avgSessionProgressRate,
-            effectivenessBandDistribution = new Dictionary<string, int>
+        var data = plans
+            .GroupBy(item => item.planCategory)
+            .Select(group =>
             {
-                ["high-impact"] = item.effectivenessBandDistribution.highimpact,
-                ["moderate"] = item.effectivenessBandDistribution.moderate,
-                ["low-impact"] = item.effectivenessBandDistribution.lowimpact,
-                ["insufficient-data"] = item.effectivenessBandDistribution.insufficientdata
-            }
-        });
+                var healthDeltas = new List<double>();
+                var educationDeltas = new List<double>();
+                var sessionDeltas = new List<double>();
 
-        return Ok(new { data = normalized });
+                foreach (var plan in group)
+                {
+                    CollectInterventionDriverDeltas(plan.effectivenessOutcomeDrivers, healthDeltas, educationDeltas, sessionDeltas);
+                }
+
+                return new
+                {
+                    planCategory = group.Key,
+                    planCount = group.Count(),
+                    avgEffectivenessScore = group.Average(item => item.effectivenessOutcomeScore),
+                    avgHealthScoreDelta = healthDeltas.Count > 0 ? Math.Round(healthDeltas.Average(), 2) : (double?)null,
+                    avgEducationProgressDelta = educationDeltas.Count > 0 ? Math.Round(educationDeltas.Average(), 2) : (double?)null,
+                    avgSessionProgressRate = sessionDeltas.Count > 0 ? Math.Round(sessionDeltas.Average(), 4) : (double?)null,
+                    effectivenessBandDistribution = new Dictionary<string, int>
+                    {
+                        ["high-impact"] = group.Count(item => item.effectivenessBand != null && item.effectivenessBand.Equals("high-impact", StringComparison.OrdinalIgnoreCase)),
+                        ["moderate"] = group.Count(item => item.effectivenessBand != null && item.effectivenessBand.Equals("moderate", StringComparison.OrdinalIgnoreCase)),
+                        ["low-impact"] = group.Count(item => item.effectivenessBand != null && item.effectivenessBand.Equals("low-impact", StringComparison.OrdinalIgnoreCase)),
+                        ["insufficient-data"] = group.Count(item => string.IsNullOrWhiteSpace(item.effectivenessBand) || item.effectivenessBand.Equals("insufficient-data", StringComparison.OrdinalIgnoreCase))
+                    }
+                };
+            })
+            .OrderByDescending(item => item.avgEffectivenessScore ?? -1)
+            .ThenBy(item => item.planCategory)
+            .ToList();
+
+        return Ok(new { data });
     }
 
     [HttpGet("interventions/effectiveness/{category}/plans")]
@@ -820,6 +840,122 @@ public sealed class SuperAdminMlController(BeaconDbContext dbContext) : ApiContr
 
         var digits = new string(value.Where(char.IsDigit).ToArray());
         return int.TryParse(digits, out var result) ? result : null;
+    }
+
+    private static void CollectInterventionDriverDeltas(JsonElement? driversElement, List<double> healthDeltas, List<double> educationDeltas, List<double> sessionDeltas)
+    {
+        if (!driversElement.HasValue || driversElement.Value.ValueKind != JsonValueKind.Array)
+        {
+            return;
+        }
+
+        foreach (var entry in driversElement.Value.EnumerateArray())
+        {
+            if (entry.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
+            if (!entry.TryGetProperty("dimension", out var dimensionElement) || dimensionElement.ValueKind != JsonValueKind.String)
+            {
+                continue;
+            }
+
+            if (!entry.TryGetProperty("delta", out var deltaElement) || !deltaElement.TryGetDouble(out var delta))
+            {
+                continue;
+            }
+
+            var dimension = dimensionElement.GetString()?.Trim().ToLowerInvariant();
+            switch (dimension)
+            {
+                case "health_score":
+                    healthDeltas.Add(delta);
+                    break;
+                case "education_progress":
+                    educationDeltas.Add(delta);
+                    break;
+                case "session_progress":
+                    sessionDeltas.Add(delta);
+                    break;
+            }
+        }
+    }
+
+    private static string? ExtractDriverLabel(JsonElement? drivers, string key)
+    {
+        if (!drivers.HasValue || drivers.Value.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        if (!drivers.Value.TryGetProperty(key, out var values) || values.ValueKind != JsonValueKind.Array)
+        {
+            return null;
+        }
+
+        foreach (var entry in values.EnumerateArray())
+        {
+            if (entry.ValueKind == JsonValueKind.Object && entry.TryGetProperty("label", out var label) && label.ValueKind == JsonValueKind.String)
+            {
+                var parsed = label.GetString();
+                if (!string.IsNullOrWhiteSpace(parsed))
+                {
+                    return parsed;
+                }
+            }
+
+            if (entry.ValueKind == JsonValueKind.String)
+            {
+                var parsed = entry.GetString();
+                if (!string.IsNullOrWhiteSpace(parsed))
+                {
+                    return parsed;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static double? DeriveReadinessScore(string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            return null;
+        }
+
+        var normalized = status.Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            "completed" => 0.9,
+            "ready" => 0.75,
+            "in progress" => 0.55,
+            "in-progress" => 0.55,
+            "not started" => 0.25,
+            "not-started" => 0.25,
+            _ => null
+        };
+    }
+
+    private static string? DeriveReadinessBand(string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            return null;
+        }
+
+        var normalized = status.Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            "completed" => "ready",
+            "ready" => "ready",
+            "in progress" => "in-progress",
+            "in-progress" => "in-progress",
+            "not started" => "not-started",
+            "not-started" => "not-started",
+            _ => null
+        };
     }
 
     private static IReadOnlyList<long> ParseIds(string? csv) =>
