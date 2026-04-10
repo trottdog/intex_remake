@@ -23,6 +23,15 @@ function fmt(n: number | null | undefined, prefix = "₱") {
 
 function fmtDate(d: string | null | undefined) {
   if (!d) return "—";
+
+  // Keep calendar dates stable for DATE-only values (YYYY-MM-DD) across time zones.
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d.trim());
+  if (dateOnlyMatch) {
+    const [, year, month, day] = dateOnlyMatch;
+    const localDate = new Date(Number(year), Number(month) - 1, Number(day));
+    return localDate.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
+  }
+
   return new Date(d).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
 }
 
@@ -53,9 +62,9 @@ function KpiCard({ label, value, sub, icon: Icon, accent = "#2a9d72", trend }: K
       </div>
       <div>
         <div className="text-2xl font-bold text-gray-900 tracking-tight">{value}</div>
-        <div className="text-xs font-semibold uppercase tracking-widest text-gray-400 mt-0.5">{label}</div>
+        <div className="text-xs font-semibold uppercase tracking-widest text-gray-500 mt-0.5">{label}</div>
       </div>
-      {sub && <div className="text-xs text-gray-400 border-t border-gray-50 pt-2">{sub}</div>}
+      {sub && <div className="text-xs text-gray-500 border-t border-gray-50 pt-2">{sub}</div>}
     </div>
   );
 }
@@ -95,7 +104,7 @@ function SnapCard({ snap, fmtDate }: { snap: DonorRecentSnapshot; fmtDate: (d: s
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-1.5 h-1.5 rounded-full bg-[#2a9d72]" />
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-gray-500">
               {snap.snapshotDate ? fmtDate(snap.snapshotDate) : "—"}
             </span>
           </div>
@@ -110,7 +119,7 @@ function SnapCard({ snap, fmtDate }: { snap: DonorRecentSnapshot; fmtDate: (d: s
           {kpiItems.map(k => (
             <div key={k.label} className="bg-[#f8faf9] rounded-xl p-3">
               <div className="text-base font-black text-[#0e2118]">{String(k.value)}</div>
-              <div className="text-xs text-gray-400 mt-0.5">{k.label}</div>
+              <div className="text-xs text-gray-500 mt-0.5">{k.label}</div>
             </div>
           ))}
         </div>
@@ -131,10 +140,14 @@ function ImpactReportsSection({ snapshots, fmtDate }: { snapshots: DonorRecentSn
       <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
         <div className="flex items-center gap-2">
           <h3 className="font-bold text-gray-800">Impact Reports</h3>
-          <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{snapshots.length} available</span>
+          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{snapshots.length} available</span>
         </div>
         {older.length > 0 && (
+          <label htmlFor="older-impact-reports" className="sr-only">Browse older impact reports</label>
+        )}
+        {older.length > 0 && (
           <select
+            id="older-impact-reports"
             value={selectedId}
             onChange={e => setSelectedId(e.target.value === "" ? "" : Number(e.target.value))}
             className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 cursor-pointer"
@@ -159,7 +172,7 @@ function ImpactReportsSection({ snapshots, fmtDate }: { snapshots: DonorRecentSn
         <div className="mt-4">
           <div className="flex items-center gap-2 mb-3">
             <div className="h-px flex-1 bg-gray-100" />
-            <span className="text-xs text-gray-400 px-2">Selected report</span>
+            <span className="text-xs text-gray-500 px-2">Selected report</span>
             <div className="h-px flex-1 bg-gray-100" />
           </div>
           <div className="md:w-1/2">
@@ -192,7 +205,7 @@ export default function DonorDashboard() {
         <div className="text-center">
           <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-amber-500" />
           <p className="font-medium">Unable to load your donor portal</p>
-          <p className="text-sm text-gray-400 mt-1">Please refresh or contact support</p>
+          <p className="text-sm text-gray-500 mt-1">Please refresh or contact support</p>
         </div>
       </div>
     );
@@ -241,7 +254,7 @@ export default function DonorDashboard() {
             <div className="text-3xl font-black text-[#0e2118]">{fmt(data.lifetimeGiving)}</div>
             <div className="text-gray-500 text-xs uppercase tracking-widest">Lifetime Contributions</div>
             {data.donationCount && data.donationCount > 0 && (
-              <div className="text-gray-400 text-xs mt-1">
+              <div className="text-gray-500 text-xs mt-1">
                 {data.donationCount} gift{data.donationCount !== 1 ? "s" : ""} to date
               </div>
             )}
@@ -257,11 +270,11 @@ export default function DonorDashboard() {
       } shadow-sm`}>
         <div className="flex items-center gap-3">
           <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${recurringData?.recurringEnabled ? "bg-[#2a9d72]/15" : "bg-gray-100"}`}>
-            <RefreshCw className={`w-4 h-4 ${recurringData?.recurringEnabled ? "text-[#2a9d72]" : "text-gray-400"}`} />
+            <RefreshCw className={`w-4 h-4 ${recurringData?.recurringEnabled ? "text-[#2a9d72]" : "text-gray-500"}`} />
           </div>
           <div>
             <div className="text-sm font-bold text-[#0e2118]">Monthly Recurring Donations</div>
-            <div className="text-xs text-gray-400 mt-0.5">
+            <div className="text-xs text-gray-500 mt-0.5">
               {recurringData?.recurringEnabled
                 ? "You are enrolled as a monthly recurring donor. Thank you!"
                 : "Turn on to automatically give every month and sustain our mission."}
@@ -272,6 +285,9 @@ export default function DonorDashboard() {
           type="button"
           disabled={togglingRecurring}
           onClick={() => toggleRecurring(!(recurringData?.recurringEnabled ?? false))}
+          role="switch"
+          aria-checked={recurringData?.recurringEnabled ?? false}
+          aria-label="Toggle monthly recurring donations"
           className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:opacity-60 ${
             recurringData?.recurringEnabled ? "bg-[#2a9d72]" : "bg-gray-200"
           }`}
@@ -318,10 +334,10 @@ export default function DonorDashboard() {
         {/* Area chart — giving trend */}
         <div className="lg:col-span-3 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Your Giving Trend</h3>
-            <span className="text-xs text-gray-400">Last 12 months</span>
+            <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Your Giving Trend</h2>
+            <span className="text-xs text-gray-500">Last 12 months</span>
           </div>
-          <p className="text-xs text-gray-400 mb-5">Monthly donation amounts (₱ PHP)</p>
+          <p className="text-xs text-gray-500 mb-5">Monthly donation amounts (₱ PHP)</p>
           {givingTrend.length > 0 ? (
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={givingTrend} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
@@ -365,8 +381,8 @@ export default function DonorDashboard() {
         {/* Donut chart — allocation breakdown */}
         <div className="lg:col-span-2 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm flex flex-col">
           <div className="mb-1">
-            <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Where Gifts Go</h3>
-            <p className="text-xs text-gray-400 mt-0.5">Program area allocation</p>
+            <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Where Gifts Go</h2>
+            <p className="text-xs text-gray-500 mt-0.5">Program area allocation</p>
           </div>
           {allocation.length > 0 ? (
             <>
@@ -418,8 +434,8 @@ export default function DonorDashboard() {
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
             <div>
-              <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Recent Donations</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Your latest contributions on record</p>
+              <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Recent Donations</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Your latest contributions on record</p>
             </div>
             <DollarSign className="w-4 h-4 text-gray-300" />
           </div>
@@ -434,7 +450,7 @@ export default function DonorDashboard() {
                     <div className="text-sm font-semibold text-gray-800 truncate">
                       {d.campaignName ?? "General Donation"}
                     </div>
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-gray-500">
                       {fmtDate(d.donationDate)} · {d.channelSource ?? "direct"}
                     </div>
                   </div>
@@ -442,7 +458,7 @@ export default function DonorDashboard() {
                     <div className="text-sm font-bold text-[#0e2118]">
                       {fmt(d.amount ?? 0)}
                     </div>
-                    <div className="text-xs text-gray-400">{d.currencyCode ?? "PHP"}</div>
+                    <div className="text-xs text-gray-500">{d.currencyCode ?? "PHP"}</div>
                   </div>
                 </div>
               ))}

@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { PublicLayout } from "@/components/layouts/PublicLayout";
 import handsImg from "@assets/Hands_Circle_1775623133974.jpg";
-import { CheckCircle, Share2, Users, Package, Building2, Globe, ChevronRight } from "lucide-react";
+import { CheckCircle, Share2, Users, Package, Building2, Globe, ChevronRight, Eye, EyeOff } from "lucide-react";
 import { triggerDonationConfetti } from "@/lib/confetti";
 import { ApiError, apiFetch, apiPost } from "@/services/api";
 import { registerDonorApi } from "@/services/auth.service";
@@ -65,6 +65,8 @@ export default function DonatePage() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [createAccount, setCreateAccount] = useState(wantsAccountFromQuery);
   const [accountForm, setAccountForm] = useState({ username: "", password: "", confirmPassword: "" });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -121,6 +123,23 @@ export default function DonatePage() {
 
   const finalAmount = selectedAmount ?? (customAmount ? parseInt(customAmount) : 0);
   const selectedSafehouse = destination !== "general" ? safehouses.find(s => s.safehouseId === destination) : null;
+  const safehouseDisplayName = (safehouse: Safehouse) => safehouse.safehouseName ?? `Safehouse #${safehouse.safehouseId}`;
+  const sortedSafehouses = useMemo(
+    () =>
+      [...safehouses].sort((a, b) => {
+        const byName = safehouseDisplayName(a).localeCompare(safehouseDisplayName(b), undefined, {
+          numeric: true,
+          sensitivity: "base",
+        });
+
+        if (byName !== 0) {
+          return byName;
+        }
+
+        return a.safehouseId - b.safehouseId;
+      }),
+    [safehouses],
+  );
   const unmetPasswordRules = PASSWORD_REQUIREMENTS.filter((rule) => !rule.test(accountForm.password));
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -286,9 +305,9 @@ export default function DonatePage() {
                           Retry loading safehouses
                         </button>
                       </div>
-                    ) : safehouses.length === 0 ? (
+                    ) : sortedSafehouses.length === 0 ? (
                       <div className="text-sm text-gray-400 text-center py-4">No safehouses are available right now.</div>
-                    ) : safehouses.map(s => (
+                    ) : sortedSafehouses.map(s => (
                       <button
                         key={s.safehouseId}
                         type="button"
@@ -302,7 +321,7 @@ export default function DonatePage() {
                             <Building2 className={`w-5 h-5 ${destination === s.safehouseId ? "text-white" : "text-gray-400"}`} />
                           </div>
                           <div>
-                            <div className="font-bold text-[#214636] text-sm">{s.safehouseName ?? `Safehouse #${s.safehouseId}`}</div>
+                            <div className="font-bold text-[#214636] text-sm">{safehouseDisplayName(s)}</div>
                             <div className="text-xs text-gray-500 mt-0.5">Your full donation goes directly to this home</div>
                           </div>
                           {destination === s.safehouseId && <CheckCircle className="w-5 h-5 text-[#2a9d72] ml-auto shrink-0" />}
@@ -417,22 +436,42 @@ export default function DonatePage() {
                         onChange={(e) => setAccountForm((f) => ({ ...f, username: e.target.value }))}
                         className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 focus:border-[#2a9d72] bg-white"
                       />
-                      <input
-                        required={createAccount}
-                        type="password"
-                        placeholder="Create a password"
-                        value={accountForm.password}
-                        onChange={(e) => setAccountForm((f) => ({ ...f, password: e.target.value }))}
-                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 focus:border-[#2a9d72] bg-white"
-                      />
-                      <input
-                        required={createAccount}
-                        type="password"
-                        placeholder="Confirm password"
-                        value={accountForm.confirmPassword}
-                        onChange={(e) => setAccountForm((f) => ({ ...f, confirmPassword: e.target.value }))}
-                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 focus:border-[#2a9d72] bg-white"
-                      />
+                      <div className="relative">
+                        <input
+                          required={createAccount}
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Create a password"
+                          value={accountForm.password}
+                          onChange={(e) => setAccountForm((f) => ({ ...f, password: e.target.value }))}
+                          className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 focus:border-[#2a9d72] bg-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((value) => !value)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#214636] hover:text-[#2a9d72]"
+                          aria-label={showPassword ? "Hide password" : "Show password"}
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <input
+                          required={createAccount}
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="Confirm password"
+                          value={accountForm.confirmPassword}
+                          onChange={(e) => setAccountForm((f) => ({ ...f, confirmPassword: e.target.value }))}
+                          className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 focus:border-[#2a9d72] bg-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword((value) => !value)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#214636] hover:text-[#2a9d72]"
+                          aria-label={showConfirmPassword ? "Hide confirmation password" : "Show confirmation password"}
+                        >
+                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
                       <p className="text-xs text-[#3f6a58]">
                         Password requirements: {PASSWORD_REQUIREMENTS.map((rule) => rule.label).join(", ")}.
                       </p>

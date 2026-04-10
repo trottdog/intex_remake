@@ -59,7 +59,7 @@ public sealed class DonorController(BeaconDbContext dbContext) : ApiControllerBa
             return BadRequest(new ErrorResponse("itemType and itemIds are required"));
         }
 
-        var now = DateTime.UtcNow;
+        var now = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
         var itemType = request.ItemType.Trim();
         foreach (var itemId in request.ItemIds.Distinct())
         {

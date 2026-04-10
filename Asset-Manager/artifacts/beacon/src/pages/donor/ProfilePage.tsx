@@ -2,8 +2,15 @@ import { useState, useEffect } from "react";
 import { useGetMyDonorProfile, useListMyDonations, updateMyDonorProfile } from "@/services/donor.service";
 import { useAuth } from "@/contexts/AuthContext";
 import { applyConsent, getConsentLevel } from "@/lib/consent";
-import { User, Mail, Phone, MapPin, Building, Shield, Bell, CreditCard, Edit3, Save, X, Lock, CheckCircle } from "lucide-react";
+import { User, Mail, Phone, MapPin, Building, Shield, Bell, CreditCard, Edit3, Save, X, Lock, CheckCircle, ChevronDown } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type CommunicationPreferenceKey = "emailUpdates" | "impactReports" | "campaignAlerts" | "taxReceiptReminders";
 
@@ -16,6 +23,21 @@ const ACQUISITION_CHANNEL_OPTIONS = [
   "Email Newsletter",
   "Other",
 ] as const;
+
+const COMMUNICATION_PREFERENCE_OPTIONS = [
+  "Email",
+  "SMS",
+  "Phone Call",
+  "Postal Mail",
+] as const;
+
+function parseCommunicationPreferenceList(value: unknown): string[] {
+  if (typeof value !== "string") return [];
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
 
 function parseDateLike(value: unknown): Date | null {
   if (typeof value !== "string" || !value.trim()) return null;
@@ -41,6 +63,7 @@ export default function ProfilePage() {
     return getConsentLevel() === "all" ? "all" : "essential";
   });
   const [consentSaved, setConsentSaved] = useState(false);
+  const [selectedCommunicationPreferences, setSelectedCommunicationPreferences] = useState<string[]>([]);
   const [communicationPrefs, setCommunicationPrefs] = useState<Record<CommunicationPreferenceKey, boolean>>({
     emailUpdates: true,
     impactReports: true,
@@ -82,8 +105,19 @@ export default function ProfilePage() {
         communicationPreference: String(donor.communicationPreference ?? ""),
         acquisitionChannel: String(donor.acquisitionChannel ?? ""),
       });
+      setSelectedCommunicationPreferences(parseCommunicationPreferenceList(donor.communicationPreference));
     }
   }, [profile]);
+
+  const toggleCommunicationPreferenceOption = (option: string) => {
+    setSelectedCommunicationPreferences((prev) => {
+      const next = prev.includes(option)
+        ? prev.filter((value) => value !== option)
+        : [...prev, option];
+      setForm((current) => ({ ...current, communicationPreference: next.join(", ") }));
+      return next;
+    });
+  };
 
   const firstDonationDate = (() => {
     const dates: Date[] = [];
@@ -107,6 +141,7 @@ export default function ProfilePage() {
         lastName: form.lastName,
         phone: form.phone,
         organizationName: form.organization,
+        communicationPreference: form.communicationPreference,
         acquisitionChannel: form.acquisitionChannel,
       };
       const updatedProfile = await updateMyDonorProfile(payload) as Record<string, unknown>;
@@ -137,6 +172,7 @@ export default function ProfilePage() {
         communicationPreference: String(donor.communicationPreference ?? ""),
         acquisitionChannel: String(donor.acquisitionChannel ?? ""),
       });
+      setSelectedCommunicationPreferences(parseCommunicationPreferenceList(donor.communicationPreference));
     }
     setEditing(false);
     setSaveError(null);
@@ -244,7 +280,33 @@ export default function ProfilePage() {
               <div>
                 <div className="text-xs text-gray-400 mb-1 flex items-center gap-1"><MapPin className="w-3 h-3" /> Communication Preference</div>
                 {editing ? (
-                  <input {...field("communicationPreference")} placeholder="email, sms, post..." className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30" />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 text-left flex items-center justify-between gap-2 bg-white"
+                      >
+                        <span className={selectedCommunicationPreferences.length > 0 ? "text-gray-800" : "text-gray-400"}>
+                          {selectedCommunicationPreferences.length > 0
+                            ? selectedCommunicationPreferences.join(", ")
+                            : "Select communication preferences"}
+                        </span>
+                        <ChevronDown className="w-4 h-4 text-gray-400" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-72">
+                      <DropdownMenuLabel>Choose one or more</DropdownMenuLabel>
+                      {COMMUNICATION_PREFERENCE_OPTIONS.map((option) => (
+                        <DropdownMenuCheckboxItem
+                          key={option}
+                          checked={selectedCommunicationPreferences.includes(option)}
+                          onCheckedChange={() => toggleCommunicationPreferenceOption(option)}
+                        >
+                          {option}
+                        </DropdownMenuCheckboxItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 ) : (
                   <div className="text-sm text-gray-800">{form.communicationPreference || "Not specified"}</div>
                 )}

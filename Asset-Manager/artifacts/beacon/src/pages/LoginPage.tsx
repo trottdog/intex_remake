@@ -111,7 +111,7 @@ export default function LoginPage() {
             </div>
             <a
               href="/"
-              className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm transition-colors"
+              className="inline-flex min-h-11 items-center gap-1.5 px-2 text-sm text-white/80 transition-colors hover:text-white"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Back to site
@@ -120,7 +120,7 @@ export default function LoginPage() {
           <h1 className="text-4xl font-bold text-white leading-tight mb-6">
             Empowering those<br />who protect survivors.
           </h1>
-          <p className="text-[#2a9d72] text-lg leading-relaxed">
+          <p className="text-[#9fe3c0] text-lg leading-relaxed">
             A unified management platform for safehouse networks supporting survivors of abuse and trafficking.
           </p>
         </div>
@@ -142,7 +142,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-8 bg-[#f9f9f8]">
+      <main className="flex-1 flex items-center justify-center bg-[#f9f9f8] p-8" aria-labelledby="login-heading">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
@@ -153,7 +153,7 @@ export default function LoginPage() {
             </div>
             <a
               href="/"
-              className="flex items-center gap-1.5 text-gray-500 hover:text-[#214636] text-sm transition-colors"
+              className="inline-flex min-h-11 items-center gap-1.5 px-2 text-sm text-gray-700 transition-colors hover:text-[#214636]"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Back to site
@@ -161,8 +161,8 @@ export default function LoginPage() {
           </div>
           <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
             <div className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900">Sign in to your account</h2>
-              <p className="text-gray-500 text-sm mt-2">Authorized personnel only — all access is logged and audited.</p>
+              <h2 id="login-heading" className="text-2xl font-bold text-gray-900">Sign in to your account</h2>
+              <p className="mt-2 text-sm text-gray-700">Authorized personnel only - all access is logged and audited.</p>
             </div>
 
             <form onSubmit={pendingChallengeToken ? handleVerifyMfa : handleSubmit} className="space-y-5">
@@ -196,15 +196,18 @@ export default function LoginPage() {
                       />
                       <button
                         type="button"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        aria-pressed={showPassword}
+                        title={showPassword ? "Hide password" : "Show password"}
                         onClick={() => setShowPassword((p) => !p)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md text-gray-600 transition-colors hover:text-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#214636] focus-visible:ring-offset-1"
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
 
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-gray-600">
                     Password requirements: 12+ characters with uppercase, lowercase, digit, and special character.
                   </p>
                 </>
@@ -272,11 +275,11 @@ export default function LoginPage() {
             </div>
 
             <div className="mt-6 pt-6 border-t border-gray-100 text-center">
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-600">
                 By signing in, you agree to Beacon's security and data handling policies.
               </p>
-              <p className="text-xs text-gray-300 mt-2">
-                <a href="/privacy" className="hover:underline hover:text-gray-500">Privacy Policy</a>
+              <p className="mt-2 text-xs text-gray-600">
+                <a href="/privacy" className="font-medium text-[#214636] underline-offset-2 hover:underline">Privacy Policy</a>
               </p>
             </div>
           </div>
@@ -287,7 +290,7 @@ export default function LoginPage() {
             </p>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

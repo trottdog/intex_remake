@@ -91,6 +91,14 @@ export function DashboardLayout({
     return new Date(d).toLocaleDateString("en-PH", { month: "short", day: "numeric" });
   }
 
+  function getUserInitials() {
+    const firstInitial = user?.firstName?.trim()?.[0] ?? "";
+    const lastInitial = user?.lastName?.trim()?.[0] ?? "";
+    const initials = `${firstInitial}${lastInitial}`.toUpperCase();
+    if (initials) return initials;
+    return user?.username?.trim()?.[0]?.toUpperCase() || "U";
+  }
+
   const hasSections = navItems.some(item => item.section);
   const c = compactSidebar;
   const navPadX = c ? "px-2" : "px-3";
@@ -100,6 +108,7 @@ export function DashboardLayout({
   const iconSz = "w-4 h-4";
   const sectionWrap = c ? "pt-2 pb-0.5 px-2" : "pt-4 pb-1 px-3";
   const sectionText = c ? "text-[10px] tracking-wider" : "text-[10px] tracking-widest";
+  const visibleBellBadge = bellItems.length > 0 ? bellBadge : 0;
 
   function renderNavItems(onNavigate?: () => void) {
     const linkCls = (isActive: boolean) =>
@@ -205,7 +214,7 @@ export function DashboardLayout({
         <div className={`border-t border-sidebar-border ${c ? "p-3" : "p-4"}`}>
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-bold shrink-0">
-              {user?.firstName?.[0] || user?.username?.[0] || "U"}
+              {getUserInitials()}
             </div>
             <div className="overflow-hidden">
               <p className="text-sm font-medium truncate">{user?.firstName} {user?.lastName}</p>
@@ -253,7 +262,7 @@ export function DashboardLayout({
               System Healthy
             </div>
             {showThemeToggle && (
-              <Button variant="ghost" size="icon" onClick={toggleTheme}>
+              <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
                 <Sun className="w-4 h-4 hidden dark:block" />
                 <Moon className="w-4 h-4 block dark:hidden" />
               </Button>
@@ -263,11 +272,12 @@ export function DashboardLayout({
               <button
                 onClick={onBellOpen ? handleBellClick : undefined}
                 className={`relative inline-flex items-center justify-center w-9 h-9 rounded-md text-gray-600 hover:bg-gray-100 transition-colors ${onBellOpen ? "cursor-pointer" : "cursor-default"}`}
+                aria-label="Open notifications"
               >
                 <Bell className="w-4 h-4" />
-                {bellBadge > 0 && (
+                {visibleBellBadge > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
-                    {bellBadge > 99 ? "99+" : bellBadge}
+                    {visibleBellBadge > 99 ? "99+" : visibleBellBadge}
                   </span>
                 )}
               </button>
@@ -277,11 +287,11 @@ export function DashboardLayout({
                   <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50 bg-[#f8faf9]">
                     <div>
                       <span className="font-bold text-[#0e2118] text-sm">Notifications</span>
-                      {bellBadge > 0 && (
-                        <span className="ml-2 text-xs text-[#2a9d72] font-semibold">{bellBadge} new</span>
+                      {visibleBellBadge > 0 && (
+                        <span className="ml-2 text-xs text-[#2a9d72] font-semibold">{visibleBellBadge} new</span>
                       )}
                     </div>
-                    <button onClick={() => setBellOpen(false)} className="text-gray-400 hover:text-gray-700">
+                    <button onClick={() => setBellOpen(false)} className="text-gray-400 hover:text-gray-700" aria-label="Close notifications panel">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
@@ -323,7 +333,7 @@ export function DashboardLayout({
 
             {user?.role === "super_admin" && (
               <Link href="/superadmin/security">
-                <Button variant="ghost" size="icon" className="text-destructive">
+                <Button variant="ghost" size="icon" className="text-destructive" aria-label="Open security dashboard">
                   <Shield className="w-4 h-4" />
                 </Button>
               </Link>
@@ -393,7 +403,7 @@ export function DashboardLayout({
             <div className={`border-t border-sidebar-border ${c ? "p-3" : "p-4"}`}>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-bold shrink-0">
-                  {user?.firstName?.[0] || user?.username?.[0] || "U"}
+                  {getUserInitials()}
                 </div>
                 <div className="overflow-hidden">
                   <p className="text-sm font-medium truncate">{user?.firstName} {user?.lastName}</p>
