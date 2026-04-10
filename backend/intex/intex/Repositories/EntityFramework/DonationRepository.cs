@@ -199,119 +199,123 @@ public sealed class DonationRepository(BeaconDbContext dbContext, IPostgresConne
 
     public async Task<DonationSummaryRecord?> CreateAdministrativeDonationAsync(AdminDonationCreateCommand command, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var executionStrategy = dbContext.Database.CreateExecutionStrategy();
+        var shouldReturnNull = false;
+        long donationId = 0;
 
-        long supporterId;
-        if (command.ExistingSupporterId.HasValue)
+        await executionStrategy.ExecuteAsync(async () =>
         {
-            supporterId = command.ExistingSupporterId.Value;
-            var supporter = await dbContext.Supporters.FirstOrDefaultAsync(item => item.SupporterId == supporterId, cancellationToken);
-            if (supporter is null)
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+            long supporterId;
+            if (command.ExistingSupporterId.HasValue)
             {
-                return null;
+                supporterId = command.ExistingSupporterId.Value;
+                var supporter = await dbContext.Supporters.FirstOrDefaultAsync(item => item.SupporterId == supporterId, cancellationToken);
+                if (supporter is null)
+                {
+                    shouldReturnNull = true;
+                    return;
+                }
+
+                ApplySupporterDonationSideEffects(supporter, command.DonationDate, command.IsRecurring);
+            }
+            else if (command.Supporter is not null)
+            {
+                var supporter = new Supporter
+                {
+                    SupporterType = command.Supporter.SupporterType,
+                    DisplayName = command.Supporter.DisplayName,
+                    OrganizationName = command.Supporter.OrganizationName,
+                    FirstName = command.Supporter.FirstName,
+                    LastName = command.Supporter.LastName,
+                    RelationshipType = command.Supporter.RelationshipType,
+                    Region = command.Supporter.Region,
+                    Country = command.Supporter.Country,
+                    Email = command.Supporter.Email,
+                    Phone = command.Supporter.Phone,
+                    Status = command.Supporter.Status,
+                    CreatedAt = command.Supporter.CreatedAt,
+                    FirstDonationDate = command.Supporter.FirstDonationDate ?? command.DonationDate,
+                    AcquisitionChannel = command.Supporter.AcquisitionChannel,
+                    CanLogin = false,
+                    RecurringEnabled = command.IsRecurring
+                };
+
+                dbContext.Supporters.Add(supporter);
+                await dbContext.SaveChangesAsync(cancellationToken);
+                supporterId = supporter.SupporterId;
+            }
+            else
+            {
+                shouldReturnNull = true;
+                return;
             }
 
-            ApplySupporterDonationSideEffects(supporter, command.DonationDate, command.IsRecurring);
-        }
-        else if (command.Supporter is not null)
-        {
-            var supporter = new Supporter
+            var donation = new Donation
             {
-                SupporterType = command.Supporter.SupporterType,
-                DisplayName = command.Supporter.DisplayName,
-                OrganizationName = command.Supporter.OrganizationName,
-                FirstName = command.Supporter.FirstName,
-                LastName = command.Supporter.LastName,
-                RelationshipType = command.Supporter.RelationshipType,
-                Region = command.Supporter.Region,
-                Country = command.Supporter.Country,
-                Email = command.Supporter.Email,
-                Phone = command.Supporter.Phone,
-                Status = command.Supporter.Status,
-                CreatedAt = command.Supporter.CreatedAt,
-                FirstDonationDate = command.Supporter.FirstDonationDate ?? command.DonationDate,
-                AcquisitionChannel = command.Supporter.AcquisitionChannel,
-                CanLogin = false,
-                RecurringEnabled = command.IsRecurring
+                SupporterId = supporterId,
+                CampaignId = command.CampaignId,
+                DonationType = command.DonationType,
+                DonationDate = command.DonationDate,
+                IsRecurring = command.IsRecurring,
+                CampaignName = command.CampaignName,
+                ChannelSource = command.ChannelSource,
+                CurrencyCode = command.CurrencyCode,
+                Amount = command.Amount,
+                EstimatedValue = command.EstimatedValue,
+                ImpactUnit = command.ImpactUnit,
+                Notes = command.Notes,
+                ReferralPostId = command.ReferralPostId,
+                SafehouseId = command.SafehouseId
             };
 
-            dbContext.Supporters.Add(supporter);
+            dbContext.Donations.Add(donation);
             await dbContext.SaveChangesAsync(cancellationToken);
-            supporterId = supporter.SupporterId;
-        }
-        else
+
+            if (command.InKindItems.Count > 0)
+            {
+                var items = command.InKindItems.Select(item => new InKindDonationItem
+                {
+                    DonationId = donation.DonationId,
+                    ItemName = item.ItemName,
+                    ItemCategory = item.ItemCategory,
+                    Quantity = item.Quantity,
+                    UnitOfMeasure = item.UnitOfMeasure,
+                    EstimatedUnitValue = item.EstimatedUnitValue,
+                    IntendedUse = item.IntendedUse,
+                    ReceivedCondition = item.ReceivedCondition
+                }).ToList();
+
+                dbContext.InKindDonationItems.AddRange(items);
+            }
+
+            if (command.Allocations.Count > 0)
+            {
+                var allocations = command.Allocations.Select(item => new DonationAllocation
+                {
+                    DonationId = donation.DonationId,
+                    SafehouseId = item.SafehouseId ?? command.SafehouseId,
+                    ProgramArea = item.ProgramArea,
+                    AmountAllocated = item.AmountAllocated,
+                    AllocationDate = item.AllocationDate,
+                    AllocationNotes = item.AllocationNotes
+                }).ToList();
+
+                dbContext.DonationAllocations.AddRange(allocations);
+            }
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            donationId = donation.DonationId;
+        });
+
+        if (shouldReturnNull || donationId == 0)
         {
             return null;
         }
 
-        var donation = new Donation
-        {
-            SupporterId = supporterId,
-            CampaignId = command.CampaignId,
-            DonationType = command.DonationType,
-            DonationDate = command.DonationDate,
-            IsRecurring = command.IsRecurring,
-            CampaignName = command.CampaignName,
-            ChannelSource = command.ChannelSource,
-            CurrencyCode = command.CurrencyCode,
-            Amount = command.Amount,
-            EstimatedValue = command.EstimatedValue,
-            ImpactUnit = command.ImpactUnit,
-            Notes = command.Notes,
-            ReferralPostId = command.ReferralPostId,
-            SafehouseId = command.SafehouseId
-        };
-
-        dbContext.Donations.Add(donation);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        if (command.InKindItems.Count > 0)
-        {
-            var nextItemId = await GetNextTableIdAsync(
-                "in_kind_donation_items",
-                "item_id",
-                transaction,
-                cancellationToken);
-            var items = command.InKindItems.Select(item => new InKindDonationItem
-            {
-                ItemId = nextItemId++,
-                DonationId = donation.DonationId,
-                ItemName = item.ItemName,
-                ItemCategory = item.ItemCategory,
-                Quantity = item.Quantity,
-                UnitOfMeasure = item.UnitOfMeasure,
-                EstimatedUnitValue = item.EstimatedUnitValue,
-                IntendedUse = item.IntendedUse,
-                ReceivedCondition = item.ReceivedCondition
-            }).ToList();
-
-            dbContext.InKindDonationItems.AddRange(items);
-        }
-
-        if (command.Allocations.Count > 0)
-        {
-            var nextAllocationId = await GetNextTableIdAsync(
-                "donation_allocations",
-                "allocation_id",
-                transaction,
-                cancellationToken);
-            var allocations = command.Allocations.Select(item => new DonationAllocation
-            {
-                AllocationId = nextAllocationId++,
-                DonationId = donation.DonationId,
-                SafehouseId = item.SafehouseId ?? command.SafehouseId,
-                ProgramArea = item.ProgramArea,
-                AmountAllocated = item.AmountAllocated,
-                AllocationDate = item.AllocationDate,
-                AllocationNotes = item.AllocationNotes
-            }).ToList();
-
-            dbContext.DonationAllocations.AddRange(allocations);
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
-        return await GetDonationAsync(donation.DonationId, cancellationToken);
+        return await GetDonationAsync(donationId, cancellationToken);
     }
 
     public async Task<IReadOnlyList<InKindDonationItem>> CreateInKindDonationItemsAsync(IReadOnlyList<InKindDonationItem> items, CancellationToken cancellationToken = default)
@@ -441,17 +445,10 @@ public sealed class DonationRepository(BeaconDbContext dbContext, IPostgresConne
     {
         await using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
-        var nextAllocationId = await GetNextTableIdAsync(
-            connection,
-            transaction,
-            "donation_allocations",
-            "allocation_id",
-            cancellationToken);
         await using var command = connection.CreateCommand();
         command.Transaction = transaction;
         command.CommandText = """
             INSERT INTO donation_allocations (
-                allocation_id,
                 donation_id,
                 safehouse_id,
                 program_area,
@@ -460,7 +457,6 @@ public sealed class DonationRepository(BeaconDbContext dbContext, IPostgresConne
                 allocation_notes
             )
             VALUES (
-                @allocation_id,
                 @donation_id,
                 @safehouse_id,
                 @program_area,
@@ -471,7 +467,6 @@ public sealed class DonationRepository(BeaconDbContext dbContext, IPostgresConne
             RETURNING allocation_id;
             """;
 
-        AddParameter(command, "allocation_id", nextAllocationId);
         AddParameter(command, "donation_id", allocation.DonationId);
         AddParameter(command, "safehouse_id", allocation.SafehouseId);
         AddParameter(command, "program_area", allocation.ProgramArea);

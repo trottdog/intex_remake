@@ -4,6 +4,7 @@ using backend.intex.Entities.Database;
 using backend.intex.Infrastructure.Auth;
 using backend.intex.Repositories.Abstractions;
 using backend.intex.Services.Abstractions;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend.intex.Services.Users;
 
@@ -16,11 +17,12 @@ public sealed class UserService(
         var page = query.Page <= 0 ? 1 : query.Page;
         var pageSize = ResolvePageSize(query.PageSize, query.Limit);
         var (users, total) = await userRepository.ListUsersAsync(page, pageSize, query.Role, cancellationToken);
+        var assignmentsByUserId = await userRepository.GetAssignedSafehousesForUsersAsync(users.Select(user => user.Id).ToList(), cancellationToken);
 
         var dtos = new List<UserResponseDto>(users.Count);
         foreach (var user in users)
         {
-            var assignedSafehouses = await userRepository.GetAssignedSafehousesAsync(user.Id, cancellationToken);
+            var assignedSafehouses = assignmentsByUserId.GetValueOrDefault(user.Id, []);
             dtos.Add(Map(user, assignedSafehouses));
         }
 
@@ -50,35 +52,63 @@ public sealed class UserService(
             return (null, "Invalid role");
         }
 
+        var username = request.Username.Trim();
+        var email = request.Email.Trim();
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(email))
+        {
+            return (null, "Username and email are required");
+        }
+
         var passwordError = PasswordRules.Validate(request.Password);
         if (passwordError is not null)
         {
             return (null, passwordError);
         }
 
-        var createdUser = await userRepository.CreateAsync(
-            new User
-            {
-                Username = request.Username,
-                Email = request.Email,
-                PasswordHash = passwordService.HashPassword(request.Password),
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                Role = request.Role,
-                IsActive = request.IsActive ?? true,
-                MfaEnabled = request.MfaEnabled ?? false,
-                MfaSecret = null,
-                ExternalAuthProvider = null,
-                ExternalAuthSubject = null,
-                SupporterId = request.SupporterId,
-                CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow
-            },
-            request.AssignedSafehouses ?? [],
-            cancellationToken);
+        var assignedSafehouseIds = request.AssignedSafehouses?.Distinct().ToArray() ?? [];
+        var duplicateExists = await userRepository.UsernameOrEmailExistsAsync(username, email, cancellationToken);
+        var missingSafehouses = await userRepository.ListMissingSafehouseIdsAsync(assignedSafehouseIds, cancellationToken);
 
-        var assignedSafehouses = await userRepository.GetAssignedSafehousesAsync(createdUser.Id, cancellationToken);
-        return (Map(createdUser, assignedSafehouses), null);
+        if (duplicateExists)
+        {
+            return (null, "Username or email already exists");
+        }
+
+        if (missingSafehouses.Count > 0)
+        {
+            return (null, $"Unknown safehouse IDs: {string.Join(", ", missingSafehouses.OrderBy(id => id))}");
+        }
+
+        User createdUser;
+        try
+        {
+            createdUser = await userRepository.CreateAsync(
+                new User
+                {
+                    Username = username,
+                    Email = email,
+                    PasswordHash = passwordService.HashPassword(request.Password),
+                    FirstName = request.FirstName,
+                    LastName = request.LastName,
+                    Role = request.Role,
+                    IsActive = request.IsActive ?? true,
+                    MfaEnabled = request.MfaEnabled ?? false,
+                    MfaSecret = null,
+                    ExternalAuthProvider = null,
+                    ExternalAuthSubject = null,
+                    SupporterId = request.SupporterId,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    UpdatedAt = DateTimeOffset.UtcNow
+                },
+                assignedSafehouseIds,
+                cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            return (null, "Failed to persist safehouse assignments for this user.");
+        }
+
+        return (Map(createdUser, assignedSafehouseIds), null);
     }
 
     public async Task<(UserResponseDto? User, string? ErrorMessage)> UpdateUserAsync(int userId, UpdateUserRequest request, CancellationToken cancellationToken = default)

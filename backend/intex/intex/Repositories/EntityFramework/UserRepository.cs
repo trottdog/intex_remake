@@ -31,23 +31,51 @@ public sealed class UserRepository(BeaconDbContext dbContext) : IUserRepository
     public Task<User?> GetUserWithAssignmentsAsync(int userId, CancellationToken cancellationToken = default) =>
         dbContext.Users.AsNoTracking().FirstOrDefaultAsync(user => user.Id == userId, cancellationToken);
 
-    public async Task<User> CreateAsync(User user, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default)
-    {
-        dbContext.Users.Add(user);
-        await dbContext.SaveChangesAsync(cancellationToken);
+    public Task<bool> UsernameOrEmailExistsAsync(string username, string email, CancellationToken cancellationToken = default) =>
+        dbContext.Users.AsNoTracking().AnyAsync(
+            user => user.Username == username || user.Email == email,
+            cancellationToken);
 
-        if (assignedSafehouses.Count > 0)
+    public async Task<IReadOnlyList<long>> ListMissingSafehouseIdsAsync(IReadOnlyList<long> safehouseIds, CancellationToken cancellationToken = default)
+    {
+        if (safehouseIds.Count == 0)
         {
-            dbContext.StaffSafehouseAssignments.AddRange(assignedSafehouses.Select(safehouseId =>
-                new StaffSafehouseAssignment
-                {
-                    UserId = user.Id.ToString(),
-                    SafehouseId = safehouseId
-                }));
-            await dbContext.SaveChangesAsync(cancellationToken);
+            return [];
         }
 
-        return user;
+        var requested = safehouseIds.Distinct().ToList();
+        var existing = await dbContext.Safehouses.AsNoTracking()
+            .Where(safehouse => requested.Contains(safehouse.SafehouseId))
+            .Select(safehouse => safehouse.SafehouseId)
+            .ToListAsync(cancellationToken);
+
+        return requested.Except(existing).ToList();
+    }
+
+    public async Task<User> CreateAsync(User user, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default)
+    {
+        var executionStrategy = dbContext.Database.CreateExecutionStrategy();
+        return await executionStrategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+            dbContext.Users.Add(user);
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            if (assignedSafehouses.Count > 0)
+            {
+                dbContext.StaffSafehouseAssignments.AddRange(assignedSafehouses.Select(safehouseId =>
+                    new StaffSafehouseAssignment
+                    {
+                        UserId = user.Id.ToString(),
+                        SafehouseId = safehouseId
+                    }));
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+            return user;
+        });
     }
 
     public async Task<User?> UpdateAsync(int userId, Action<UserMutation> mutate, IReadOnlyList<long>? assignedSafehouses, CancellationToken cancellationToken = default)
@@ -144,23 +172,16 @@ public sealed class UserRepository(BeaconDbContext dbContext) : IUserRepository
 
     public async Task<bool> DeleteAsync(int userId, CancellationToken cancellationToken = default)
     {
-        var user = await dbContext.Users.FirstOrDefaultAsync(entity => entity.Id == userId, cancellationToken);
-        if (user is null)
-        {
-            return false;
-        }
+        var userIdText = userId.ToString();
+        await dbContext.StaffSafehouseAssignments
+            .Where(assignment => assignment.UserId == userIdText)
+            .ExecuteDeleteAsync(cancellationToken);
 
-        var assignments = await dbContext.StaffSafehouseAssignments
-            .Where(assignment => assignment.UserId == userId.ToString())
-            .ToListAsync(cancellationToken);
-        if (assignments.Count > 0)
-        {
-            dbContext.StaffSafehouseAssignments.RemoveRange(assignments);
-        }
+        var deletedUsers = await dbContext.Users
+            .Where(entity => entity.Id == userId)
+            .ExecuteDeleteAsync(cancellationToken);
 
-        dbContext.Users.Remove(user);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return true;
+        return deletedUsers > 0;
     }
 
     public async Task<IReadOnlyList<long>> GetAssignedSafehousesAsync(int userId, CancellationToken cancellationToken = default) =>
@@ -168,4 +189,26 @@ public sealed class UserRepository(BeaconDbContext dbContext) : IUserRepository
             .Where(assignment => assignment.UserId == userId.ToString())
             .Select(assignment => assignment.SafehouseId)
             .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyDictionary<int, IReadOnlyList<long>>> GetAssignedSafehousesForUsersAsync(IReadOnlyList<int> userIds, CancellationToken cancellationToken = default)
+    {
+        if (userIds.Count == 0)
+        {
+            return new Dictionary<int, IReadOnlyList<long>>();
+        }
+
+        var userIdSet = userIds.Select(id => id.ToString()).ToHashSet(StringComparer.Ordinal);
+        var assignments = await dbContext.StaffSafehouseAssignments.AsNoTracking()
+            .Where(assignment => userIdSet.Contains(assignment.UserId))
+            .Select(assignment => new { assignment.UserId, assignment.SafehouseId })
+            .ToListAsync(cancellationToken);
+
+        var grouped = assignments
+            .GroupBy(item => int.Parse(item.UserId))
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<long>)group.Select(item => item.SafehouseId).ToList());
+
+        return grouped;
+    }
 }

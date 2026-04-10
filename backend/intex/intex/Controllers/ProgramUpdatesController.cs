@@ -148,23 +148,29 @@ public sealed class ProgramUpdatesController(BeaconDbContext dbContext) : ApiCon
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Delete(long id, CancellationToken cancellationToken)
     {
-        using var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-        var dependents = await dbContext.DonorViewedItems
-            .Where(item => item.ItemType != null && EF.Functions.ILike(item.ItemType, "update") && item.ItemId == id)
-            .ToListAsync(cancellationToken);
-        if (dependents.Count > 0)
-        {
-            dbContext.DonorViewedItems.RemoveRange(dependents);
-        }
+        var executionStrategy = dbContext.Database.CreateExecutionStrategy();
 
-        var entity = await dbContext.ProgramUpdates.FirstOrDefaultAsync(item => item.UpdateId == id, cancellationToken);
-        if (entity is not null)
+        await executionStrategy.ExecuteAsync(async () =>
         {
-            dbContext.ProgramUpdates.Remove(entity);
-        }
+            await using var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+            var dependents = await dbContext.DonorViewedItems
+                .Where(item => item.ItemType != null && EF.Functions.ILike(item.ItemType, "update") && item.ItemId == id)
+                .ToListAsync(cancellationToken);
+            if (dependents.Count > 0)
+            {
+                dbContext.DonorViewedItems.RemoveRange(dependents);
+            }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await tx.CommitAsync(cancellationToken);
+            var entity = await dbContext.ProgramUpdates.FirstOrDefaultAsync(item => item.UpdateId == id, cancellationToken);
+            if (entity is not null)
+            {
+                dbContext.ProgramUpdates.Remove(entity);
+            }
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await tx.CommitAsync(cancellationToken);
+        });
+
         return NoContent();
     }
 

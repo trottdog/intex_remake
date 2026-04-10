@@ -10,7 +10,7 @@ public sealed class DonationAllocationConfiguration : IEntityTypeConfiguration<D
     {
         builder.ToTable("donation_allocations");
         builder.HasKey(x => x.AllocationId);
-        builder.Property(x => x.AllocationId).HasColumnName("allocation_id").ValueGeneratedNever();
+        builder.Property(x => x.AllocationId).HasColumnName("allocation_id").ValueGeneratedOnAdd();
         builder.Property(x => x.DonationId).HasColumnName("donation_id");
         builder.Property(x => x.SafehouseId).HasColumnName("safehouse_id");
         builder.Property(x => x.ProgramArea).HasColumnName("program_area");

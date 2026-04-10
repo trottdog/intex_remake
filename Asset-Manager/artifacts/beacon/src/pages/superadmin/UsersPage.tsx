@@ -102,7 +102,7 @@ export default function UsersPage() {
     !search || `${u.firstName} ${u.lastName} ${u.username} ${u.email}`.toLowerCase().includes(search.toLowerCase())
   );
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["ListUsers"] });
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["users"] });
 
   const openAdd = () => {
     setCreateForm(EMPTY_CREATE);
@@ -140,8 +140,8 @@ export default function UsersPage() {
         assignedSafehouses: createSafehouseId ? [createSafehouseId] : [],
       };
       await createUser(payload);
-      await invalidate();
       setModalMode(null);
+      void invalidate();
     } catch (e: unknown) {
       setFormError(e instanceof Error ? e.message : "Failed to create user");
     } finally { setSaving(false); }
@@ -152,8 +152,8 @@ export default function UsersPage() {
     setSaving(true); setFormError(null);
     try {
       await updateUser(selected.id, { ...editForm, assignedSafehouses: editSafehouseId ? [editSafehouseId] : [] });
-      await invalidate();
       setModalMode(null);
+      void invalidate();
     } catch (e: unknown) {
       setFormError(e instanceof Error ? e.message : "Failed to update user");
     } finally { setSaving(false); }
@@ -164,7 +164,7 @@ export default function UsersPage() {
     try {
       if (u.isActive) await disableUser(u.id);
       else await enableUser(u.id);
-      await invalidate();
+      void invalidate();
     } catch { /* no-op */ }
     setConfirmToggle(null);
   };
@@ -177,8 +177,8 @@ export default function UsersPage() {
 
     try {
       await deleteUser(deleteTarget.id);
-      await invalidate();
       setDeleteTarget(null);
+      void invalidate();
     } catch (e: unknown) {
       setDeleteError(e instanceof Error ? e.message : "Failed to delete user");
     } finally {

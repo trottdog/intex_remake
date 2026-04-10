@@ -164,12 +164,12 @@ export function SupporterFormModal({
 
       return apiPatch<Supporter>(`/api/supporters/${supporter.supporterId ?? supporter.id}`, payload, token ?? undefined);
     },
-    onSuccess: async (savedSupporter) => {
-      await queryClient.invalidateQueries({ queryKey: ["supporters"] });
-      await queryClient.invalidateQueries({ queryKey: ["supporters", "stats"] });
+    onSuccess: (savedSupporter) => {
+      void queryClient.invalidateQueries({ queryKey: ["supporters"] });
+      void queryClient.invalidateQueries({ queryKey: ["supporters", "stats"] });
       if (savedSupporter.supporterId ?? savedSupporter.id) {
-        await queryClient.invalidateQueries({ queryKey: ["supporters", savedSupporter.supporterId ?? savedSupporter.id] });
-        await queryClient.invalidateQueries({ queryKey: ["supporters", savedSupporter.supporterId ?? savedSupporter.id, "profile"] });
+        void queryClient.invalidateQueries({ queryKey: ["supporters", savedSupporter.supporterId ?? savedSupporter.id] });
+        void queryClient.invalidateQueries({ queryKey: ["supporters", savedSupporter.supporterId ?? savedSupporter.id, "profile"] });
       }
       onSaved?.(savedSupporter);
       onClose();

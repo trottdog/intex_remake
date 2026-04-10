@@ -190,6 +190,52 @@ static async Task EnsureRuntimeSchemaAsync(WebApplication app)
             ALTER TABLE public.users
             ADD COLUMN IF NOT EXISTS mfa_secret text;
             """);
+
+        await dbContext.Database.ExecuteSqlRawAsync("""
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_schema = 'public'
+                      AND table_name = 'donation_allocations'
+                      AND column_name = 'allocation_id'
+                      AND is_identity = 'NO'
+                      AND column_default IS NULL
+                ) THEN
+                    CREATE SEQUENCE IF NOT EXISTS public.donation_allocations_allocation_id_seq;
+                    PERFORM setval(
+                        'public.donation_allocations_allocation_id_seq',
+                        COALESCE((SELECT MAX(allocation_id) FROM public.donation_allocations), 0) + 1,
+                        false);
+                    ALTER TABLE public.donation_allocations
+                        ALTER COLUMN allocation_id SET DEFAULT nextval('public.donation_allocations_allocation_id_seq');
+                END IF;
+            END $$;
+            """);
+
+        await dbContext.Database.ExecuteSqlRawAsync("""
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_schema = 'public'
+                      AND table_name = 'in_kind_donation_items'
+                      AND column_name = 'item_id'
+                      AND is_identity = 'NO'
+                      AND column_default IS NULL
+                ) THEN
+                    CREATE SEQUENCE IF NOT EXISTS public.in_kind_donation_items_item_id_seq;
+                    PERFORM setval(
+                        'public.in_kind_donation_items_item_id_seq',
+                        COALESCE((SELECT MAX(item_id) FROM public.in_kind_donation_items), 0) + 1,
+                        false);
+                    ALTER TABLE public.in_kind_donation_items
+                        ALTER COLUMN item_id SET DEFAULT nextval('public.in_kind_donation_items_item_id_seq');
+                END IF;
+            END $$;
+            """);
     }
     catch (Exception ex)
     {

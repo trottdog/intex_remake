@@ -84,46 +84,55 @@ public sealed class ResidentRepository(BeaconDbContext dbContext) : IResidentRep
 
     public async Task<bool> DeleteResidentAsync(long residentId, CancellationToken cancellationToken = default)
     {
-        var entity = await dbContext.Residents.FirstOrDefaultAsync(resident => resident.ResidentId == residentId, cancellationToken);
-        if (entity is null)
+        var executionStrategy = dbContext.Database.CreateExecutionStrategy();
+        var deleted = false;
+
+        await executionStrategy.ExecuteAsync(async () =>
         {
-            return false;
-        }
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+            var entity = await dbContext.Residents.FirstOrDefaultAsync(resident => resident.ResidentId == residentId, cancellationToken);
+            if (entity is null)
+            {
+                deleted = false;
+                return;
+            }
 
-        await dbContext.CaseConferences
-            .Where(conference => conference.ResidentId == residentId)
-            .ExecuteDeleteAsync(cancellationToken);
+            await dbContext.CaseConferences
+                .Where(conference => conference.ResidentId == residentId)
+                .ExecuteDeleteAsync(cancellationToken);
 
-        await dbContext.EducationRecords
-            .Where(record => record.ResidentId == residentId)
-            .ExecuteDeleteAsync(cancellationToken);
+            await dbContext.EducationRecords
+                .Where(record => record.ResidentId == residentId)
+                .ExecuteDeleteAsync(cancellationToken);
 
-        await dbContext.HealthWellbeingRecords
-            .Where(record => record.ResidentId == residentId)
-            .ExecuteDeleteAsync(cancellationToken);
+            await dbContext.HealthWellbeingRecords
+                .Where(record => record.ResidentId == residentId)
+                .ExecuteDeleteAsync(cancellationToken);
 
-        await dbContext.HomeVisitations
-            .Where(visit => visit.ResidentId == residentId)
-            .ExecuteDeleteAsync(cancellationToken);
+            await dbContext.HomeVisitations
+                .Where(visit => visit.ResidentId == residentId)
+                .ExecuteDeleteAsync(cancellationToken);
 
-        await dbContext.IncidentReports
-            .Where(report => report.ResidentId == residentId)
-            .ExecuteDeleteAsync(cancellationToken);
+            await dbContext.IncidentReports
+                .Where(report => report.ResidentId == residentId)
+                .ExecuteDeleteAsync(cancellationToken);
 
-        await dbContext.InterventionPlans
-            .Where(plan => plan.ResidentId == residentId)
-            .ExecuteDeleteAsync(cancellationToken);
+            await dbContext.InterventionPlans
+                .Where(plan => plan.ResidentId == residentId)
+                .ExecuteDeleteAsync(cancellationToken);
 
-        await dbContext.ProcessRecordings
-            .Where(recording => recording.ResidentId == residentId)
-            .ExecuteDeleteAsync(cancellationToken);
+            await dbContext.ProcessRecordings
+                .Where(recording => recording.ResidentId == residentId)
+                .ExecuteDeleteAsync(cancellationToken);
 
-        dbContext.Residents.Remove(entity);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
-        return true;
+            dbContext.Residents.Remove(entity);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            deleted = true;
+        });
+
+        return deleted;
     }
 
     public async Task<IReadOnlyDictionary<long, string?>> GetSafehouseNamesAsync(IReadOnlyList<long> safehouseIds, CancellationToken cancellationToken = default)

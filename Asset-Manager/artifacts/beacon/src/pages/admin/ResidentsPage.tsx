@@ -61,10 +61,12 @@ export default function ResidentsPage() {
     setPage(1);
   }, [filterSafehouse, filterStatus, filterRisk, search, setPage]);
 
+  const needsClientWideFiltering = Boolean(search || filterRisk);
   const { data: allResidentsData, isLoading } = useListResidents({
-    page: 1,
-    pageSize: 2000,
+    page: needsClientWideFiltering ? 1 : page,
+    pageSize: needsClientWideFiltering ? 2000 : pageSize,
     safehouseId: filterSafehouse ?? undefined,
+    caseStatus: filterStatus || undefined,
   });
   const allResidents = allResidentsData?.data ?? [];
   const thirtyDaysAgo = new Date();
@@ -79,14 +81,17 @@ export default function ResidentsPage() {
       ].filter(Boolean).join(" ").toLowerCase();
       if (!searchable.includes(q)) return false;
     }
-    if (filterStatus && r.caseStatus !== filterStatus) return false;
     if (filterRisk && (r.currentRiskLevel ?? r.riskLevel) !== filterRisk) return false;
     return true;
   });
-  const totalFilteredResidents = filteredResidents.length;
+  const totalFilteredResidents = needsClientWideFiltering
+    ? filteredResidents.length
+    : (allResidentsData?.total ?? filteredResidents.length);
   const totalPages = totalFilteredResidents === 0 ? 1 : Math.ceil(totalFilteredResidents / pageSize);
   const safePage = Math.min(page, totalPages);
-  const rows = filteredResidents.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const rows = needsClientWideFiltering
+    ? filteredResidents.slice((safePage - 1) * pageSize, safePage * pageSize)
+    : filteredResidents;
   const hasActiveFilters = Boolean(search || filterStatus || filterRisk || filterSafehouse !== null);
   const derivedStats = {
     totalActive: filteredResidents.filter(isActiveResident).length,

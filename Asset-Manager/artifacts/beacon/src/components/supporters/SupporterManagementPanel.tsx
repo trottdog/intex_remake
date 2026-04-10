@@ -61,9 +61,9 @@ export function SupporterManagementPanel({ pageSize = 50 }: SupporterManagementP
 
   const deleteMutation = useMutation({
     mutationFn: async (supporterId: number) => apiDelete(`/api/supporters/${supporterId}`, token ?? undefined),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["supporters"] });
-      await queryClient.invalidateQueries({ queryKey: ["supporters", "stats"] });
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["supporters"] });
+      void queryClient.invalidateQueries({ queryKey: ["supporters", "stats"] });
       setDeleteTarget(null);
     },
   });
