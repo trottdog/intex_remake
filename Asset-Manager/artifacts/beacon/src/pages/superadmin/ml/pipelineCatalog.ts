@@ -16,7 +16,7 @@ export interface PipelineCatalogEntry {
   evidence: PipelineEvidenceLevel;
   caveat: PipelineCaveatLevel;
   summary: string;
-  limitation: string;
+  limitation?: string;
   links: PipelineRouteLink[];
   auditStatus: PipelineAuditStatus;
   complete: string;
@@ -106,15 +106,15 @@ export const PIPELINE_REVIEW_CATALOG: PipelineCatalogEntry[] = [
     family: "Residents",
     taskType: "classification",
     evidence: "direct",
-    caveat: "caution",
+    caveat: "normal",
     summary: "Surfaced directly in the reintegration funnel and readiness table.",
-    limitation: "Evaluation automation and executable notebook proof still need tightening.",
     links: [{ label: "Residents: Reintegration", href: "/superadmin/residents?tab=reintegration" }],
     auditStatus: "risk",
-    complete: "Framing, deployment notes, artifact outputs, and resident super-admin integration are present.",
-    weak: "There is no executable notebook evidence and evaluation automation is not implemented.",
-    missing: "Executed notebook proof and a functional evaluation script.",
-    videoSafety: "Safe to show with caveat language.",
+    complete:
+      "Framing, deployment notes, artifact outputs, resident super-admin integration, runtime evaluation automation, and executed notebook evidence are present.",
+    weak: "No pipeline-specific implementation blockers are currently flagged.",
+    missing: "No critical evidence gaps identified for this pipeline entry.",
+    videoSafety: "Safe to show in routed UI demos.",
   },
   {
     internalName: "case_prioritization",
