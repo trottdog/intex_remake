@@ -191,126 +191,69 @@ static async Task EnsureRuntimeSchemaAsync(WebApplication app)
             ADD COLUMN IF NOT EXISTS mfa_secret text;
             """);
 
-        await dbContext.Database.ExecuteSqlRawAsync("""
-            DO $$
-            BEGIN
-                IF EXISTS (
-                    SELECT 1
-                    FROM information_schema.columns
-                    WHERE table_schema = 'public'
-                      AND table_name = 'donation_allocations'
-                      AND column_name = 'allocation_id'
-                      AND is_identity = 'NO'
-                      AND column_default IS NULL
-                ) THEN
-                    CREATE SEQUENCE IF NOT EXISTS public.donation_allocations_allocation_id_seq;
-                    PERFORM setval(
-                        'public.donation_allocations_allocation_id_seq',
-                        COALESCE((SELECT MAX(allocation_id) FROM public.donation_allocations), 0) + 1,
-                        false);
-                    ALTER TABLE public.donation_allocations
-                        ALTER COLUMN allocation_id SET DEFAULT nextval('public.donation_allocations_allocation_id_seq');
-                END IF;
-            END $$;
-            """);
+        var generatedIdColumns = new (string TableName, string ColumnName, string SequenceName)[]
+        {
+            ("users", "id", "users_id_seq"),
+            ("supporters", "supporter_id", "supporters_supporter_id_seq"),
+            ("safehouses", "safehouse_id", "safehouses_safehouse_id_seq"),
+            ("partners", "partner_id", "partners_partner_id_seq"),
+            ("partner_assignments", "assignment_id", "partner_assignments_assignment_id_seq"),
+            ("campaigns", "campaign_id", "campaigns_campaign_id_seq"),
+            ("donations", "donation_id", "donations_donation_id_seq"),
+            ("donation_allocations", "allocation_id", "donation_allocations_allocation_id_seq"),
+            ("in_kind_donation_items", "item_id", "in_kind_donation_items_item_id_seq"),
+            ("program_updates", "update_id", "program_updates_update_id_seq"),
+            ("social_media_posts", "post_id", "social_media_posts_post_id_seq"),
+            ("residents", "resident_id", "residents_resident_id_seq"),
+            ("case_conferences", "conference_id", "case_conferences_conference_id_seq"),
+            ("education_records", "education_record_id", "education_records_education_record_id_seq"),
+            ("health_wellbeing_records", "health_record_id", "health_wellbeing_records_health_record_id_seq"),
+            ("donor_viewed_items", "id", "donor_viewed_items_id_seq"),
+            ("staff_safehouse_assignments", "id", "staff_safehouse_assignments_id_seq"),
+            ("public_impact_snapshots", "snapshot_id", "public_impact_snapshots_snapshot_id_seq"),
+            ("safehouse_monthly_metrics", "metric_id", "safehouse_monthly_metrics_metric_id_seq"),
+            ("ml_pipeline_runs", "run_id", "ml_pipeline_runs_run_id_seq"),
+            ("ml_prediction_snapshots", "prediction_id", "ml_prediction_snapshots_prediction_id_seq")
+        };
 
-        await dbContext.Database.ExecuteSqlRawAsync("""
-            DO $$
-            BEGIN
-                IF EXISTS (
-                    SELECT 1
-                    FROM information_schema.columns
-                    WHERE table_schema = 'public'
-                      AND table_name = 'in_kind_donation_items'
-                      AND column_name = 'item_id'
-                      AND is_identity = 'NO'
-                      AND column_default IS NULL
-                ) THEN
-                    CREATE SEQUENCE IF NOT EXISTS public.in_kind_donation_items_item_id_seq;
-                    PERFORM setval(
-                        'public.in_kind_donation_items_item_id_seq',
-                        COALESCE((SELECT MAX(item_id) FROM public.in_kind_donation_items), 0) + 1,
-                        false);
-                    ALTER TABLE public.in_kind_donation_items
-                        ALTER COLUMN item_id SET DEFAULT nextval('public.in_kind_donation_items_item_id_seq');
-                END IF;
-            END $$;
-            """);
-
-        await dbContext.Database.ExecuteSqlRawAsync("""
-            DO $$
-            BEGIN
-                IF EXISTS (
-                    SELECT 1
-                    FROM information_schema.columns
-                    WHERE table_schema = 'public'
-                      AND table_name = 'safehouses'
-                      AND column_name = 'safehouse_id'
-                      AND is_identity = 'NO'
-                      AND column_default IS NULL
-                ) THEN
-                    CREATE SEQUENCE IF NOT EXISTS public.safehouses_safehouse_id_seq;
-                    PERFORM setval(
-                        'public.safehouses_safehouse_id_seq',
-                        COALESCE((SELECT MAX(safehouse_id) FROM public.safehouses), 0) + 1,
-                        false);
-                    ALTER TABLE public.safehouses
-                        ALTER COLUMN safehouse_id SET DEFAULT nextval('public.safehouses_safehouse_id_seq');
-                END IF;
-            END $$;
-            """);
-
-        await dbContext.Database.ExecuteSqlRawAsync("""
-            DO $$
-            BEGIN
-                IF EXISTS (
-                    SELECT 1
-                    FROM information_schema.columns
-                    WHERE table_schema = 'public'
-                      AND table_name = 'partners'
-                      AND column_name = 'partner_id'
-                      AND is_identity = 'NO'
-                      AND column_default IS NULL
-                ) THEN
-                    CREATE SEQUENCE IF NOT EXISTS public.partners_partner_id_seq;
-                    PERFORM setval(
-                        'public.partners_partner_id_seq',
-                        COALESCE((SELECT MAX(partner_id) FROM public.partners), 0) + 1,
-                        false);
-                    ALTER TABLE public.partners
-                        ALTER COLUMN partner_id SET DEFAULT nextval('public.partners_partner_id_seq');
-                END IF;
-            END $$;
-            """);
-
-        await dbContext.Database.ExecuteSqlRawAsync("""
-            DO $$
-            BEGIN
-                IF EXISTS (
-                    SELECT 1
-                    FROM information_schema.columns
-                    WHERE table_schema = 'public'
-                      AND table_name = 'partner_assignments'
-                      AND column_name = 'assignment_id'
-                      AND is_identity = 'NO'
-                      AND column_default IS NULL
-                ) THEN
-                    CREATE SEQUENCE IF NOT EXISTS public.partner_assignments_assignment_id_seq;
-                    PERFORM setval(
-                        'public.partner_assignments_assignment_id_seq',
-                        COALESCE((SELECT MAX(assignment_id) FROM public.partner_assignments), 0) + 1,
-                        false);
-                    ALTER TABLE public.partner_assignments
-                        ALTER COLUMN assignment_id SET DEFAULT nextval('public.partner_assignments_assignment_id_seq');
-                END IF;
-            END $$;
-            """);
+        foreach (var (tableName, columnName, sequenceName) in generatedIdColumns)
+        {
+            await EnsurePrimaryKeyDefaultAsync(dbContext, tableName, columnName, sequenceName);
+        }
     }
     catch (Exception ex)
     {
         logger.LogError(ex, "Failed to apply runtime schema bootstrap for auth columns.");
         throw;
     }
+}
+
+static async Task EnsurePrimaryKeyDefaultAsync(BeaconDbContext dbContext, string tableName, string columnName, string sequenceName)
+{
+    var sql = $"""
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = '{tableName}'
+                  AND column_name = '{columnName}'
+                  AND is_identity = 'NO'
+                  AND column_default IS NULL
+            ) THEN
+                CREATE SEQUENCE IF NOT EXISTS public.{sequenceName};
+                PERFORM setval(
+                    'public.{sequenceName}',
+                    COALESCE((SELECT MAX({columnName}) FROM public.{tableName}), 0) + 1,
+                    false);
+                ALTER TABLE public.{tableName}
+                    ALTER COLUMN {columnName} SET DEFAULT nextval('public.{sequenceName}');
+            END IF;
+        END $$;
+        """;
+
+    await dbContext.Database.ExecuteSqlRawAsync(sql);
 }
 
 public partial class Program;
