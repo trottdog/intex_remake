@@ -324,15 +324,20 @@ export default function SuperAdminDashboard() {
             onClick={goTo("/superadmin/caseload")}
             tooltip="Active residents currently in care across the organization."
           />
-          <KpiCard
-            label="Cases at Risk"
-            value={fmt(dashboardKpis.casesAtRisk)}
-            icon={AlertTriangle}
-            color="#dc2626"
-            emphasis={dashboardKpis.casesAtRisk > 0}
-            onClick={goTo("/superadmin/donors?tab=supporters")}
-            tooltip="Residents currently marked at high or critical risk level."
-          />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={goTo("/superadmin/residents")}
+                aria-label="Open High / Critical Risk residents"
+                className="w-full rounded-xl border border-gray-100 bg-white p-4 text-left transition-all hover:border-red-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2a9d72]/30"
+              >
+                <div className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">High / Critical Risk</div>
+                <div className="text-2xl font-bold text-red-600">{fmt(dashboardKpis.casesAtRisk)}</div>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Residents currently marked at high or critical risk level.</TooltipContent>
+          </Tooltip>
           <KpiCard
             label="Total Donations"
             value={fmtPeso(dashboardKpis.totalDonations)}
