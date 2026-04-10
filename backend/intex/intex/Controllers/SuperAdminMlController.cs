@@ -655,7 +655,7 @@ public sealed class SuperAdminMlController(BeaconDbContext dbContext) : ApiContr
                     from safehouse in safehouseGroup.DefaultIfEmpty()
                     select new { metric, safehouse };
 
-        var hasMonthFilter = !string.IsNullOrWhiteSpace(monthStart) && DateOnly.TryParse(monthStart, out var parsedMonth);
+        var hasMonthFilter = DateOnly.TryParse(monthStart, out var parsedMonth);
 
         if (hasMonthFilter)
         {
