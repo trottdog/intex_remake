@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useGetMyDonorProfile, updateMyDonorProfile } from "@/services/donor.service";
 import { useAuth } from "@/contexts/AuthContext";
 import { getCookie, setCookie } from "@/lib/cookies";
+import { applyConsent, getConsentLevel } from "@/lib/consent";
 import { User, Mail, Phone, MapPin, Building, Shield, Bell, CreditCard, Edit3, Save, X, Lock, CheckCircle, Sun, Moon, Monitor } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -35,8 +36,7 @@ export default function ProfilePage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [themePref, setThemePref] = useState<ThemePref>(getThemePref);
   const [consentLevel, setConsentLevel] = useState<"all" | "essential">(() => {
-    const c = getCookie("beacon_consent");
-    return c === "all" ? "all" : "essential";
+    return getConsentLevel() === "all" ? "all" : "essential";
   });
   const [consentSaved, setConsentSaved] = useState(false);
 
@@ -50,6 +50,7 @@ export default function ProfilePage() {
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
+    email: "",
     phone: "",
     organization: "",
     communicationPreference: "",
@@ -60,6 +61,7 @@ export default function ProfilePage() {
       setForm({
         firstName: String(donor.firstName ?? user?.firstName ?? ""),
         lastName: String(donor.lastName ?? user?.lastName ?? ""),
+        email: String(donor.email ?? user?.email ?? ""),
         phone: String(donor.phone ?? ""),
         organization: String(donor.organization ?? ""),
         communicationPreference: String(donor.communicationPreference ?? ""),
@@ -73,7 +75,7 @@ export default function ProfilePage() {
     setSaveError(null);
     try {
       await updateMyDonorProfile(form);
-      await queryClient.invalidateQueries({ queryKey: ["GetMyDonorProfile"] });
+      await queryClient.invalidateQueries({ queryKey: ["donor", "profile"] });
       setSaveSuccess(true);
       setEditing(false);
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -89,6 +91,7 @@ export default function ProfilePage() {
       setForm({
         firstName: String(donor.firstName ?? user?.firstName ?? ""),
         lastName: String(donor.lastName ?? user?.lastName ?? ""),
+        email: String(donor.email ?? user?.email ?? ""),
         phone: String(donor.phone ?? ""),
         organization: String(donor.organization ?? ""),
         communicationPreference: String(donor.communicationPreference ?? ""),
@@ -99,7 +102,7 @@ export default function ProfilePage() {
   };
 
   const saveConsent = (level: "all" | "essential") => {
-    setCookie("beacon_consent", level);
+    applyConsent(level);
     setConsentLevel(level);
     setConsentSaved(true);
     setTimeout(() => setConsentSaved(false), 2000);
@@ -122,12 +125,12 @@ export default function ProfilePage() {
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-[#2a9d72] rounded-full flex items-center justify-center">
               <span className="text-2xl font-bold text-white">
-                {user?.firstName?.[0]}{user?.lastName?.[0]}
+                {form.firstName?.[0] ?? user?.firstName?.[0]}{form.lastName?.[0] ?? user?.lastName?.[0]}
               </span>
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">
-                {isLoading ? "Loading..." : (donor ? `${donor.firstName} ${donor.lastName}` : `${user?.firstName} ${user?.lastName}`)}
+                {isLoading ? "Loading..." : `${form.firstName} ${form.lastName}`.trim() || `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() || "Donor"}
               </h2>
               <p className="text-white/60 text-sm">
                 {isLoading ? "" : (donor?.supportType ? String(donor.supportType) : "Donor")} — Beacon Supporter
@@ -175,7 +178,11 @@ export default function ProfilePage() {
               </div>
               <div>
                 <div className="text-xs text-gray-400 mb-1 flex items-center gap-1"><Mail className="w-3 h-3" /> Email</div>
-                <div className="text-sm text-gray-500">{String(donor?.email ?? user?.email ?? "—")} <span className="text-xs text-gray-400">(contact admin to update)</span></div>
+                {editing ? (
+                  <input {...field("email")} type="email" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30" />
+                ) : (
+                  <div className="text-sm text-gray-800">{form.email || "Not provided"}</div>
+                )}
               </div>
               <div>
                 <div className="text-xs text-gray-400 mb-1 flex items-center gap-1"><Phone className="w-3 h-3" /> Phone</div>
@@ -309,12 +316,12 @@ export default function ProfilePage() {
           Privacy &amp; Consent Preferences
         </h3>
         <p className="text-sm text-gray-500 mb-4">
-          Control how Beacon stores on-device preferences. Essential preferences keep your theme, sidebar, and consent choices consistent. Optional consent is reserved for analytics or personalization if those features are enabled.
+          Control how Beacon stores on-device preferences. Essential preferences keep your theme, sidebar, and consent choices consistent. Accept All also enables a non-essential <code>beacon_personalization</code> cookie.
         </p>
         <div className="space-y-3 mb-4">
           {([
             { id: "essential", label: "Essential Only", desc: "Stores only Beacon preference cookies such as theme, consent, and sidebar state. No analytics or cross-site tracking.", locked: true },
-            { id: "all", label: "Accept All", desc: "Allows optional analytics or personalization features if Beacon enables them in the future." },
+            { id: "all", label: "Accept All", desc: "Allows optional personalization and enables the non-essential beacon_personalization cookie." },
           ] as const).map((opt) => (
             <label key={opt.id} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${consentLevel === opt.id ? "border-[#2a9d72] bg-[#f0faf6]" : "border-gray-100 hover:border-gray-200"}`}>
               <input

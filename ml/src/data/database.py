@@ -140,16 +140,38 @@ def is_transaction_pooler_connection(connection_string: str | None = None) -> bo
     return int(parsed.get("port", 5432)) == 6543
 
 
-def connect_to_postgres(connection_string: str | None = None):
+def connect_to_postgres(
+    connection_string: str | None = None,
+    *,
+    autocommit: bool = False,
+):
     """Create a psycopg connection for the configured Postgres target."""
 
     import psycopg
 
     resolved = resolve_database_connection_string(connection_string)
     if "://" in resolved:
-        return psycopg.connect(resolved)
+        return psycopg.connect(resolved, autocommit=autocommit)
 
-    return psycopg.connect(**parse_npgsql_connection_string(resolved))
+    return psycopg.connect(
+        **parse_npgsql_connection_string(resolved),
+        autocommit=autocommit,
+    )
+
+
+def _read_table_from_connection(
+    conn,
+    table_name: str,
+) -> pd.DataFrame:
+    """Execute a single raw-table select using an existing connection."""
+
+    query = f'SELECT * FROM public."{table_name}"'
+    with conn.cursor() as cursor:
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        columns = [column.name for column in cursor.description]
+
+    return pd.DataFrame(rows, columns=columns)
 
 
 def load_database_table(
@@ -163,14 +185,11 @@ def load_database_table(
         valid = ", ".join(EXPECTED_TABLES)
         raise ValueError(f"Unknown raw table '{table_name}'. Valid options: {valid}")
 
-    query = f'SELECT * FROM public."{table_name}"'
-    with connect_to_postgres(connection_string) as conn:
-        with conn.cursor() as cursor:
-            cursor.execute(query)
-            rows = cursor.fetchall()
-            columns = [column.name for column in cursor.description]
-
-    return pd.DataFrame(rows, columns=columns)
+    conn = connect_to_postgres(connection_string, autocommit=True)
+    try:
+        return _read_table_from_connection(conn, table_name)
+    finally:
+        conn.close()
 
 
 def load_database_tables(
@@ -181,10 +200,17 @@ def load_database_tables(
     """Load multiple source tables from Postgres."""
 
     selected = tuple(table_names or EXPECTED_TABLES)
-    return {
-        table_name: load_database_table(
-            table_name,
-            connection_string=connection_string,
-        )
-        for table_name in selected
-    }
+    invalid = [table_name for table_name in selected if table_name not in EXPECTED_TABLES]
+    if invalid:
+        valid = ", ".join(EXPECTED_TABLES)
+        invalid_names = ", ".join(invalid)
+        raise ValueError(f"Unknown raw table(s) '{invalid_names}'. Valid options: {valid}")
+
+    conn = connect_to_postgres(connection_string, autocommit=True)
+    try:
+        return {
+            table_name: _read_table_from_connection(conn, table_name)
+            for table_name in selected
+        }
+    finally:
+        conn.close()

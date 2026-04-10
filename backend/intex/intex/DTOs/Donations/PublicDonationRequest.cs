@@ -9,4 +9,5 @@ public sealed class PublicDonationRequest
     public bool? IsRecurring { get; init; }
     public long? SafehouseId { get; init; }
     public string? CurrencyCode { get; init; }
+    public long? SupporterId { get; init; }
 }

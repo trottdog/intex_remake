@@ -26,8 +26,23 @@ public sealed class SupporterService(ISupporterRepository supporterRepository) :
         var fields = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
         AddIfPresent(fields, "firstName", request.FirstName);
         AddIfPresent(fields, "lastName", request.LastName);
+        AddIfPresent(fields, "email", request.Email);
         AddIfPresent(fields, "phone", request.Phone);
         AddIfPresent(fields, "organizationName", request.OrganizationName ?? request.Organization);
+
+        if (request.FirstName is not null || request.LastName is not null)
+        {
+            var existing = await supporterRepository.GetSupporterByIdAsync(supporterId, cancellationToken);
+            if (existing is null)
+            {
+                return (null, "Not found");
+            }
+
+            var resolvedFirst = request.FirstName ?? existing.FirstName;
+            var resolvedLast = request.LastName ?? existing.LastName;
+            var displayName = string.Join(" ", new[] { resolvedFirst, resolvedLast }.Where(part => !string.IsNullOrWhiteSpace(part))).Trim();
+            fields["displayName"] = JsonSerializer.SerializeToElement(string.IsNullOrWhiteSpace(displayName) ? null : displayName);
+        }
 
         if (fields.Count == 0)
         {

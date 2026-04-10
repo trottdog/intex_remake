@@ -42,6 +42,7 @@ public static class ServiceCollectionExtensions
                 }
             });
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.Configure<MfaOptions>(configuration.GetSection(MfaOptions.SectionName));
         services.Configure<SupabaseOptions>(configuration.GetSection(SupabaseOptions.SectionName));
         return services;
     }
@@ -91,14 +92,24 @@ public static class ServiceCollectionExtensions
             throw new InvalidOperationException("A PostgreSQL connection string must be configured.");
         }
 
-        var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+        var connectionBuilder = new NpgsqlConnectionStringBuilder(connectionString)
+        {
+            Pooling = true,
+            MinPoolSize = 0,
+            MaxPoolSize = 20,
+            Timeout = 15,
+            CommandTimeout = 15
+        };
+        var normalizedConnectionString = connectionBuilder.ConnectionString;
+
+        var dataSourceBuilder = new NpgsqlDataSourceBuilder(normalizedConnectionString);
         var dataSource = dataSourceBuilder.Build();
 
         services.AddSingleton(dataSource);
         services.AddSingleton<IPostgresConnectionFactory, PostgresConnectionFactory>();
         services.AddPooledDbContextFactory<BeaconDbContext>(options =>
         {
-            options.UseNpgsql(connectionString, npgsql =>
+            options.UseNpgsql(normalizedConnectionString, npgsql =>
             {
                 npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery);
                 npgsql.CommandTimeout(15);
@@ -223,9 +234,11 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
+        services.AddMemoryCache();
         services.AddScoped<IPasswordService, BcryptPasswordService>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IJwtTokenReader, JwtTokenReader>();
+        services.AddScoped<IMfaChallengeService, MfaChallengeService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICaseManagementService, CaseManagementService>();
         services.AddScoped<IUserScopeService, UserScopeService>();

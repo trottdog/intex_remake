@@ -336,7 +336,26 @@ public sealed class DonationRepository(BeaconDbContext dbContext) : IDonationRep
             return new Dictionary<long, string?>();
         }
 
-        return await dbContext.Supporters.AsNoTracking()
+        var userNamesBySupporterId = (await dbContext.Users.AsNoTracking()
+            .Where(item => item.SupporterId.HasValue && ids.Contains(item.SupporterId.Value))
+            .Select(item => new
+            {
+                SupporterId = item.SupporterId!.Value,
+                UserName = ((item.FirstName ?? string.Empty) + " " + (item.LastName ?? string.Empty)).Trim(),
+                item.Username,
+                item.Email
+            })
+            .ToListAsync(cancellationToken))
+            .GroupBy(item => item.SupporterId)
+            .ToDictionary(
+                group => group.Key,
+                group => group
+                    .Select(item => !string.IsNullOrWhiteSpace(item.UserName)
+                        ? item.UserName
+                        : (!string.IsNullOrWhiteSpace(item.Username) ? item.Username : item.Email))
+                    .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name)));
+
+        var supporterNamesById = await dbContext.Supporters.AsNoTracking()
             .Where(item => ids.Contains(item.SupporterId))
             .Select(item => new
             {
@@ -344,9 +363,22 @@ public sealed class DonationRepository(BeaconDbContext dbContext) : IDonationRep
                 SupporterName = item.DisplayName
                                 ?? (((item.FirstName ?? string.Empty) + " " + (item.LastName ?? string.Empty)).Trim().Length > 0
                                     ? ((item.FirstName ?? string.Empty) + " " + (item.LastName ?? string.Empty)).Trim()
-                                    : null)
+                                    : item.Email)
             })
             .ToDictionaryAsync(item => item.SupporterId, item => item.SupporterName, cancellationToken);
+
+        foreach (var supporterId in ids)
+        {
+            if (!supporterNamesById.TryGetValue(supporterId, out var supporterName) || string.IsNullOrWhiteSpace(supporterName))
+            {
+                if (userNamesBySupporterId.TryGetValue(supporterId, out var userName) && !string.IsNullOrWhiteSpace(userName))
+                {
+                    supporterNamesById[supporterId] = userName;
+                }
+            }
+        }
+
+        return supporterNamesById;
     }
 
     private static bool TryMapField(string key, JsonElement value, out string propertyName, out object? parsedValue)

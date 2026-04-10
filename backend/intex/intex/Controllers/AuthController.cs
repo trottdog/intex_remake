@@ -13,6 +13,27 @@ namespace backend.intex.Controllers;
 public sealed class AuthController(IAuthService authService) : ApiControllerBase
 {
     [AllowAnonymous]
+    [HttpPost("register-donor")]
+    [ProducesResponseType<RegisterDonorResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<RegisterDonorResponse>> RegisterDonor([FromBody] RegisterDonorRequest request, CancellationToken cancellationToken)
+    {
+        var result = await authService.RegisterDonorAsync(request, cancellationToken);
+        if (result.Response is null)
+        {
+            if (result.IsConflict)
+            {
+                return Conflict(new ErrorResponse(result.ErrorMessage ?? "Username or email already exists"));
+            }
+
+            return BadRequest(new ErrorResponse(result.ErrorMessage ?? "Failed to create donor account"));
+        }
+
+        return StatusCode(StatusCodes.Status201Created, result.Response);
+    }
+
+    [AllowAnonymous]
     [HttpPost("login")]
     [ProducesResponseType<LoginResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ErrorResponse>(StatusCodes.Status401Unauthorized)]
@@ -26,6 +47,18 @@ public sealed class AuthController(IAuthService authService) : ApiControllerBase
         var response = await authService.LoginAsync(request, cancellationToken);
         return response is null
             ? Unauthorized(new ErrorResponse("Invalid credentials"))
+            : Ok(response);
+    }
+
+    [AllowAnonymous]
+    [HttpPost("mfa/verify")]
+    [ProducesResponseType<LoginResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<LoginResponse>> VerifyMfa([FromBody] MfaVerifyRequest request, CancellationToken cancellationToken)
+    {
+        var response = await authService.VerifyMfaAsync(request, cancellationToken);
+        return response is null
+            ? Unauthorized(new ErrorResponse("Invalid MFA challenge or code"))
             : Ok(response);
     }
 

@@ -14,45 +14,48 @@ public sealed class DashboardController(IDbContextFactory<BeaconDbContext> dbFac
     [HttpGet("public-impact")]
     public async Task<IActionResult> GetPublicImpact(CancellationToken cancellationToken)
     {
-        var residentsTask = RunAsync(db => db.Residents.AsNoTracking().CountAsync(cancellationToken));
-        var donationsTask = RunAsync(db => db.Donations.AsNoTracking().SumAsync(item => (decimal?)item.Amount, cancellationToken));
-        var reintegrationTask = RunAsync(db => db.Residents.AsNoTracking()
-            .CountAsync(item => item.ReintegrationStatus != null && EF.Functions.ILike(item.ReintegrationStatus, "completed"), cancellationToken));
-        var safehouseTask = RunAsync(db => db.Safehouses.AsNoTracking().CountAsync(cancellationToken));
-        var programAreasTask = RunAsync(db => db.PartnerAssignments.AsNoTracking()
-            .Where(item => item.ProgramArea != null)
-            .Select(item => item.ProgramArea!)
-            .Distinct()
-            .CountAsync(cancellationToken));
-        var snapshotsTask = RunAsync(db => db.PublicImpactSnapshots.AsNoTracking()
-            .Where(item => item.IsPublished == true)
-            .OrderByDescending(item => item.SnapshotId)
-            .Take(5)
-            .Select(item => new
-            {
-                item.SnapshotId,
-                Id = item.SnapshotId,
-                item.Headline,
-                Title = item.Headline,
-                item.SummaryText,
-                Summary = item.SummaryText,
-                SnapshotDate = item.SnapshotDate.HasValue ? item.SnapshotDate.Value.ToString("yyyy-MM-dd") : null,
-                PublishedAt = item.PublishedAt,
-                item.IsPublished
-            })
-            .ToListAsync(cancellationToken));
-
-        await Task.WhenAll(residentsTask, donationsTask, reintegrationTask, safehouseTask, programAreasTask, snapshotsTask);
-
-        return Ok(new
+        var payload = await RunAsync(async db =>
         {
-            residentsServedTotal = residentsTask.Result,
-            totalDonationsRaised = decimal.Round(donationsTask.Result ?? 0m, 2),
-            reintegrationCount = reintegrationTask.Result,
-            safehouseCount = safehouseTask.Result,
-            programAreasActive = programAreasTask.Result,
-            recentSnapshots = snapshotsTask.Result
+            var residentsServedTotal = await db.Residents.AsNoTracking().CountAsync(cancellationToken);
+            var totalDonationsRaised = await db.Donations.AsNoTracking().SumAsync(item => (decimal?)item.Amount, cancellationToken);
+            var reintegrationCount = await db.Residents.AsNoTracking()
+                .CountAsync(item => item.ReintegrationStatus != null && EF.Functions.ILike(item.ReintegrationStatus, "completed"), cancellationToken);
+            var safehouseCount = await db.Safehouses.AsNoTracking().CountAsync(cancellationToken);
+            var programAreasActive = await db.PartnerAssignments.AsNoTracking()
+                .Where(item => item.ProgramArea != null)
+                .Select(item => item.ProgramArea!)
+                .Distinct()
+                .CountAsync(cancellationToken);
+            var recentSnapshots = await db.PublicImpactSnapshots.AsNoTracking()
+                .Where(item => item.IsPublished == true)
+                .OrderByDescending(item => item.SnapshotId)
+                .Take(5)
+                .Select(item => new
+                {
+                    item.SnapshotId,
+                    Id = item.SnapshotId,
+                    item.Headline,
+                    Title = item.Headline,
+                    item.SummaryText,
+                    Summary = item.SummaryText,
+                    SnapshotDate = item.SnapshotDate.HasValue ? item.SnapshotDate.Value.ToString("yyyy-MM-dd") : null,
+                    PublishedAt = item.PublishedAt,
+                    item.IsPublished
+                })
+                .ToListAsync(cancellationToken);
+
+            return new
+            {
+                residentsServedTotal,
+                totalDonationsRaised = decimal.Round(totalDonationsRaised ?? 0m, 2),
+                reintegrationCount,
+                safehouseCount,
+                programAreasActive,
+                recentSnapshots
+            };
         });
+
+        return Ok(payload);
     }
 
     [Authorize(Policy = PolicyNames.DonorOnly)]
@@ -66,37 +69,39 @@ public sealed class DashboardController(IDbContextFactory<BeaconDbContext> dbFac
         }
 
         var sid = supporterId.Value;
-        var lifetimeTask = RunAsync(db => db.Donations.AsNoTracking().Where(d => d.SupporterId == sid).SumAsync(d => (decimal?)d.Amount, cancellationToken));
-        var countTask = RunAsync(db => db.Donations.AsNoTracking().Where(d => d.SupporterId == sid).CountAsync(cancellationToken));
-        var lastTask = RunAsync(db => db.Donations.AsNoTracking().Where(d => d.SupporterId == sid).OrderByDescending(d => d.DonationDate).FirstOrDefaultAsync(cancellationToken));
-        var trendTask = RunAsync(db => db.Donations.AsNoTracking().Where(d => d.SupporterId == sid)
-            .Where(d => d.DonationDate.HasValue)
-            .Select(d => new { d.DonationDate, d.Amount })
-            .ToListAsync(cancellationToken));
-
-        await Task.WhenAll(lifetimeTask, countTask, lastTask, trendTask);
-
-        var lifetimeGiving = lifetimeTask.Result ?? 0m;
-        var lastDonation = lastTask.Result;
-        var givingTrend = trendTask.Result
-            .GroupBy(item => new { item.DonationDate!.Value.Year, item.DonationDate!.Value.Month })
-            .OrderBy(group => group.Key.Year).ThenBy(group => group.Key.Month)
-            .Select(group => new
-            {
-                month = $"{group.Key.Year:D4}-{group.Key.Month:D2}",
-                year = group.Key.Year,
-                amount = decimal.Round(group.Sum(item => item.Amount ?? 0m), 2)
-            })
-            .ToList();
-
-        return Ok(new
+        var payload = await RunAsync(async db =>
         {
-            lifetimeGiving = decimal.Round(lifetimeGiving, 2),
-            donationCount = countTask.Result,
-            lastDonationDate = lastDonation?.DonationDate.HasValue == true ? lastDonation.DonationDate!.Value.ToString("yyyy-MM-dd") : null,
-            lastDonationAmount = lastDonation != null && lastDonation.Amount.HasValue ? (decimal?)decimal.Round(lastDonation.Amount.Value, 2) : null,
-            givingTrend
+            var donorDonations = db.Donations.AsNoTracking().Where(d => d.SupporterId == sid);
+            var lifetimeGiving = await donorDonations.SumAsync(d => (decimal?)d.Amount, cancellationToken) ?? 0m;
+            var donationCount = await donorDonations.CountAsync(cancellationToken);
+            var lastDonation = await donorDonations.OrderByDescending(d => d.DonationDate).FirstOrDefaultAsync(cancellationToken);
+            var trendRows = await donorDonations
+                .Where(d => d.DonationDate.HasValue)
+                .Select(d => new { d.DonationDate, d.Amount })
+                .ToListAsync(cancellationToken);
+
+            var givingTrend = trendRows
+                .GroupBy(item => new { item.DonationDate!.Value.Year, item.DonationDate!.Value.Month })
+                .OrderBy(group => group.Key.Year).ThenBy(group => group.Key.Month)
+                .Select(group => new
+                {
+                    month = $"{group.Key.Year:D4}-{group.Key.Month:D2}",
+                    year = group.Key.Year,
+                    amount = decimal.Round(group.Sum(item => item.Amount ?? 0m), 2)
+                })
+                .ToList();
+
+            return new
+            {
+                lifetimeGiving = decimal.Round(lifetimeGiving, 2),
+                donationCount,
+                lastDonationDate = lastDonation?.DonationDate.HasValue == true ? lastDonation.DonationDate!.Value.ToString("yyyy-MM-dd") : null,
+                lastDonationAmount = lastDonation != null && lastDonation.Amount.HasValue ? (decimal?)decimal.Round(lastDonation.Amount.Value, 2) : null,
+                givingTrend
+            };
         });
+
+        return Ok(payload);
     }
 
     [Authorize(Policy = PolicyNames.StaffOrAbove)]
@@ -108,28 +113,255 @@ public sealed class DashboardController(IDbContextFactory<BeaconDbContext> dbFac
         var scoped = enforceScope && assignedSafehouses.Count > 0;
         var ids = assignedSafehouses;
 
-        var totalTask = RunAsync(db =>
-        {
-            var q = db.Residents.AsNoTracking();
-            if (scoped) q = q.Where(r => r.SafehouseId.HasValue && ids.Contains(r.SafehouseId.Value));
-            return q.CountAsync(cancellationToken);
-        });
-        var highRiskTask = RunAsync(db =>
-        {
-            var q = db.Residents.AsNoTracking();
-            if (scoped) q = q.Where(r => r.SafehouseId.HasValue && ids.Contains(r.SafehouseId.Value));
-            return q.CountAsync(r => r.CurrentRiskLevel != null && (EF.Functions.ILike(r.CurrentRiskLevel, "high") || EF.Functions.ILike(r.CurrentRiskLevel, "critical")), cancellationToken);
-        });
-        var incidentsTask = RunAsync(db => db.IncidentReports.AsNoTracking()
-            .CountAsync(item => item.Status == null || !EF.Functions.ILike(item.Status, "resolved"), cancellationToken));
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
 
-        await Task.WhenAll(totalTask, highRiskTask, incidentsTask);
+        var residentsQuery = db.Residents.AsNoTracking();
+        if (scoped)
+        {
+            residentsQuery = residentsQuery.Where(item => item.SafehouseId.HasValue && ids.Contains(item.SafehouseId.Value));
+        }
+
+        var residents = await residentsQuery
+            .Select(item => new
+            {
+                item.ResidentId,
+                item.SafehouseId,
+                item.CaseStatus,
+                item.CurrentRiskLevel,
+                item.ReintegrationStatus,
+                item.DateOfAdmission
+            })
+            .ToListAsync(cancellationToken);
+
+        var residentIds = residents.Select(item => item.ResidentId).ToHashSet();
+        var activeResidents = residents
+            .Where(item => string.Equals(item.CaseStatus, "active", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var thirtyDaysAgo = today.AddDays(-30);
+        var sevenDaysAgo = today.AddDays(-7);
+        var sevenDaysAhead = today.AddDays(7);
+
+        var safehousesQuery = db.Safehouses.AsNoTracking();
+        if (scoped)
+        {
+            safehousesQuery = safehousesQuery.Where(item => ids.Contains(item.SafehouseId));
+        }
+
+        var safehouses = await safehousesQuery
+            .Select(item => new
+            {
+                item.SafehouseId,
+                item.Name
+            })
+            .OrderBy(item => item.Name)
+            .ToListAsync(cancellationToken);
+
+        var incidentQuery = db.IncidentReports.AsNoTracking();
+        if (scoped)
+        {
+            incidentQuery = incidentQuery.Where(item =>
+                (item.SafehouseId.HasValue && ids.Contains(item.SafehouseId.Value))
+                || (item.ResidentId.HasValue && residentIds.Contains(item.ResidentId.Value)));
+        }
+
+        var incidents = await incidentQuery
+            .Select(item => new
+            {
+                item.IncidentId,
+                item.ResidentId,
+                item.SafehouseId,
+                item.IncidentDate,
+                item.Status
+            })
+            .ToListAsync(cancellationToken);
+
+        var conferenceQuery = db.CaseConferences.AsNoTracking();
+        if (scoped)
+        {
+            conferenceQuery = conferenceQuery.Where(item => residentIds.Contains(item.ResidentId));
+        }
+
+        var conferences = await conferenceQuery
+            .Select(item => new
+            {
+                item.ConferenceId,
+                item.ResidentId,
+                item.ConferenceDate
+            })
+            .ToListAsync(cancellationToken);
+
+        var processRecordingQuery = db.ProcessRecordings.AsNoTracking();
+        if (scoped)
+        {
+            processRecordingQuery = processRecordingQuery.Where(item => item.ResidentId.HasValue && residentIds.Contains(item.ResidentId.Value));
+        }
+
+        var processRecordingCount = await processRecordingQuery
+            .CountAsync(item => item.SessionDate.HasValue && item.SessionDate.Value >= sevenDaysAgo, cancellationToken);
+
+        var interventionPlanQuery = db.InterventionPlans.AsNoTracking();
+        if (scoped)
+        {
+            interventionPlanQuery = interventionPlanQuery.Where(item => item.ResidentId.HasValue && residentIds.Contains(item.ResidentId.Value));
+        }
+
+        var activeInterventionPlans = await interventionPlanQuery
+            .CountAsync(item =>
+                item.Status != null
+                && !EF.Functions.ILike(item.Status, "completed")
+                && !EF.Functions.ILike(item.Status, "discontinued")
+                && !EF.Functions.ILike(item.Status, "cancelled"), cancellationToken);
+
+        var donationTotalThisMonth = await db.Donations.AsNoTracking()
+            .Where(item => item.DonationDate.HasValue && item.DonationDate.Value >= thirtyDaysAgo)
+            .SumAsync(item => (decimal?)item.Amount, cancellationToken) ?? 0m;
+
+        var donationTrend = await db.Donations.AsNoTracking()
+            .Where(item => item.DonationDate.HasValue)
+            .Select(item => new
+            {
+                item.DonationDate,
+                item.Amount
+            })
+            .ToListAsync(cancellationToken);
+
+        var socialReferralsThisMonth = await db.SocialMediaPosts.AsNoTracking()
+            .CountAsync(item => item.CreatedAt.HasValue && item.CreatedAt.Value >= thirtyDaysAgo.ToDateTime(TimeOnly.MinValue), cancellationToken);
+
+        var mlAlerts = await db.MlPredictionSnapshots.AsNoTracking()
+            .OrderByDescending(item => item.CreatedAt)
+            .Take(5)
+            .Select(item => new
+            {
+                item.PredictionId,
+                item.RunId,
+                item.PipelineName,
+                item.EntityType,
+                item.EntityId,
+                item.EntityKey,
+                item.EntityLabel,
+                item.SafehouseId,
+                item.RecordTimestamp,
+                item.PredictionValue,
+                item.PredictionScore,
+                item.RankOrder,
+                item.ContextJson,
+                item.CreatedAt,
+                item.BandLabel,
+                item.ActionCode
+            })
+            .ToListAsync(cancellationToken);
+
+        var openIncidents = incidents.Count(item =>
+            item.Status is null
+            || string.Equals(item.Status, "open", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(item.Status, "under_review", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(item.Status, "investigating", StringComparison.OrdinalIgnoreCase));
+
+        var incidentsThisWeek = incidents.Count(item => item.IncidentDate.HasValue && item.IncidentDate.Value >= sevenDaysAgo);
+        var highRiskResidents = activeResidents.Count(item => IsHighRisk(item.CurrentRiskLevel));
+        var admissionsThisMonth = activeResidents.Count(item => item.DateOfAdmission.HasValue && item.DateOfAdmission.Value >= thirtyDaysAgo);
+        var upcomingCaseConferences = conferences.Count(item => item.ConferenceDate >= today && item.ConferenceDate <= sevenDaysAhead);
+        var overdueFollowUps = conferences.Count(item => item.ConferenceDate < today);
+
+        var residentsByRisk = safehouses.Select(safehouse =>
+        {
+            var safehouseResidents = activeResidents
+                .Where(item => item.SafehouseId == safehouse.SafehouseId)
+                .ToList();
+
+            return new
+            {
+                safehouse = safehouse.Name,
+                low = safehouseResidents.Count(item => EqualsIgnoreCase(item.CurrentRiskLevel, "low")),
+                medium = safehouseResidents.Count(item => EqualsIgnoreCase(item.CurrentRiskLevel, "medium")),
+                high = safehouseResidents.Count(item => EqualsIgnoreCase(item.CurrentRiskLevel, "high")),
+                critical = safehouseResidents.Count(item => EqualsIgnoreCase(item.CurrentRiskLevel, "critical"))
+            };
+        }).ToList();
+
+        var reintegrationBreakdown = new
+        {
+            notStarted = activeResidents.Count(item => NormalizeReintegrationDashboardStage(item.ReintegrationStatus) == "not_started"),
+            inProgress = activeResidents.Count(item => NormalizeReintegrationDashboardStage(item.ReintegrationStatus) == "in_progress"),
+            ready = activeResidents.Count(item => NormalizeReintegrationDashboardStage(item.ReintegrationStatus) == "ready"),
+            completed = residents.Count(item => NormalizeReintegrationDashboardStage(item.ReintegrationStatus) == "completed")
+        };
+
+        var priorityAlerts = new List<object>();
+        if (highRiskResidents > 0)
+        {
+            priorityAlerts.Add(new
+            {
+                type = "risk",
+                message = $"{highRiskResidents} resident{(highRiskResidents == 1 ? string.Empty : "s")} at high or critical risk level",
+                entityId = 0,
+                severity = "high"
+            });
+        }
+
+        if (openIncidents > 0)
+        {
+            priorityAlerts.Add(new
+            {
+                type = "incident",
+                message = $"{openIncidents} open incident{(openIncidents == 1 ? string.Empty : "s")} require follow-up",
+                entityId = 0,
+                severity = openIncidents > 2 ? "high" : "medium"
+            });
+        }
+
+        if (overdueFollowUps > 0)
+        {
+            priorityAlerts.Add(new
+            {
+                type = "conference",
+                message = $"{overdueFollowUps} case conference{(overdueFollowUps == 1 ? string.Empty : "s")} overdue",
+                entityId = 0,
+                severity = "medium"
+            });
+        }
+
+        var donationTrendByMonth = Enumerable.Range(0, 6)
+            .Select(offset =>
+            {
+                var monthDate = DateTime.UtcNow.AddMonths(-(5 - offset));
+                var monthKey = monthDate.ToString("yyyy-MM");
+                var monthRows = donationTrend.Where(item =>
+                    item.DonationDate.HasValue
+                    && $"{item.DonationDate.Value.Year:D4}-{item.DonationDate.Value.Month:D2}" == monthKey);
+
+                return new
+                {
+                    month = monthDate.ToString("MMM yy"),
+                    amount = decimal.Round(monthRows.Sum(item => item.Amount ?? 0m), 2),
+                    count = monthRows.Count()
+                };
+            })
+            .ToList();
 
         return Ok(new
         {
-            totalResidents = totalTask.Result,
-            highRiskResidents = highRiskTask.Result,
-            openIncidents = incidentsTask.Result
+            totalResidents = residents.Count,
+            activeResidents = activeResidents.Count,
+            highRiskResidents,
+            highRiskCount = highRiskResidents,
+            openIncidents,
+            incidentsThisWeek,
+            admissionsThisMonth,
+            upcomingCaseConferences,
+            overdueFollowUps,
+            socialReferralsThisMonth,
+            donationTotalThisMonth = decimal.Round(donationTotalThisMonth, 2),
+            donationTrend = donationTrendByMonth,
+            residentsByRisk,
+            reintegrationBreakdown,
+            processRecordingsThisWeek = processRecordingCount,
+            activeInterventionPlans,
+            priorityAlerts,
+            mlAlerts
         });
     }
 
@@ -137,41 +369,70 @@ public sealed class DashboardController(IDbContextFactory<BeaconDbContext> dbFac
     [HttpGet("executive-summary")]
     public async Task<IActionResult> GetExecutiveSummary(CancellationToken cancellationToken)
     {
-        var safehousesTask = RunAsync(db => db.Safehouses.AsNoTracking().CountAsync(cancellationToken));
-        var residentsTask = RunAsync(db => db.Residents.AsNoTracking().CountAsync(cancellationToken));
-        var supportersTask = RunAsync(db => db.Supporters.AsNoTracking().CountAsync(cancellationToken));
-        var donationsTask = RunAsync(db => db.Donations.AsNoTracking().SumAsync(d => (decimal?)d.Amount, cancellationToken));
-        var incidentsTask = RunAsync(db => db.IncidentReports.AsNoTracking()
-            .CountAsync(item => item.Status == null || !EF.Functions.ILike(item.Status, "resolved"), cancellationToken));
-        var breakdownTask = RunAsync(db => db.Safehouses.AsNoTracking()
-            .Select(item => new
-            {
-                item.SafehouseId,
-                item.Name,
-                item.Status,
-                item.CapacityGirls,
-                item.CurrentOccupancy
-            })
-            .OrderBy(item => item.Name)
-            .ToListAsync(cancellationToken));
-
-        await Task.WhenAll(safehousesTask, residentsTask, supportersTask, donationsTask, incidentsTask, breakdownTask);
-
-        return Ok(new
+        var payload = await RunAsync(async db =>
         {
-            totalSafehouses = safehousesTask.Result,
-            activeSafehouses = breakdownTask.Result.Count(item => string.Equals(item.Status, "active", StringComparison.OrdinalIgnoreCase)),
-            totalResidents = residentsTask.Result,
-            totalSupporters = supportersTask.Result,
-            totalDonations = decimal.Round(donationsTask.Result ?? 0m, 2),
-            openIncidents = incidentsTask.Result,
-            safehouseBreakdown = breakdownTask.Result
+            var totalSafehouses = await db.Safehouses.AsNoTracking().CountAsync(cancellationToken);
+            var totalResidents = await db.Residents.AsNoTracking().CountAsync(cancellationToken);
+            var totalSupporters = await db.Supporters.AsNoTracking().CountAsync(cancellationToken);
+            var totalDonations = await db.Donations.AsNoTracking().SumAsync(d => (decimal?)d.Amount, cancellationToken);
+            var openIncidents = await db.IncidentReports.AsNoTracking()
+                .CountAsync(item => item.Status == null || !EF.Functions.ILike(item.Status, "resolved"), cancellationToken);
+            var safehouseBreakdown = await db.Safehouses.AsNoTracking()
+                .Select(item => new
+                {
+                    item.SafehouseId,
+                    item.Name,
+                    item.Status,
+                    item.CapacityGirls,
+                    item.CurrentOccupancy
+                })
+                .OrderBy(item => item.Name)
+                .ToListAsync(cancellationToken);
+
+            return new
+            {
+                totalSafehouses,
+                activeSafehouses = safehouseBreakdown.Count(item => string.Equals(item.Status, "active", StringComparison.OrdinalIgnoreCase)),
+                totalResidents,
+                totalSupporters,
+                totalDonations = decimal.Round(totalDonations ?? 0m, 2),
+                openIncidents,
+                safehouseBreakdown
+            };
         });
+
+        return Ok(payload);
     }
 
     private async Task<T> RunAsync<T>(Func<BeaconDbContext, Task<T>> work)
     {
         await using var db = await dbFactory.CreateDbContextAsync();
         return await work(db);
+    }
+
+    private static bool IsHighRisk(string? value) =>
+        string.Equals(value, "high", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(value, "critical", StringComparison.OrdinalIgnoreCase);
+
+    private static bool EqualsIgnoreCase(string? left, string right) =>
+        string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
+
+    private static string NormalizeReintegrationDashboardStage(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "not_started";
+        }
+
+        var normalized = value.Trim().Replace(" ", "_").ToLowerInvariant();
+        return normalized switch
+        {
+            "on_hold" => "ready",
+            "not_started" => "not_started",
+            "in_progress" => "in_progress",
+            "ready" => "ready",
+            "completed" => "completed",
+            _ => "not_started"
+        };
     }
 }

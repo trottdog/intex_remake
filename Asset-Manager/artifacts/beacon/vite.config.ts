@@ -38,6 +38,7 @@ export default defineConfig({
         target: "https://localhost:7194",
         changeOrigin: true,
         secure: false,
+        cookieDomainRewrite: {},
       },
     },
     fs: {

@@ -3,7 +3,8 @@ import { PublicLayout } from "@/components/layouts/PublicLayout";
 import handsImg from "@assets/Hands_Circle_1775623133974.jpg";
 import { CheckCircle, Share2, Users, Package, Building2, Globe, ChevronRight } from "lucide-react";
 import { triggerDonationConfetti } from "@/lib/confetti";
-import { apiFetch } from "@/services/api";
+import { ApiError, apiFetch, apiPost } from "@/services/api";
+import { registerDonorApi } from "@/services/auth.service";
 
 const PRESET_AMOUNTS = [500, 1000, 2500, 5000, 10000];
 
@@ -40,48 +41,148 @@ const OTHER_WAYS = [
   { Icon: Package, title: "In-Kind Donations", desc: "School supplies, clothes, hygiene products, and food items are always welcome at any of our safe homes.", action: "Learn How", href: "mailto:info@beaconsanctuary.ph" },
 ];
 
+const PASSWORD_REQUIREMENTS = [
+  { label: "At least 12 characters", test: (pw: string) => pw.length >= 12 },
+  { label: "Uppercase letter", test: (pw: string) => /[A-Z]/.test(pw) },
+  { label: "Lowercase letter", test: (pw: string) => /[a-z]/.test(pw) },
+  { label: "Number", test: (pw: string) => /[0-9]/.test(pw) },
+  { label: "Special character", test: (pw: string) => /[^A-Za-z0-9]/.test(pw) },
+];
+
 interface Safehouse { safehouseId: number; safehouseName: string | null; }
 
 export default function DonatePage() {
+  const wantsAccountFromQuery = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("createAccount") === "1";
   const [step, setStep] = useState<"destination" | "form">("destination");
   const [destination, setDestination] = useState<"general" | number>("general");
   const [safehouses, setSafehouses] = useState<Safehouse[]>([]);
+  const [safehousesLoading, setSafehousesLoading] = useState(true);
+  const [safehousesError, setSafehousesError] = useState<string | null>(null);
+  const [safehousesRetryToken, setSafehousesRetryToken] = useState(0);
   const [selectedAmount, setSelectedAmount] = useState<number | null>(2500);
   const [customAmount, setCustomAmount] = useState("");
   const [frequency, setFrequency] = useState<"once" | "monthly">("once");
   const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [createAccount, setCreateAccount] = useState(wantsAccountFromQuery);
+  const [accountForm, setAccountForm] = useState({ username: "", password: "", confirmPassword: "" });
   const [submitted, setSubmitted] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
 
   useEffect(() => {
-    apiFetch<{ data: Safehouse[] }>("/api/public/safehouses").then(d => setSafehouses(d.data ?? [])).catch(() => {});
-  }, []);
+    let cancelled = false;
+
+    setSafehousesLoading(true);
+    setSafehousesError(null);
+
+    apiFetch<{ data: Safehouse[] }>("/api/public/safehouses")
+      .then((response) => {
+        if (cancelled) {
+          return;
+        }
+
+        setSafehouses(response.data ?? []);
+      })
+      .catch((error: unknown) => {
+        if (cancelled) {
+          return;
+        }
+
+        console.error("Unable to load safehouses", error);
+        setSafehouses([]);
+        setSafehousesError("Unable to load safehouses right now. You can still continue with the General Fund.");
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setSafehousesLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [safehousesRetryToken]);
+
+  useEffect(() => {
+    if (!submitted || !createAccount || redirectCountdown === null) return;
+    if (redirectCountdown <= 0) {
+      window.location.href = "/login";
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setRedirectCountdown((count) => (count === null ? null : count - 1));
+    }, 1000);
+
+    return () => window.clearTimeout(timer);
+  }, [submitted, createAccount, redirectCountdown]);
 
   const finalAmount = selectedAmount ?? (customAmount ? parseInt(customAmount) : 0);
   const selectedSafehouse = destination !== "general" ? safehouses.find(s => s.safehouseId === destination) : null;
+  const unmetPasswordRules = PASSWORD_REQUIREMENTS.filter((rule) => !rule.test(accountForm.password));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
     if (!finalAmount || !form.name || !form.email) return;
+    if (createAccount) {
+      if (!accountForm.username.trim()) {
+        setSubmitError("Username is required to create an account.");
+        return;
+      }
+      if (unmetPasswordRules.length > 0) {
+        setSubmitError("Password does not meet all account requirements.");
+        return;
+      }
+      if (accountForm.password !== accountForm.confirmPassword) {
+        setSubmitError("Password and confirmation do not match.");
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
-      await apiFetch("/api/donations/public", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: finalAmount,
-          name: form.name,
+      let supporterId: number | null = null;
+
+      if (createAccount) {
+        const fullNameParts = form.name.trim().split(/\s+/).filter(Boolean);
+        const firstName = fullNameParts[0] ?? "Donor";
+        const lastName = fullNameParts.slice(1).join(" ") || "Supporter";
+        const account = await registerDonorApi({
+          firstName,
+          lastName,
           email: form.email,
-          notes: form.message || undefined,
-          isRecurring: frequency === "monthly",
-          safehouseId: destination !== "general" ? destination : null,
-        }),
+          username: accountForm.username.trim(),
+          password: accountForm.password,
+        });
+        supporterId = account.supporterId;
+      }
+
+      await apiPost("/api/donations/public", {
+        amount: finalAmount,
+        name: form.name,
+        email: form.email,
+        notes: form.message || undefined,
+        isRecurring: frequency === "monthly",
+        safehouseId: destination !== "general" ? destination : null,
+        supporterId,
       });
-    } catch { /* best effort */ }
-    triggerDonationConfetti();
-    setSubmitted(true);
-    setSubmitting(false);
+      triggerDonationConfetti();
+      setSubmitted(true);
+      if (createAccount) {
+        setRedirectCountdown(5);
+      }
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setSubmitError(err.message);
+      } else {
+        setSubmitError("Unable to process donation right now. Please try again.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -124,8 +225,19 @@ export default function DonatePage() {
                   <p className="text-sm text-gray-500 mb-2">Going to the General Fund — our team will allocate it where it's needed most.</p>
                 )}
                 <p className="text-gray-500 text-sm mb-8">A receipt and impact report will be sent to <strong>{form.email}</strong> within 24 hours.</p>
+                {createAccount && redirectCountdown !== null && (
+                  <p className="text-sm text-[#214636] mb-6">
+                    Account created successfully. Redirecting to login in <strong>{redirectCountdown}</strong>...
+                  </p>
+                )}
                 <button
-                  onClick={() => { setSubmitted(false); setForm({ name: "", email: "", message: "" }); setStep("destination"); setDestination("general"); }}
+                  onClick={() => {
+                    setSubmitted(false);
+                    setRedirectCountdown(null);
+                    setForm({ name: "", email: "", message: "" });
+                    setStep("destination");
+                    setDestination("general");
+                  }}
                   className="border-2 border-[#2a9d72] text-[#2a9d72] hover:bg-[#2a9d72] hover:text-white px-8 py-3 rounded-full font-semibold transition-colors"
                 >Give Again</button>
               </div>
@@ -161,8 +273,21 @@ export default function DonatePage() {
                   {/* Safehouses */}
                   <div className="space-y-2">
                     <p className="text-xs font-bold uppercase tracking-widest text-gray-400 px-1">Or choose a specific safehouse</p>
-                    {safehouses.length === 0 ? (
+                    {safehousesLoading ? (
                       <div className="text-sm text-gray-400 text-center py-4">Loading safehouses...</div>
+                    ) : safehousesError ? (
+                      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900 space-y-3">
+                        <p>{safehousesError}</p>
+                        <button
+                          type="button"
+                          onClick={() => setSafehousesRetryToken((token) => token + 1)}
+                          className="text-sm font-semibold text-[#214636] hover:underline"
+                        >
+                          Retry loading safehouses
+                        </button>
+                      </div>
+                    ) : safehouses.length === 0 ? (
+                      <div className="text-sm text-gray-400 text-center py-4">No safehouses are available right now.</div>
                     ) : safehouses.map(s => (
                       <button
                         key={s.safehouseId}
@@ -267,6 +392,59 @@ export default function DonatePage() {
                       className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 focus:border-[#2a9d72] resize-none" />
                   </div>
                 </div>
+
+                <div className="rounded-xl border border-[#c8e6d4] bg-[#f0faf6] p-4 space-y-3">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={createAccount}
+                      onChange={(e) => setCreateAccount(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#2a9d72] focus:ring-[#2a9d72]"
+                    />
+                    <span className="text-sm text-[#214636]">
+                      <span className="font-semibold">Create a donor account while donating</span>
+                      <span className="block text-xs text-[#3f6a58] mt-1">Your account helps you track giving history and lets our team support you better.</span>
+                    </span>
+                  </label>
+
+                  {createAccount && (
+                    <div className="space-y-3 pt-1">
+                      <input
+                        required={createAccount}
+                        type="text"
+                        placeholder="Choose a username"
+                        value={accountForm.username}
+                        onChange={(e) => setAccountForm((f) => ({ ...f, username: e.target.value }))}
+                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 focus:border-[#2a9d72] bg-white"
+                      />
+                      <input
+                        required={createAccount}
+                        type="password"
+                        placeholder="Create a password"
+                        value={accountForm.password}
+                        onChange={(e) => setAccountForm((f) => ({ ...f, password: e.target.value }))}
+                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 focus:border-[#2a9d72] bg-white"
+                      />
+                      <input
+                        required={createAccount}
+                        type="password"
+                        placeholder="Confirm password"
+                        value={accountForm.confirmPassword}
+                        onChange={(e) => setAccountForm((f) => ({ ...f, confirmPassword: e.target.value }))}
+                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 focus:border-[#2a9d72] bg-white"
+                      />
+                      <p className="text-xs text-[#3f6a58]">
+                        Password requirements: {PASSWORD_REQUIREMENTS.map((rule) => rule.label).join(", ")}.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {submitError && (
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {submitError}
+                  </div>
+                )}
 
                 <button type="submit" disabled={!finalAmount || !form.name || !form.email || submitting}
                   className="w-full bg-[#2a9d72] hover:bg-[#248c64] disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-base transition-colors shadow-md">

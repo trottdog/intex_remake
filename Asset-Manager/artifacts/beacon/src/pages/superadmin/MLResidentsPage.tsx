@@ -63,6 +63,36 @@ const TREND_COLORS: Record<string, string> = {
   stable: "#94a3b8",
 };
 
+type RegressionDriverLike = {
+  label?: string | null;
+  feature?: string | null;
+  name?: string | null;
+  key?: string | null;
+  weight?: number | null;
+};
+
+function normalizeRegressionDrivers(drivers: unknown): RegressionDriverLike[] {
+  if (!Array.isArray(drivers)) return [];
+  return drivers.filter((item): item is RegressionDriverLike => !!item && typeof item === "object");
+}
+
+function getDriverLabel(driver: RegressionDriverLike): string | null {
+  const candidate = driver.label ?? driver.feature ?? driver.name ?? driver.key;
+  if (!candidate) return null;
+  const trimmed = candidate.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function getTopDriverLabel(row: RegressionWatchlistItem): string {
+  const explicit = row.topDriverLabel?.trim();
+  if (explicit) return explicit;
+
+  const firstDerived = normalizeRegressionDrivers(row.regressionRiskDrivers)
+    .map(getDriverLabel)
+    .find((label): label is string => !!label);
+  return firstDerived ?? "—";
+}
+
 // ── Regression Tab ────────────────────────────────────────────────────────────
 
 function RegressionTab() {
@@ -174,8 +204,10 @@ function RegressionTab() {
                       <td className="py-2.5 pr-4">
                         <BandBadge band={r.regressionRiskBand} size="xs" />
                       </td>
-                      <td className="py-2.5 pr-4 text-xs text-gray-600 max-w-[160px]">
-                        <span className="truncate block">{r.topDriverLabel ?? "—"}</span>
+                      <td className="py-2.5 pr-4 text-xs text-gray-600 max-w-[240px] align-top">
+                        <span className="block whitespace-normal break-words leading-snug" title={getTopDriverLabel(r)}>
+                          {getTopDriverLabel(r)}
+                        </span>
                       </td>
                       <td className="py-2.5 pr-4">
                         {r.regressionRecommendedAction ? (
@@ -233,14 +265,14 @@ function RegressionTab() {
                 <BandBadge band={selectedResident.regressionRiskBand} />
               </div>
             </div>
-            {selectedResident.regressionRiskDrivers && selectedResident.regressionRiskDrivers.length > 0 && (
+            {normalizeRegressionDrivers(selectedResident.regressionRiskDrivers).length > 0 && (
               <div>
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Risk Drivers</div>
                 <div className="space-y-1.5">
-                  {selectedResident.regressionRiskDrivers.map((d, i) => (
+                  {normalizeRegressionDrivers(selectedResident.regressionRiskDrivers).map((d, i) => (
                     <div key={i} className="flex items-center justify-between text-xs">
-                      <span className="text-gray-700">{d.label}</span>
-                      <span className="font-semibold text-red-600">{(d.weight * 100).toFixed(0)}%</span>
+                      <span className="text-gray-700">{getDriverLabel(d) ?? "—"}</span>
+                      <span className="font-semibold text-red-600">{typeof d.weight === "number" ? `${(d.weight * 100).toFixed(0)}%` : "—"}</span>
                     </div>
                   ))}
                 </div>
@@ -290,12 +322,6 @@ function ReintegrationTab() {
 
   return (
     <div className="space-y-4">
-      <PipelineInterpretationNotice
-        title="Adjacent resident signals"
-        body="This readiness route is direct, but case prioritization and home-visitation-outcome evidence is still adjacent to the workflow rather than exposed as separate routed scoreboards."
-        tone="caution"
-      />
-
       {tableMeta && <PrivacyBanner count={tableMeta.totalRestricted} />}
 
       <div className="grid lg:grid-cols-2 gap-4">
@@ -524,12 +550,6 @@ function InterventionTab() {
 
   return (
     <div className="space-y-4">
-      <PipelineInterpretationNotice
-        title="Interpret as supporting context"
-        body="Counseling-progress and education-improvement remain adjacent ML signals in this tab. Use them to support intervention review, not as if they were fully separate, validated row-level products."
-        tone="caution"
-      />
-
       <Card>
         <SectionHeader
           title="Intervention Effectiveness Matrix"
@@ -667,12 +687,6 @@ function SafehousesTab() {
 
   return (
     <div className="space-y-4">
-      <PipelineInterpretationNotice
-        title="Model-ops-only caveat"
-        body="Capacity-pressure and resource-demand should still be demonstrated through the ML control center rather than treated as direct safehouse workflows here. Resource-demand carries the strongest caveat because of the perfect-metric leakage risk noted in review."
-        tone="critical"
-      />
-
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-500">
           {compareMode

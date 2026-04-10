@@ -190,6 +190,7 @@ public sealed class DonationService(IDonationRepository donationRepository) : ID
 
         var created = await donationRepository.CreateDonationAsync(new Donation
         {
+            SupporterId = request.SupporterId,
             DonationType = "monetary",
             DonationDate = DateOnly.FromDateTime(DateTime.UtcNow),
             Amount = amount,
