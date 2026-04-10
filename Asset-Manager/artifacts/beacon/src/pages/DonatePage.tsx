@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { PublicLayout } from "@/components/layouts/PublicLayout";
 import handsImg from "@assets/Hands_Circle_1775623133974.jpg";
-import { CheckCircle, Share2, Users, Package, Building2, Globe, ChevronRight, Eye, EyeOff } from "lucide-react";
+import { CheckCircle, Share2, Users, Package, Building2, Globe, ChevronRight } from "lucide-react";
 import { triggerDonationConfetti } from "@/lib/confetti";
 import { ApiError, apiFetch, apiPost } from "@/services/api";
-import { registerDonorApi } from "@/services/auth.service";
 import { createPublicInKindDonation, type PublicInKindDonationItemPayload } from "@/services/donations.service";
 
 const PRESET_AMOUNTS = [500, 1000, 2500, 5000, 10000];
@@ -42,18 +41,9 @@ const OTHER_WAYS = [
   { Icon: Package, title: "In-Kind Donations", desc: "School supplies, clothes, hygiene products, and food items are always welcome at any of our safe homes.", action: "Learn How", href: "mailto:info@beaconsanctuary.ph" },
 ];
 
-const PASSWORD_REQUIREMENTS = [
-  { label: "At least 12 characters", test: (pw: string) => pw.length >= 12 },
-  { label: "Uppercase letter", test: (pw: string) => /[A-Z]/.test(pw) },
-  { label: "Lowercase letter", test: (pw: string) => /[a-z]/.test(pw) },
-  { label: "Number", test: (pw: string) => /[0-9]/.test(pw) },
-  { label: "Special character", test: (pw: string) => /[^A-Za-z0-9]/.test(pw) },
-];
-
 interface Safehouse { safehouseId: number; safehouseName: string | null; }
 
 export default function DonatePage() {
-  const wantsAccountFromQuery = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("createAccount") === "1";
   const [step, setStep] = useState<"destination" | "form">("destination");
   const [destination, setDestination] = useState<"general" | number>("general");
   const [safehouses, setSafehouses] = useState<Safehouse[]>([]);
@@ -68,10 +58,6 @@ export default function DonatePage() {
     { itemName: "", quantity: 1, itemCategory: "", unitOfMeasure: "pcs", estimatedUnitValue: undefined, intendedUse: "", receivedCondition: "new" },
   ]);
   const [form, setForm] = useState({ name: "", email: "", message: "" });
-  const [createAccount, setCreateAccount] = useState(wantsAccountFromQuery);
-  const [accountForm, setAccountForm] = useState({ username: "", password: "", confirmPassword: "" });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -155,8 +141,6 @@ export default function DonatePage() {
       }),
     [safehouses],
   );
-  const unmetPasswordRules = PASSWORD_REQUIREMENTS.filter((rule) => !rule.test(accountForm.password));
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
@@ -174,39 +158,8 @@ export default function DonatePage() {
         return;
       }
     }
-    if (createAccount) {
-      if (!accountForm.username.trim()) {
-        setSubmitError("Username is required to create an account.");
-        return;
-      }
-      if (unmetPasswordRules.length > 0) {
-        setSubmitError("Password does not meet all account requirements.");
-        return;
-      }
-      if (accountForm.password !== accountForm.confirmPassword) {
-        setSubmitError("Password and confirmation do not match.");
-        return;
-      }
-    }
-
     setSubmitting(true);
     try {
-      let supporterId: number | null = null;
-
-      if (createAccount) {
-        const fullNameParts = form.name.trim().split(/\s+/).filter(Boolean);
-        const firstName = fullNameParts[0] ?? "Donor";
-        const lastName = fullNameParts.slice(1).join(" ") || "Supporter";
-        const account = await registerDonorApi({
-          firstName,
-          lastName,
-          email: form.email,
-          username: accountForm.username.trim(),
-          password: accountForm.password,
-        });
-        supporterId = account.supporterId;
-      }
-
       if (donationMode === "monetary") {
         await apiPost("/api/donations/public", {
           amount: finalAmount,
@@ -215,7 +168,6 @@ export default function DonatePage() {
           notes: form.message || undefined,
           isRecurring: frequency === "monthly",
           safehouseId: destination !== "general" ? destination : null,
-          supporterId,
         });
       } else {
         await createPublicInKindDonation({
@@ -223,7 +175,6 @@ export default function DonatePage() {
           email: form.email,
           notes: form.message || undefined,
           safehouseId: destination !== "general" ? destination : null,
-          supporterId,
           items: inKindItems
             .filter((item) => item.itemName.trim().length > 0)
             .map((item) => ({
@@ -292,19 +243,8 @@ export default function DonatePage() {
                   <p className="text-sm text-gray-500 mb-2">Going to the General Fund — our team will allocate it where it's needed most.</p>
                 )}
                 <p className="text-gray-500 text-sm mb-8">A receipt and impact report will be sent to <strong>{form.email}</strong> within 24 hours.</p>
-                {createAccount && (
-                  <div className="mb-6 rounded-xl border border-[#c8e6d4] bg-[#f0faf6] px-4 py-4 text-sm text-[#214636]">
-                    <p className="font-semibold">Account created successfully. Welcome to Beacon Sanctuary PH!</p>
-                    <p className="mt-1 text-[#3f6a58]">You can log in whenever you are ready to view your donor account.</p>
-                  </div>
-                )}
                 <button
                   onClick={() => {
-                    if (createAccount) {
-                      window.location.href = "/login";
-                      return;
-                    }
-
                     setSubmitted(false);
                     setForm({ name: "", email: "", message: "" });
                     setDonationMode("monetary");
@@ -315,7 +255,7 @@ export default function DonatePage() {
                     setDestination("general");
                   }}
                   className="border-2 border-[#2a9d72] text-[#2a9d72] hover:bg-[#2a9d72] hover:text-white px-8 py-3 rounded-full font-semibold transition-colors"
-                >{createAccount ? "Log In to Donate Again" : "Give Again"}</button>
+                >Give Again</button>
               </div>
             ) : step === "destination" ? (
               /* ── Step 1: Choose Destination ── */
@@ -549,86 +489,6 @@ export default function DonatePage() {
                       onChange={(e) => setForm(f => ({ ...f, message: e.target.value }))}
                       className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 focus:border-[#2a9d72] resize-none" />
                   </div>
-                </div>
-
-                <div className="rounded-xl border border-[#c8e6d4] bg-[#f0faf6] p-4 space-y-3">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={createAccount}
-                      onChange={(e) => setCreateAccount(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#2a9d72] focus:ring-[#2a9d72]"
-                    />
-                    <span className="text-sm text-[#214636]">
-                      <span className="font-semibold">Create a donor account while donating</span>
-                      <span className="block text-xs text-[#3f6a58] mt-1">Your account helps you track giving history and lets our team support you better.</span>
-                    </span>
-                  </label>
-
-                  <p className="text-xs text-[#3f6a58]">
-                    Already have an account?{" "}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        window.location.href = "/login";
-                      }}
-                      className="font-semibold text-[#2a9d72] hover:underline"
-                    >
-                      Log in
-                    </button>
-                  </p>
-
-                  {createAccount && (
-                    <div className="space-y-3 pt-1">
-                      <input
-                        required={createAccount}
-                        type="text"
-                        placeholder="Choose a username"
-                        value={accountForm.username}
-                        onChange={(e) => setAccountForm((f) => ({ ...f, username: e.target.value }))}
-                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 focus:border-[#2a9d72] bg-white"
-                      />
-                      <div className="relative">
-                        <input
-                          required={createAccount}
-                          type={showPassword ? "text" : "password"}
-                          placeholder="Create a password"
-                          value={accountForm.password}
-                          onChange={(e) => setAccountForm((f) => ({ ...f, password: e.target.value }))}
-                          className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 focus:border-[#2a9d72] bg-white"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword((value) => !value)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#214636] hover:text-[#2a9d72]"
-                          aria-label={showPassword ? "Hide password" : "Show password"}
-                        >
-                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                      <div className="relative">
-                        <input
-                          required={createAccount}
-                          type={showConfirmPassword ? "text" : "password"}
-                          placeholder="Confirm password"
-                          value={accountForm.confirmPassword}
-                          onChange={(e) => setAccountForm((f) => ({ ...f, confirmPassword: e.target.value }))}
-                          className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30 focus:border-[#2a9d72] bg-white"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword((value) => !value)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#214636] hover:text-[#2a9d72]"
-                          aria-label={showConfirmPassword ? "Hide confirmation password" : "Show confirmation password"}
-                        >
-                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                      <p className="text-xs text-[#3f6a58]">
-                        Password requirements: {PASSWORD_REQUIREMENTS.map((rule) => rule.label).join(", ")}.
-                      </p>
-                    </div>
-                  )}
                 </div>
 
                 {submitError && (
