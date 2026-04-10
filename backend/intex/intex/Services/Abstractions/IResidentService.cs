@@ -5,7 +5,7 @@ namespace backend.intex.Services.Abstractions;
 
 public interface IResidentService
 {
-    Task<ResidentStatsResponseDto> GetStatsAsync(string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default);
+    Task<ResidentStatsResponseDto> GetStatsAsync(long? safehouseId, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ResidentTimelineEventDto>?> GetTimelineAsync(long residentId, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default);
     Task<StandardPagedResponse<ResidentResponseDto>> ListResidentsAsync(ListResidentsQuery query, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default);
     Task<(ResidentResponseDto? Resident, string? ErrorMessage)> CreateResidentAsync(CreateResidentRequest request, string? role, IReadOnlyList<long> assignedSafehouses, CancellationToken cancellationToken = default);

@@ -52,25 +52,25 @@ A feature is not complete for grading if:
 
 Do not call the project ready unless every item below is true.
 
-- [ ] Deployed website is publicly reachable
-- [ ] Deployed operational database is reachable through the app
-- [ ] App truly persists data to the deployed database
-- [ ] Login works on the deployed site
-- [ ] Admin account exists and works on the deployed site
-- [ ] Donor account exists and works on the deployed site
-- [ ] Donor account has historical donations tied correctly
+- [x] Deployed website is publicly reachable
+- [~] Deployed operational database is reachable through the app
+- [~] App truly persists data to the deployed database
+- [~] Login works on the deployed site
+- [~] Admin account exists and works on the deployed site
+- [~] Donor account exists and works on the deployed site
+- [x] Donor account has historical donations tied correctly
 - [ ] At least one account exists with MFA enabled for testing
-- [ ] Public pages work without authentication
-- [ ] Required protected staff/admin pages work after login
-- [ ] At least one ML pipeline is complete end-to-end
+- [x] Public pages work without authentication
+- [~] Required protected staff/admin pages work after login
+- [x] At least one ML pipeline is complete end-to-end
 - [ ] At least one ML pipeline is meaningfully integrated into the deployed app
 - [ ] Security requirements are both implemented and shown in the security video
 - [ ] All required videos exist
 - [ ] All required submission links are correct and tested
-- [ ] All required credentials are correct and tested
+- [~] All required credentials are correct and tested
 - [ ] Videos are public/unlisted and playable by anyone with the link
 
-**Ship decision:** PASS / FAIL
+**Ship decision:** FAIL
 
 ---
 
@@ -218,13 +218,15 @@ Audit note (2026-04-09): Team confirmed Monday through Thursday IS401 deliverabl
 - [x] Frontend uses React / TypeScript / Vite
 - [x] Database uses Azure SQL, MySQL, or PostgreSQL
 - [x] Database design follows good relational principles
-- [ ] App is deployed
+- [x] App is deployed
 - [ ] Database is deployed
 - [ ] App and DB both work together in deployed environment
 - [x] Data validation exists
 - [x] Error handling exists
 - [ ] Titles/icons/branding/navigation are consistent
 - [ ] Performance is acceptable for demo use
+
+Deployment note (2026-04-09): public pages are live, but authenticated deployed proof was blocked by two frontend issues until this patch set: `Asset-Manager/vercel.json` rewrote `/api/*` requests to `index.html`, and `Asset-Manager/artifacts/beacon/src/contexts/AuthContext.tsx` did not persist auth across refreshes. The current frontend patch adds an Azure API fallback, restores `/api/*` proxying to Azure, and persists the JWT/user session so deployed CRUD refresh flows can be re-verified.
 
 ## 5.2 Public Experience
 
@@ -233,7 +235,7 @@ Audit note (2026-04-09): Team confirmed Monday through Thursday IS401 deliverabl
 - [x] Mission is clearly explained
 - [x] Clear calls to action exist
 - [x] Trust/credibility signals are present
-- [ ] Page works unauthenticated
+- [x] Page works unauthenticated
 
 ### Impact / Donor-Facing Dashboard
 - [x] Public impact dashboard exists
@@ -359,6 +361,8 @@ Audit note (2026-04-09): Team confirmed Monday through Thursday IS401 deliverabl
 
 # 6. IS 414 Audit: Security
 
+Audit note (2026-04-09 local verification): headless Chrome verified anonymous and role-based route protection against `http://127.0.0.1:5173`, and direct API calls against `https://localhost:7194` verified invalid login rejection, working admin/donor/superadmin credentials, `/auth/me`, donor ledger history, and donor write denial. Evidence: `Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md`.
+
 ## 6.1 Critical Rule
 
 - [ ] Every claimed security feature is clearly shown in the security video
@@ -366,16 +370,16 @@ Audit note (2026-04-09): Team confirmed Monday through Thursday IS401 deliverabl
 
 ## 6.2 Confidentiality
 
-- [ ] Public site uses HTTPS/TLS
-- [ ] Certificate is valid
-- [ ] HTTP redirects to HTTPS
+- [x] Public site uses HTTPS/TLS
+- [x] Certificate is valid
+- [x] HTTP redirects to HTTPS
 - [ ] HTTPS behavior is demonstrated in browser
 
 ## 6.3 Authentication
 
 - [x] Username/password authentication works
-- [ ] Visitors can browse public pages unauthenticated
-- [ ] Authenticated users can access protected pages
+- [x] Visitors can browse public pages unauthenticated
+- [x] Authenticated users can access protected pages
 - [x] Better-than-default password policy is configured according to class expectations
 - [x] Team can explain the exact password rules used
 - [x] /login and /auth/me style endpoints are accessible as needed
@@ -385,7 +389,7 @@ Audit note (2026-04-09): Team confirmed Monday through Thursday IS401 deliverabl
 
 - [x] Admin role exists
 - [x] Donor role exists
-- [ ] Public/non-authenticated access is restricted appropriately
+- [x] Public/non-authenticated access is restricted appropriately
 - [x] Only admin can create data where required
 - [x] Only admin can update data where required
 - [x] Only admin can delete data where required
@@ -396,8 +400,8 @@ Audit note (2026-04-09): Team confirmed Monday through Thursday IS401 deliverabl
 
 - [x] Change/delete actions require authorization
 - [x] Delete confirmation is required
-- [ ] Unauthorized CUD attempts fail
-- [ ] Team can demonstrate those failures
+- [x] Unauthorized CUD attempts fail
+- [x] Team can demonstrate those failures
 
 ## 6.6 Credentials
 
@@ -425,7 +429,7 @@ Audit note (2026-04-09): Team confirmed Monday through Thursday IS401 deliverabl
 
 ## 6.9 Availability
 
-- [ ] Site is publicly accessible
+- [x] Site is publicly accessible
 - [ ] Site is stable enough for TA access
 - [ ] Identity/login works in deployed environment
 - [ ] Operational database works in deployed environment
@@ -445,19 +449,21 @@ Mark only what was actually completed and can be proved.
 
 ## 6.11 Required Grading Credentials
 
-- [ ] Admin account without MFA exists
-- [ ] Admin account without MFA works
-- [ ] Donor account without MFA exists
-- [ ] Donor account without MFA works
-- [ ] Donor account is tied to historical donations
+- [x] Admin account without MFA exists
+- [x] Admin account without MFA works
+- [x] Donor account without MFA exists
+- [x] Donor account without MFA works
+- [x] Donor account is tied to historical donations
 - [ ] MFA-enabled account exists
 - [ ] MFA-enabled account is configured correctly
-- [ ] Credentials are accurate and tested
+- [x] Credentials are accurate and tested
 - [ ] Credentials are included where required in final submission
 
 ---
 
 # 7. IS 455 Audit: Machine Learning
+
+Audit note (2026-04-09): ML grading-readiness proof is now consolidated in `IS455_GRADING_READINESS.md`. Focused proof command passed locally: `py -3 -m pytest ml/tests/test_is455_grading_readiness.py` -> `13 passed in 72.31s`. Direct headless notebook execution proof also passed via `py -3 ml/scripts/verify_notebook_execution.py`.
 
 ## 7.1 Minimum ML Standard
 
@@ -466,10 +472,10 @@ Mark only what was actually completed and can be proved.
 - [x] Predictive model exists
 - [x] Explanatory / causal-style analysis exists
 - [x] Results are interpreted in business terms
-- [ ] Notebook is executable top-to-bottom by a TA
-- [ ] Notebook includes a CSV backup / fallback data-loading path for grading if DB access is unavailable
+- [x] Notebook is executable top-to-bottom by a TA
+- [x] Notebook includes a CSV backup / fallback data-loading path for grading if DB access is unavailable
 - [x] Notebook preserves the original deployed / production-oriented code path
-- [ ] Notebook is saved with outputs visible
+- [x] Notebook is saved with outputs visible
 - [x] Pipeline is integrated into the deployed web app
 - [x] Model outputs are visible in a meaningful way in the app
 
@@ -488,10 +494,10 @@ Mark only what was actually completed and can be proved.
 - [ ] Missing values handled appropriately
 - [ ] Outliers explored/handled appropriately
 - [ ] Feature engineering is explained
-- [ ] Data prep is reproducible
+- [x] Data prep is reproducible
 - [ ] Exploration includes distributions/relationships/anomalies
-- [ ] Data paths work relative to the repository structure
-- [ ] CSV fallback data is documented clearly enough for TAs to run locally
+- [x] Data paths work relative to the repository structure
+- [x] CSV fallback data is documented clearly enough for TAs to run locally
 
 ### Modeling & Feature Selection
 - [ ] Model choice fits the problem
@@ -521,9 +527,9 @@ Mark only what was actually completed and can be proved.
 - [x] Notebook explains both the deployed integration path and the TA grading / fallback execution path
 
 ### Grading Readiness
-- [ ] Notebook can run without private credentials
-- [ ] Notebook does not require grader IP whitelisting
-- [ ] Notebook has rendered outputs visible before submission
+- [x] Notebook can run without private credentials
+- [x] Notebook does not require grader IP whitelisting
+- [x] Notebook has rendered outputs visible before submission
 
 ## 7.3 Multi-Pipeline Inventory
 
@@ -588,14 +594,16 @@ Mark only what was actually completed and can be proved.
 
 This section exists because many teams verify only from repo code.
 
+Deployment verification note (2026-04-09): current public pages are live, but authenticated runtime proof is still blocked in the live deployment until the latest frontend patch is deployed. Root cause found in repo and live behavior: `Asset-Manager/vercel.json` rewrote `/api/*` requests to `index.html`, and `Asset-Manager/artifacts/beacon/src/contexts/AuthContext.tsx` dropped auth state on refresh. Fixes are now present locally but still need live re-verification after deploy.
+
 ## 9.1 Deployed URL Smoke Test
-- [ ] Home page opens
-- [ ] Footer opens privacy policy
-- [ ] Cookie consent appears
-- [ ] Login page opens
+- [x] Home page opens
+- [x] Footer opens privacy policy
+- [x] Cookie consent appears
+- [x] Login page opens
 - [ ] Invalid login behaves correctly
-- [ ] Valid admin login behaves correctly
-- [ ] Valid donor login behaves correctly
+- [~] Valid admin login behaves correctly
+- [~] Valid donor login behaves correctly
 - [ ] Logout behaves correctly
 
 ## 9.2 Persistence Smoke Test
@@ -606,9 +614,9 @@ This section exists because many teams verify only from repo code.
 - [ ] Delete test record and verify persistence/change
 
 ## 9.3 Protected Access Smoke Test
-- [ ] Anonymous user blocked from protected admin pages
-- [ ] Donor blocked from admin-only pages
-- [ ] Admin can access required protected pages
+- [~] Anonymous user blocked from protected admin pages
+- [~] Donor blocked from admin-only pages
+- [~] Admin can access required protected pages
 - [ ] Unauthorized API calls fail
 
 ---
@@ -617,9 +625,9 @@ This section exists because many teams verify only from repo code.
 
 ## 10.1 Functional Testing
 
-- [ ] Public navigation tested
-- [ ] Login/logout tested
-- [ ] Role-based route protection tested
+- [x] Public navigation tested
+- [x] Login/logout tested
+- [x] Role-based route protection tested
 - [ ] CRUD tested for supporters/donors
 - [ ] CRUD tested for residents
 - [ ] CRUD tested for process recordings
@@ -629,10 +637,10 @@ This section exists because many teams verify only from repo code.
 
 ## 10.2 Failure / Edge Cases
 
-- [ ] Invalid login tested
+- [x] Invalid login tested
 - [ ] Empty form submission tested
 - [ ] Bad API request tested
-- [ ] Unauthorized access tested
+- [x] Unauthorized access tested
 - [ ] Delete confirmation tested
 - [ ] Empty data states tested
 - [ ] Graceful error state tested somewhere meaningful
@@ -703,7 +711,7 @@ This section exists because many teams verify only from repo code.
 
 Open every link from a logged-out browser/private window.
 
-- [ ] Website link opens
+- [x] Website link opens
 - [ ] GitHub link opens publicly
 - [ ] Notebook links open
 - [ ] IS 413 video opens
@@ -711,8 +719,8 @@ Open every link from a logged-out browser/private window.
 
 ## 12.3 Credential Verification
 
-- [ ] Admin credential works
-- [ ] Donor credential works
+- [x] Admin credential works
+- [x] Donor credential works
 - [ ] MFA account exists as claimed
 - [ ] Credentials are copied accurately into submission
 - [ ] Credentials are not exposed publicly elsewhere
@@ -764,36 +772,55 @@ Mark each as cleared before submission.
 
 List anything that would directly cost points if unresolved.
 
-1.
-2.
-3.
-4.
-5.
+1. Frontend deploy is stale relative to the local patch set that fixes `/api/*` routing and auth persistence.
+2. No fresh deployed proof yet for valid admin login, valid donor login, logout, or protected route redirects.
+3. No deployed CRUD persistence evidence yet for any admin/staff workflow after refresh.
+4. No verified donor-role evidence yet showing admin-data restrictions in a live session.
+5. Submission/video artifacts are not yet recorded against the deployed runtime.
 
 ## Highest-Risk Claims
 
 List anything the team plans to claim that must be demonstrated carefully.
 
-1.
-2.
-3.
-4.
-5.
+1. "The deployed app supports authenticated admin/staff workflows."
+2. "Data persists correctly in the deployed database."
+3. "Role-based access control is enforced for donor, staff/admin, and super admin users."
+4. "The donor role cannot access admin-only data."
+5. "The deployed app shown in video matches the current repository state."
+
+## IS 413 Snapshot
+
+Status: RISK
+
+Evidence:
+- Deployed app is publicly reachable.
+- Public unauthenticated pages are reachable in deployment.
+- Role-gated routes exist in frontend router and `ProtectedRoute`.
+- Frontend fixes are in repo for Vercel `/api/*` routing, production API fallback, and refresh-safe auth persistence.
+
+Gaps:
+- No fresh live proof yet for valid admin login, donor login, logout, or protected-page access after the latest frontend patch.
+- No runtime proof yet for admin/staff CRUD or deployed DB-backed persistence after refresh.
+- No live donor-session proof yet for donor-role restrictions against admin-only views.
+
+Blockers:
+- Frontend changes must be deployed to Vercel before live verification can continue.
+- Large admin/staff feature area remains unsafe to claim until one deployed CRUD flow and role-gated session are re-recorded.
 
 ## Final Status by Area
 
-- Project alignment: PASS / RISK / FAIL
-- IS 401: PASS / RISK / FAIL
-- IS 413: PASS / RISK / FAIL
-- IS 414: PASS / RISK / FAIL
-- IS 455: PASS / RISK / FAIL
-- Deployed runtime verification: PASS / RISK / FAIL
-- Final submission package: PASS / RISK / FAIL
-- Presentation readiness: PASS / RISK / FAIL
+- Project alignment: RISK
+- IS 401: PASS
+- IS 413: RISK
+- IS 414: RISK
+- IS 455: LOW RISK
+- Deployed runtime verification: RISK
+- Final submission package: RISK
+- Presentation readiness: RISK
 
 ## Final Recommendation
 
 - [ ] Ready to record videos
 - [ ] Ready to submit
 - [ ] Ready to present
-- [ ] Not ready, blockers remain
+- [x] Not ready, blockers remain

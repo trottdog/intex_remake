@@ -1,0 +1,26 @@
+{
+  "pipeline_name": "counseling_progress",
+  "target_col": "label_counseling_progress_next_90d",
+  "split_col": "snapshot_month",
+  "evaluation_rows": 1140,
+  "metrics": {
+    "sample_count": 1140.0,
+    "positive_count": 572.0,
+    "positive_rate": 0.5017543859649123,
+    "accuracy": 0.793859649122807,
+    "balanced_accuracy": 0.793866344922683,
+    "precision": 0.7961335676625659,
+    "recall": 0.791958041958042,
+    "f1": 0.7940403155127082,
+    "roc_auc": 0.9114470476706392,
+    "average_precision": 0.923474795231148
+  },
+  "calibration": {
+    "sample_count": 1140.0,
+    "positive_rate": 0.5017543859649123,
+    "mean_score": 0.5170964912280702,
+    "brier_score": 0.12478399122807017,
+    "expected_calibration_error": 0.10192105263157894,
+    "bin_count": 10.0
+  }
+}

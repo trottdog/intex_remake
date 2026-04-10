@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   LayoutDashboard, Users, FileText, Calendar, Heart, PieChart,
-  ShieldAlert, ListChecks, Bell, Settings, Handshake, Newspaper, Home, ClipboardList, DollarSign,
+  ShieldAlert, Bell, Settings, Handshake, Newspaper, Home, ClipboardList, DollarSign,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,7 +12,6 @@ const ADMIN_NAV = [
   { label: "Tasks & Alerts",      href: "/admin/tasks-alerts",          icon: Bell,            section: "Overview" },
 
   { label: "Residents",           href: "/admin/residents",             icon: Users,           section: "Resident Care" },
-  { label: "Caseload",            href: "/admin/caseload",              icon: ListChecks,      section: "Resident Care" },
 
   { label: "Process Recordings",  href: "/admin/process-recordings",   icon: FileText,        section: "Case Management" },
   { label: "Home Visits",         href: "/admin/home-visits",           icon: Home,            section: "Case Management" },

@@ -75,13 +75,6 @@ export function PipelineCoveragePanel({
 
               <div className="mt-3 text-xs leading-relaxed text-gray-600">{entry.summary}</div>
 
-              {entry.limitation ? (
-                <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  <span>{entry.limitation}</span>
-                </div>
-              ) : null}
-
               <div className="mt-3 space-y-2 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
                 <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Audit Snapshot</div>
                 <div className="text-xs leading-relaxed text-gray-600">

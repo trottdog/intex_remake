@@ -250,7 +250,7 @@ function Router() {
       </Route>
       <Route path="/superadmin/residents">
         <ProtectedRoute roles={["super_admin"]}>
-          <SuperAdminLayout><MLResidentsPage /></SuperAdminLayout>
+          <SuperAdminLayout><ResidentsPage /></SuperAdminLayout>
         </ProtectedRoute>
       </Route>
       <Route path="/superadmin/caseload">

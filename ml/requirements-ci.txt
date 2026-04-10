@@ -1,5 +1,8 @@
+ipykernel>=6.29
 joblib>=1.4
 matplotlib>=3.9
+nbclient>=0.10
+nbformat>=5.10
 numpy>=1.26
 pandas>=2.2
 psycopg[binary]>=3.2

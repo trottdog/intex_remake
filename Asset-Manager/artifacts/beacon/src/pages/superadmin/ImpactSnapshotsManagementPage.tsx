@@ -6,15 +6,21 @@ import { Globe, EyeOff, Plus, RefreshCw, TrendingUp, Calendar, AlertTriangle } f
 
 interface Snapshot {
   id: number;
-  periodLabel: string;
-  year: number;
-  quarter: number | null;
-  residentsServed: number;
-  totalDonationsAmount: number;
-  newSupporters: number;
+  snapshotId?: number;
+  periodLabel?: string;
+  snapshotDate?: string | null;
+  headline?: string | null;
+  title?: string | null;
+  summaryText?: string | null;
+  summary?: string | null;
+  year?: number;
+  quarter?: number | null;
+  residentsServed?: number;
+  totalDonationsAmount?: number;
+  newSupporters?: number;
   isPublished: boolean;
   publishedAt: string | null;
-  highlights: string | null;
+  highlights?: string | null;
 }
 
 interface ConfirmAction {
@@ -179,12 +185,12 @@ export default function ImpactSnapshotsManagementPage() {
                 <tr key={s.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3">
                     <div>
-                      <p className="font-semibold text-gray-900">{s.periodLabel || `${s.year} Q${s.quarter}`}</p>
-                      <p className="text-xs text-gray-400 flex items-center gap-1"><Calendar size={10} /> {s.year}</p>
+                      <p className="font-semibold text-gray-900">{s.periodLabel || s.headline || s.title || (s.year ? `${s.year} Q${s.quarter}` : s.snapshotDate?.slice(0, 7) ?? "—")}</p>
+                      <p className="text-xs text-gray-400 flex items-center gap-1"><Calendar size={10} /> {s.year ?? s.snapshotDate?.slice(0, 4) ?? "—"}</p>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-700 font-medium">{s.residentsServed}</td>
-                  <td className="px-4 py-3 text-gray-700 font-medium">{s.newSupporters}</td>
+                  <td className="px-4 py-3 text-gray-700 font-medium">{s.residentsServed ?? "—"}</td>
+                  <td className="px-4 py-3 text-gray-700 font-medium">{s.newSupporters ?? "—"}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${s.isPublished ? "bg-green-50 text-green-700" : "bg-yellow-50 text-yellow-700"}`}>
                       {s.isPublished ? "Published" : "Draft"}
@@ -198,7 +204,7 @@ export default function ImpactSnapshotsManagementPage() {
                       <button
                         onClick={() => setConfirm({
                           label: "Unpublish",
-                          description: `This will retract "${s.periodLabel || `${s.year} Q${s.quarter}`}" from the public impact page. Supporters will no longer see it.`,
+                          description: `This will retract "${s.periodLabel || s.headline || s.title || (s.year ? `${s.year} Q${s.quarter}` : s.snapshotDate?.slice(0, 7) ?? "—")}" from the public impact page. Supporters will no longer see it.`,
                           variant: "unpublish",
                           onConfirm: () => unpublishMutation.mutate(s.id),
                         })}
@@ -210,7 +216,7 @@ export default function ImpactSnapshotsManagementPage() {
                       <button
                         onClick={() => setConfirm({
                           label: "Publish",
-                          description: `This will make "${s.periodLabel || `${s.year} Q${s.quarter}`}" visible on the public impact page.`,
+                          description: `This will make "${s.periodLabel || s.headline || s.title || (s.year ? `${s.year} Q${s.quarter}` : s.snapshotDate?.slice(0, 7) ?? "—")}" visible on the public impact page.`,
                           variant: "publish",
                           onConfirm: () => publishMutation.mutate(s.id),
                         })}

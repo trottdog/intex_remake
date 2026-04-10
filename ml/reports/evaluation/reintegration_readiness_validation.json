@@ -1,0 +1,26 @@
+{
+  "pipeline_name": "reintegration_readiness",
+  "target_col": "label_reintegration_complete_next_90d",
+  "split_col": "snapshot_month",
+  "evaluation_rows": 1533,
+  "metrics": {
+    "sample_count": 1533.0,
+    "positive_count": 36.0,
+    "positive_rate": 0.023483365949119372,
+    "accuracy": 0.9941291585127201,
+    "balanced_accuracy": 0.875,
+    "precision": 1.0,
+    "recall": 0.75,
+    "f1": 0.8571428571428571,
+    "roc_auc": 0.9610424552809322,
+    "average_precision": 0.8220188096937527
+  },
+  "calibration": {
+    "sample_count": 1533.0,
+    "positive_rate": 0.023483365949119372,
+    "mean_score": 0.02706784083496412,
+    "brier_score": 0.007192253750815395,
+    "expected_calibration_error": 0.0036366601435094577,
+    "bin_count": 5.0
+  }
+}

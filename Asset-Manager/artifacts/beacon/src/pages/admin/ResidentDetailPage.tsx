@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRoute, useLocation, Link } from "wouter";
 import {
-  useGetResident, useListEducationRecords, useListHealthRecords,
+  useGetResident, useListEducationRecords, useListHealthRecords, useUpdateResident, useDeleteResident,
   type Resident, type EducationRecord, type HealthRecord,
 } from "@/services/residents.service";
 import {
@@ -14,8 +14,13 @@ import {
   User, Calendar, Activity, FileText, Home, ShieldAlert,
   ArrowLeft, Loader2, AlertTriangle, Clock, BookOpen, Heart,
   CheckCircle2, Circle, BadgeAlert,
+  Pencil, Trash2, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useListSafehouses } from "@/services/superadmin.service";
+import { useAuth } from "@/contexts/AuthContext";
+import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 
 const TABS = [
   { id: "profile", label: "Profile", icon: User },
@@ -106,6 +111,86 @@ function Card({ children }: { children: React.ReactNode }) {
   );
 }
 
+type ResidentForm = {
+  caseControlNo: string;
+  safehouseId: string;
+  caseCategory: string;
+  sex: string;
+  dateOfBirth: string;
+  dateOfAdmission: string;
+  caseStatus: string;
+  initialRiskLevel: string;
+  currentRiskLevel: string;
+  referralSource: string;
+  referringAgencyPerson: string;
+  assignedSocialWorker: string;
+  reintegrationType: string;
+  reintegrationStatus: string;
+  initialCaseAssessment: string;
+  notesRestricted: string;
+};
+
+const EMPTY_FORM: ResidentForm = {
+  caseControlNo: "",
+  safehouseId: "",
+  caseCategory: "",
+  sex: "",
+  dateOfBirth: "",
+  dateOfAdmission: "",
+  caseStatus: "Active",
+  initialRiskLevel: "Low",
+  currentRiskLevel: "Low",
+  referralSource: "",
+  referringAgencyPerson: "",
+  assignedSocialWorker: "",
+  reintegrationType: "",
+  reintegrationStatus: "",
+  initialCaseAssessment: "",
+  notesRestricted: "",
+};
+
+function toResidentForm(resident: Resident): ResidentForm {
+  return {
+    caseControlNo: resident.caseControlNo ?? "",
+    safehouseId: resident.safehouseId != null ? String(resident.safehouseId) : "",
+    caseCategory: resident.caseCategory ?? "",
+    sex: resident.sex ?? "",
+    dateOfBirth: resident.dateOfBirth ?? "",
+    dateOfAdmission: resident.dateOfAdmission ?? resident.admissionDate ?? "",
+    caseStatus: resident.caseStatus ?? "Active",
+    initialRiskLevel: resident.initialRiskLevel ?? resident.currentRiskLevel ?? resident.riskLevel ?? "Low",
+    currentRiskLevel: resident.currentRiskLevel ?? resident.riskLevel ?? resident.initialRiskLevel ?? "Low",
+    referralSource: resident.referralSource ?? "",
+    referringAgencyPerson: resident.referringAgencyPerson ?? "",
+    assignedSocialWorker: resident.assignedSocialWorker ?? resident.assignedWorkerName ?? "",
+    reintegrationType: resident.reintegrationType ?? "",
+    reintegrationStatus: resident.reintegrationStatus ?? "",
+    initialCaseAssessment: resident.initialCaseAssessment ?? "",
+    notesRestricted: resident.notesRestricted ?? "",
+  };
+}
+
+function residentFormToPayload(form: ResidentForm): Record<string, unknown> {
+  return {
+    caseControlNo: form.caseControlNo.trim() || null,
+    safehouseId: form.safehouseId ? Number(form.safehouseId) : null,
+    caseCategory: form.caseCategory || null,
+    sex: form.sex || null,
+    dateOfBirth: form.dateOfBirth || null,
+    dateOfAdmission: form.dateOfAdmission || null,
+    caseStatus: form.caseStatus || null,
+    initialRiskLevel: form.initialRiskLevel || null,
+    currentRiskLevel: form.currentRiskLevel || null,
+    referralSource: form.referralSource.trim() || null,
+    referringAgencyPerson: form.referringAgencyPerson.trim() || null,
+    assignedSocialWorker: form.assignedSocialWorker.trim() || null,
+    reintegrationType: form.reintegrationType.trim() || null,
+    reintegrationStatus: form.reintegrationStatus || null,
+    initialCaseAssessment: form.initialCaseAssessment.trim() || null,
+    notesRestricted: form.notesRestricted.trim() || null,
+  };
+}
+
 function ProfileTab({ r }: { r: Resident }) {
   const subcats: { flag: boolean | null | undefined; label: string }[] = [
     { flag: r.subCatTrafficked, label: "Trafficked" },
@@ -132,7 +217,7 @@ function ProfileTab({ r }: { r: Resident }) {
     <div className="space-y-4">
       {/* Identification */}
       <SectionCard title="Case Identification">
-        <Field label="Internal Code" value={r.internalCode} />
+        <Field label="Internal Code" value={r.internalCode ?? r.residentCode} />
         <Field label="Case Control No." value={r.caseControlNo} />
         <Field label="Case Status" value={r.caseStatus} />
         <Field label="Safehouse" value={r.safehouseName ?? (r.safehouseId ? `Safehouse #${r.safehouseId}` : null)} />
@@ -539,7 +624,8 @@ function HealthTab({ list, loading }: { list: HealthRecord[]; loading: boolean }
 }
 
 export default function ResidentDetailPage() {
-  const [location] = useLocation();
+  const { user } = useAuth();
+  const [location, navigate] = useLocation();
   const [, adminParams] = useRoute("/admin/residents/:id");
   const [, superParams] = useRoute("/superadmin/residents/:id");
   const params = adminParams ?? superParams;
@@ -547,9 +633,19 @@ export default function ResidentDetailPage() {
   const backPath = `${portalBase}/residents`;
   const id = parseInt(params?.id ?? "0");
   const [activeTab, setActiveTab] = useState<TabId>("profile");
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [form, setForm] = useState<ResidentForm>(EMPTY_FORM);
+  const [formError, setFormError] = useState("");
 
   const { data: resident, isLoading } = useGetResident(id);
+  const { data: safehousesData } = useListSafehouses({ pageSize: 100 });
+  const updateResident = useUpdateResident();
+  const deleteResident = useDeleteResident();
   const resId = resident?.residentId ?? resident?.id ?? id;
+  const safehouses = safehousesData?.data ?? [];
+  const canEdit = !!user && ["staff", "admin", "super_admin"].includes(user.role);
+  const canDelete = !!user && ["admin", "super_admin"].includes(user.role);
 
   const { data: ccData, isLoading: ccLoading } = useListCaseConferences({ residentId: resId, pageSize: 100 });
   const { data: ipData, isLoading: ipLoading } = useListInterventionPlans({ residentId: resId, pageSize: 100 });
@@ -568,6 +664,12 @@ export default function ResidentDetailPage() {
   const healthList: HealthRecord[] = healthData?.data ?? [];
 
   const riskLevel = resident?.currentRiskLevel ?? resident?.riskLevel;
+
+  useEffect(() => {
+    if (resident) {
+      setForm(toResidentForm(resident));
+    }
+  }, [resident]);
 
   const TAB_COUNTS: Partial<Record<TabId, number>> = {
     "case-conferences": ccList.length,
@@ -601,8 +703,57 @@ export default function ResidentDetailPage() {
 
   const code = resident.caseControlNo ?? resident.internalCode ?? resident.residentCode ?? `CASE-${resId}`;
 
+  function setField<K extends keyof ResidentForm>(key: K, value: ResidentForm[K]) {
+    setForm(current => ({ ...current, [key]: value }));
+  }
+
+  function openEdit() {
+    setForm(toResidentForm(resident));
+    setFormError("");
+    setEditOpen(true);
+  }
+
+  function submitEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!canEdit || updateResident.isPending) return;
+    if (!form.safehouseId) {
+      setFormError("Safehouse is required.");
+      return;
+    }
+
+    updateResident.mutate(
+      { id: resId, body: residentFormToPayload(form) },
+      {
+        onSuccess: () => {
+          setEditOpen(false);
+          setFormError("");
+        },
+        onError: (error) => {
+          setFormError((error as { message?: string })?.message ?? "Failed to update resident.");
+        },
+      },
+    );
+  }
+
+  function confirmDelete() {
+    if (!canDelete || deleteResident.isPending) return;
+    deleteResident.mutate(resId, {
+      onSuccess: () => navigate(backPath),
+    });
+  }
+
   return (
     <div className="max-w-5xl mx-auto space-y-5">
+      <DeleteConfirmModal
+        open={deleteOpen}
+        title="Delete this resident?"
+        itemName={code}
+        description="This permanently removes the resident record."
+        isPending={deleteResident.isPending}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteOpen(false)}
+      />
+
       {/* Back */}
       <Link href={backPath}>
         <Button variant="ghost" size="sm" className="gap-1.5 text-gray-500 hover:text-gray-800 -ml-2">
@@ -652,6 +803,20 @@ export default function ResidentDetailPage() {
           <div className="text-right text-xs text-gray-400 flex-shrink-0">
             <p>Admitted</p>
             <p className="font-medium text-gray-700">{resident.dateOfAdmission ?? resident.admissionDate ?? "—"}</p>
+            {(canEdit || canDelete) && (
+              <div className="mt-3 flex justify-end gap-2">
+                {canEdit && (
+                  <Button variant="outline" size="sm" className="gap-1.5" onClick={openEdit}>
+                    <Pencil className="w-3.5 h-3.5" /> Edit
+                  </Button>
+                )}
+                {canDelete && (
+                  <Button variant="outline" size="sm" className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50" onClick={() => setDeleteOpen(true)}>
+                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -734,6 +899,172 @@ export default function ResidentDetailPage() {
           )}
         </div>
       </div>
+
+      {editOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          <div className="flex-1 bg-black/30 backdrop-blur-sm" onClick={() => !updateResident.isPending && setEditOpen(false)} />
+          <div className="w-full max-w-xl bg-white shadow-2xl flex flex-col overflow-hidden">
+            <div className="px-6 py-4 bg-[#0e2118] flex items-start justify-between">
+              <div>
+                <p className="text-[#7bc5a6] text-xs font-semibold uppercase tracking-wide">Edit Resident</p>
+                <h2 className="text-lg font-bold text-white mt-0.5 font-mono">{code}</h2>
+              </div>
+              <button onClick={() => setEditOpen(false)} disabled={updateResident.isPending} className="text-gray-300 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form id="resident-edit-form" onSubmit={submitEdit} className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Internal Code</label>
+                  <Input value={resident.internalCode ?? ""} disabled className="bg-gray-50 text-gray-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Case Control No.</label>
+                  <Input value={form.caseControlNo} onChange={(e) => setField("caseControlNo", e.target.value)} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Safehouse <span className="text-red-500">*</span></label>
+                  <select value={form.safehouseId} onChange={(e) => setField("safehouseId", e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30">
+                    <option value="">Select safehouse...</option>
+                    {safehouses.map((safehouse) => (
+                      <option key={safehouse.safehouseId ?? safehouse.id} value={safehouse.safehouseId ?? safehouse.id ?? ""}>
+                        {safehouse.name ?? `Safehouse #${safehouse.safehouseId ?? safehouse.id}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Case Category</label>
+                  <Input value={form.caseCategory} onChange={(e) => setField("caseCategory", e.target.value)} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Sex</label>
+                  <select value={form.sex} onChange={(e) => setField("sex", e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30">
+                    <option value="">Select...</option>
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Date of Birth</label>
+                  <Input type="date" value={form.dateOfBirth} onChange={(e) => setField("dateOfBirth", e.target.value)} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Date of Admission</label>
+                  <Input type="date" value={form.dateOfAdmission} onChange={(e) => setField("dateOfAdmission", e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Case Status</label>
+                  <select value={form.caseStatus} onChange={(e) => setField("caseStatus", e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30">
+                    <option value="Active">Active</option>
+                    <option value="Closed">Closed</option>
+                    <option value="Transferred">Transferred</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Initial Risk Level</label>
+                  <select value={form.initialRiskLevel} onChange={(e) => setField("initialRiskLevel", e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30">
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                    <option value="Critical">Critical</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Current Risk Level</label>
+                  <select value={form.currentRiskLevel} onChange={(e) => setField("currentRiskLevel", e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30">
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                    <option value="Critical">Critical</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Assigned Social Worker</label>
+                  <Input value={form.assignedSocialWorker} onChange={(e) => setField("assignedSocialWorker", e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Referral Source</label>
+                  <Input value={form.referralSource} onChange={(e) => setField("referralSource", e.target.value)} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Referring Agency / Person</label>
+                  <Input value={form.referringAgencyPerson} onChange={(e) => setField("referringAgencyPerson", e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Reintegration Type</label>
+                  <Input value={form.reintegrationType} onChange={(e) => setField("reintegrationType", e.target.value)} />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Reintegration Status</label>
+                <select value={form.reintegrationStatus} onChange={(e) => setField("reintegrationStatus", e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30">
+                  <option value="">Select...</option>
+                  <option value="Not Started">Not Started</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="On Hold">On Hold</option>
+                  <option value="Ready">Ready</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Initial Case Assessment</label>
+                <textarea value={form.initialCaseAssessment} onChange={(e) => setField("initialCaseAssessment", e.target.value)} rows={4}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30" />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Restricted Notes</label>
+                <textarea value={form.notesRestricted} onChange={(e) => setField("notesRestricted", e.target.value)} rows={3}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#2a9d72]/30" />
+              </div>
+
+              {formError && (
+                <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                  {formError}
+                </div>
+              )}
+            </form>
+
+            <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
+              <Button type="button" variant="outline" onClick={() => setEditOpen(false)} disabled={updateResident.isPending}>
+                Cancel
+              </Button>
+              <Button type="submit" form="resident-edit-form" disabled={updateResident.isPending} className="bg-[#2a9d72] hover:bg-[#238c63] text-white">
+                {updateResident.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

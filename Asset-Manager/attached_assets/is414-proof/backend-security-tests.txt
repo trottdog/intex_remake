@@ -1,0 +1,21 @@
+Command:
+dotnet test backend\intex\intex.sln -c Release
+
+Output:
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  intex -> C:\Users\GeorgeColinRamsay\Documents\GitHub\intex_remake\backend\intex\intex\bin\Release\net10.0\intex.dll
+  intex.Tests -> C:\Users\GeorgeColinRamsay\Documents\GitHub\intex_remake\backend\intex\intex.Tests\bin\Release\net10.0\intex.Tests.dll
+Test run for C:\Users\GeorgeColinRamsay\Documents\GitHub\intex_remake\backend\intex\intex.Tests\bin\Release\net10.0\intex.Tests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:     4, Skipped:     0, Total:     4, Duration: 1 s - intex.Tests.dll (net10.0)
+
+Covered tests:
+- Healthz_ReturnsOk_AndSecurityHeaders
+- DonorSummary_WithoutToken_ReturnsUnauthorized
+- CreateSupporter_WithoutToken_ReturnsUnauthorized
+- DeleteDonation_WithoutToken_ReturnsUnauthorized

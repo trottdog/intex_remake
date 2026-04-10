@@ -16,17 +16,10 @@ public sealed class ResidentRepository(BeaconDbContext dbContext) : IResidentRep
 
     public async Task<(IReadOnlyList<Resident> Residents, int Total)> ListResidentsAsync(int page, int pageSize, long? safehouseId, string? caseStatus, IReadOnlyList<long> allowedSafehouses, bool enforceSafehouseScope, CancellationToken cancellationToken = default)
     {
-        var query = ApplyResidentScope(dbContext.Residents.AsNoTracking(), allowedSafehouses, enforceSafehouseScope);
-
-        if (safehouseId.HasValue)
-        {
-            query = query.Where(resident => resident.SafehouseId == safehouseId.Value);
-        }
-
-        if (!string.IsNullOrWhiteSpace(caseStatus))
-        {
-            query = query.Where(resident => resident.CaseStatus == caseStatus);
-        }
+        var query = ApplyResidentFilters(
+            ApplyResidentScope(dbContext.Residents.AsNoTracking(), allowedSafehouses, enforceSafehouseScope),
+            safehouseId,
+            caseStatus);
 
         var total = await query.CountAsync(cancellationToken);
         var residents = await query
@@ -39,8 +32,11 @@ public sealed class ResidentRepository(BeaconDbContext dbContext) : IResidentRep
         return (residents, total);
     }
 
-    public async Task<IReadOnlyList<Resident>> ListResidentsForStatsAsync(IReadOnlyList<long> allowedSafehouses, bool enforceSafehouseScope, CancellationToken cancellationToken = default) =>
-        await ApplyResidentScope(dbContext.Residents.AsNoTracking(), allowedSafehouses, enforceSafehouseScope)
+    public async Task<IReadOnlyList<Resident>> ListResidentsForStatsAsync(long? safehouseId, IReadOnlyList<long> allowedSafehouses, bool enforceSafehouseScope, CancellationToken cancellationToken = default) =>
+        await ApplyResidentFilters(
+                ApplyResidentScope(dbContext.Residents.AsNoTracking(), allowedSafehouses, enforceSafehouseScope),
+                safehouseId,
+                caseStatus: null)
             .ToListAsync(cancellationToken);
 
     public Task<Resident?> GetResidentAsync(long residentId, IReadOnlyList<long> allowedSafehouses, bool enforceSafehouseScope, CancellationToken cancellationToken = default) =>
@@ -50,10 +46,15 @@ public sealed class ResidentRepository(BeaconDbContext dbContext) : IResidentRep
     public async Task<Resident> CreateResidentAsync(IReadOnlyDictionary<string, JsonElement> fields, CancellationToken cancellationToken = default)
     {
         var fieldMap = new Dictionary<string, JsonElement>(fields, StringComparer.OrdinalIgnoreCase);
+        fieldMap.Remove("residentId");
+        fieldMap.Remove("id");
+        fieldMap.Remove("internalCode");
         if (!fieldMap.ContainsKey("createdAt"))
         {
             fieldMap["createdAt"] = JsonSerializer.SerializeToElement(DateTime.UtcNow);
         }
+        fieldMap["internalCode"] = JsonSerializer.SerializeToElement(
+            await GenerateInternalCodeAsync(ReadNullableLong(fieldMap, "safehouseId"), cancellationToken));
 
         var resident = JsonSerializer.Deserialize<Resident>(JsonSerializer.Serialize(fieldMap, JsonOptions), JsonOptions)
             ?? throw new InvalidOperationException("The request body is invalid.");
@@ -71,14 +72,7 @@ public sealed class ResidentRepository(BeaconDbContext dbContext) : IResidentRep
             return null;
         }
 
-        var merged = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
-            JsonSerializer.Serialize(entity, JsonOptions),
-            JsonOptions) ?? new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var (key, value) in fields)
-        {
-            merged[key] = value;
-        }
+        var merged = MergeResidentFields(entity, fields);
 
         var updated = JsonSerializer.Deserialize<Resident>(JsonSerializer.Serialize(merged, JsonOptions), JsonOptions)
             ?? throw new InvalidOperationException("The request body is invalid.");
@@ -179,5 +173,71 @@ public sealed class ResidentRepository(BeaconDbContext dbContext) : IResidentRep
         }
 
         return query.Where(resident => resident.SafehouseId.HasValue && allowedSafehouses.Contains(resident.SafehouseId.Value));
+    }
+
+    private static IQueryable<Resident> ApplyResidentFilters(IQueryable<Resident> query, long? safehouseId, string? caseStatus)
+    {
+        if (safehouseId.HasValue)
+        {
+            query = query.Where(resident => resident.SafehouseId == safehouseId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(caseStatus))
+        {
+            query = query.Where(resident => resident.CaseStatus == caseStatus);
+        }
+
+        return query;
+    }
+
+    private static Dictionary<string, JsonElement> MergeResidentFields(Resident resident, IReadOnlyDictionary<string, JsonElement> fields)
+    {
+        var existing = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
+            JsonSerializer.Serialize(resident, JsonOptions),
+            JsonOptions);
+        var merged = existing is null
+            ? new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, JsonElement>(existing, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var (key, value) in fields)
+        {
+            merged[key] = value;
+        }
+
+        return merged;
+    }
+
+    private async Task<string> GenerateInternalCodeAsync(long? safehouseId, CancellationToken cancellationToken)
+    {
+        var nextResidentNumber = (await dbContext.Residents.AsNoTracking()
+            .MaxAsync(resident => (long?)resident.ResidentId, cancellationToken) ?? 0) + 1;
+
+        if (!safehouseId.HasValue)
+        {
+            return $"RES-R{nextResidentNumber:D4}";
+        }
+
+        var safehouseCode = await dbContext.Safehouses.AsNoTracking()
+            .Where(safehouse => safehouse.SafehouseId == safehouseId.Value)
+            .Select(safehouse => safehouse.SafehouseCode)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var prefix = string.IsNullOrWhiteSpace(safehouseCode)
+            ? $"SH{safehouseId.Value}"
+            : safehouseCode.Trim();
+
+        return $"{prefix}-R{nextResidentNumber:D4}";
+    }
+
+    private static long? ReadNullableLong(IReadOnlyDictionary<string, JsonElement> fields, string key)
+    {
+        if (!fields.TryGetValue(key, out var value) || value.ValueKind == JsonValueKind.Null)
+        {
+            return null;
+        }
+
+        return value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var number)
+            ? number
+            : null;
     }
 }

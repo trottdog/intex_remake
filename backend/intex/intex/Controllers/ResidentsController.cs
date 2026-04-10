@@ -13,8 +13,8 @@ public sealed class ResidentsController(IResidentService residentService, IUserS
 {
     [HttpGet("stats")]
     [ProducesResponseType<ResidentStatsResponseDto>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<ResidentStatsResponseDto>> GetStats(CancellationToken cancellationToken)
-        => Ok(await residentService.GetStatsAsync(User.GetRole(), await userScopeService.GetAssignedSafehousesAsync(User, cancellationToken), cancellationToken));
+    public async Task<ActionResult<ResidentStatsResponseDto>> GetStats([FromQuery] GetResidentStatsQuery query, CancellationToken cancellationToken)
+        => Ok(await residentService.GetStatsAsync(query.SafehouseId, User.GetRole(), await userScopeService.GetAssignedSafehousesAsync(User, cancellationToken), cancellationToken));
 
     [HttpGet("{id:long}/timeline")]
     [ProducesResponseType<IReadOnlyList<ResidentTimelineEventDto>>(StatusCodes.Status200OK)]

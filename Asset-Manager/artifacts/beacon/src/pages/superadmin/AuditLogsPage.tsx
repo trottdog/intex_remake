@@ -62,8 +62,8 @@ export default function AuditLogsPage() {
                     {log.action}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-gray-500 capitalize text-xs">{log.entityType?.replace(/_/g, " ")}</td>
-                <td className="px-4 py-3 text-gray-600 text-xs">{log.entityDescription ?? "—"}</td>
+                <td className="px-4 py-3 text-gray-500 capitalize text-xs">{log.resource?.replace(/_/g, " ") ?? "—"}</td>
+                <td className="px-4 py-3 text-gray-600 text-xs">{log.details ? JSON.stringify(log.details) : "—"}</td>
               </tr>
             ))}
           </tbody>

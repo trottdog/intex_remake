@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { apiFetch } from "./api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiDelete, apiFetch, apiPatch, apiPost } from "./api";
 
 export interface Resident {
   residentId?: number | null;
@@ -115,10 +115,13 @@ export function useListResidents(params?: { page?: number; pageSize?: number; sa
   });
 }
 
-export function useGetResidentStats() {
+export function useGetResidentStats(params?: { safehouseId?: number }) {
+  const search = new URLSearchParams();
+  if (params?.safehouseId) search.set("safehouseId", String(params.safehouseId));
+  const qs = search.toString();
   return useQuery<ResidentStats>({
-    queryKey: ["residents", "stats"],
-    queryFn: () => apiFetch("/api/residents/stats"),
+    queryKey: ["residents", "stats", params],
+    queryFn: () => apiFetch(`/api/residents/stats${qs ? `?${qs}` : ""}`),
   });
 }
 
@@ -151,5 +154,41 @@ export function useListHealthRecords(residentId: number | null) {
     queryKey: ["health-records", residentId],
     queryFn: () => apiFetch(`/api/health-records?residentId=${residentId}&limit=100`),
     enabled: !!residentId,
+  });
+}
+
+export function useCreateResident() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: Record<string, unknown>) =>
+      apiPost<Resident>("/api/residents", body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["residents"] });
+    },
+  });
+}
+
+export function useUpdateResident() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: Record<string, unknown> }) =>
+      apiPatch<Resident>(`/api/residents/${id}`, body),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ["residents"] });
+      qc.invalidateQueries({ queryKey: ["residents", variables.id] });
+      qc.invalidateQueries({ queryKey: ["residents", "stats"] });
+    },
+  });
+}
+
+export function useDeleteResident() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => apiDelete(`/api/residents/${id}`),
+    onSuccess: (_, id) => {
+      qc.invalidateQueries({ queryKey: ["residents"] });
+      qc.invalidateQueries({ queryKey: ["residents", id] });
+      qc.invalidateQueries({ queryKey: ["residents", "stats"] });
+    },
   });
 }

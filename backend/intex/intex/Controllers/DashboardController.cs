@@ -363,7 +363,11 @@ public sealed class DashboardController(IDbContextFactory<BeaconDbContext> dbFac
         }
 
         var activeInterventionPlans = await interventionPlanQuery
-            .CountAsync(item => item.Status != null && EF.Functions.ILike(item.Status, "active"), cancellationToken);
+            .CountAsync(item =>
+                item.Status != null
+                && !EF.Functions.ILike(item.Status, "completed")
+                && !EF.Functions.ILike(item.Status, "discontinued")
+                && !EF.Functions.ILike(item.Status, "cancelled"), cancellationToken);
 
         var donationTotalThisMonth = await db.Donations.AsNoTracking()
             .Where(item => item.DonationDate.HasValue && item.DonationDate.Value >= thirtyDaysAgo)

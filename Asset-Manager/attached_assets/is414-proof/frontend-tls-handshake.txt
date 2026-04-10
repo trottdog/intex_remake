@@ -1,0 +1,28 @@
+Command:
+curl.exe -Iv https://intex.trottdog.com/C
+
+Relevant output:
+* Host intex.trottdog.com:443 was resolved.
+* IPv4: 216.198.79.1, 64.29.17.1
+*   Trying 216.198.79.1:443...
+* schannel: disabled automatic use of client certificate
+* ALPN: curl offers http/1.1
+* ALPN: server accepted http/1.1
+* Established connection to intex.trottdog.com (216.198.79.1 port 443)
+* using HTTP/1.x
+> HEAD /C HTTP/1.1
+> Host: intex.trottdog.com
+> User-Agent: curl/8.18.0
+> Accept: */*
+* Request completely sent off
+* schannel: remote party requests renegotiation
+* schannel: renegotiating SSL/TLS connection
+* schannel: SSL/TLS connection renegotiated
+< HTTP/1.1 200 OK
+< Strict-Transport-Security: max-age=63072000
+< X-Content-Type-Options: nosniff
+< X-Frame-Options: DENY
+
+Interpretation:
+- The TLS handshake completed successfully through Windows Schannel without bypass flags.
+- Pair this with a browser lock/certificate screenshot for final grading evidence.

@@ -47,6 +47,24 @@ const BAND_COLORS: Record<string, string> = {
   noise: "#94a3b8",
 };
 
+function toPercentValue(value: unknown): number {
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) return 0;
+    return value <= 1 ? +(value * 100).toFixed(1) : +value.toFixed(1);
+  }
+
+  if (typeof value === "string") {
+    const cleaned = value.replace("%", "").trim();
+    if (!cleaned) return 0;
+    const parsed = Number(cleaned);
+    if (!Number.isFinite(parsed)) return 0;
+    if (value.includes("%")) return +parsed.toFixed(1);
+    return parsed <= 1 ? +(parsed * 100).toFixed(1) : +parsed.toFixed(1);
+  }
+
+  return 0;
+}
+
 function CampaignEffectivenessTab() {
   const [dateRange, setDateRange] = useState("90d");
   const [category, setCategory] = useState("");
@@ -60,12 +78,22 @@ function CampaignEffectivenessTab() {
 
   const campaigns = data?.data ?? [];
 
-  const chartData = campaigns.map(c => ({
-    title: c.title.length > 16 ? c.title.slice(0, 16) + "…" : c.title,
-    conversionRatio: c.conversionRatio != null ? +(c.conversionRatio * 100).toFixed(1) : 0,
-    raised: parseFloat(c.totalRaisedPhp),
-    band: c.classificationBand,
-  }));
+  const chartData = campaigns.map(c => {
+    const goalValue = Number(c.goal);
+    const raisedValue = Number(c.totalRaisedPhp);
+    const fallbackRatio =
+      Number.isFinite(goalValue) && goalValue > 0 && Number.isFinite(raisedValue)
+        ? raisedValue / goalValue
+        : null;
+    const safeTitle = c.title ?? "Untitled campaign";
+
+    return {
+      title: safeTitle.length > 16 ? safeTitle.slice(0, 16) + "…" : safeTitle,
+      conversionRatio: toPercentValue(c.conversionRatio ?? fallbackRatio),
+      raised: parseFloat(c.totalRaisedPhp),
+      band: c.classificationBand,
+    };
+  });
 
   return (
     <div className="space-y-4">
@@ -107,7 +135,7 @@ function CampaignEffectivenessTab() {
                       ]}
                       contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e2e8f0" }}
                     />
-                    <Bar dataKey="conversionRatio" radius={[4, 4, 0, 0]}>
+                    <Bar dataKey="conversionRatio" radius={[4, 4, 0, 0]} minPointSize={3}>
                       {chartData.map((entry, i) => (
                         <Cell
                           key={i}

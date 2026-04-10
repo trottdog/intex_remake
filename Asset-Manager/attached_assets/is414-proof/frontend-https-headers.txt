@@ -1,0 +1,25 @@
+Command:
+curl.exe -I -sS https://intex.trottdog.com/C
+
+Output:
+HTTP/1.1 200 OK
+Accept-Ranges: bytes
+Access-Control-Allow-Origin: *
+Age: 31
+Cache-Control: public, max-age=0, must-revalidate
+Content-Disposition: inline; filename="index.html"
+Content-Length: 747
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://beacon-api.azurewebsites.net https://intex.trottdog.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+Content-Type: text/html; charset=utf-8
+Date: Fri, 10 Apr 2026 02:25:31 GMT
+Etag: "9959d02e3473d8eb67791805bb3052fc"
+Last-Modified: Fri, 10 Apr 2026 02:24:59 GMT
+Permissions-Policy: camera=(), microphone=(), geolocation=()
+Referrer-Policy: strict-origin-when-cross-origin
+Server: Vercel
+Strict-Transport-Security: max-age=63072000
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+X-Vercel-Cache: HIT
+X-Vercel-Enable-Rewrite-Caching: 1
+X-Vercel-Id: cle1::cr7sl-1775787931102-dc334817dfec

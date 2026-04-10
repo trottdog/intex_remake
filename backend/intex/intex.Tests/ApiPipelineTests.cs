@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text;
 using backend.intex;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -28,6 +29,27 @@ public sealed class ApiPipelineTests(ApiPipelineTests.TestAppFactory factory) : 
         using var client = factory.CreateClient();
 
         using var response = await client.GetAsync("/api/dashboard/donor-summary");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateSupporter_WithoutToken_ReturnsUnauthorized()
+    {
+        using var client = factory.CreateClient();
+        using var content = new StringContent("{}", Encoding.UTF8, "application/json");
+
+        using var response = await client.PostAsync("/api/supporters", content);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteDonation_WithoutToken_ReturnsUnauthorized()
+    {
+        using var client = factory.CreateClient();
+
+        using var response = await client.DeleteAsync("/api/donations/1");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }

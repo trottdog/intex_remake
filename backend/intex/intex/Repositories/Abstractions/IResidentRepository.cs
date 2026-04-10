@@ -6,7 +6,7 @@ namespace backend.intex.Repositories.Abstractions;
 public interface IResidentRepository
 {
     Task<(IReadOnlyList<Resident> Residents, int Total)> ListResidentsAsync(int page, int pageSize, long? safehouseId, string? caseStatus, IReadOnlyList<long> allowedSafehouses, bool enforceSafehouseScope, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Resident>> ListResidentsForStatsAsync(IReadOnlyList<long> allowedSafehouses, bool enforceSafehouseScope, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Resident>> ListResidentsForStatsAsync(long? safehouseId, IReadOnlyList<long> allowedSafehouses, bool enforceSafehouseScope, CancellationToken cancellationToken = default);
     Task<Resident?> GetResidentAsync(long residentId, IReadOnlyList<long> allowedSafehouses, bool enforceSafehouseScope, CancellationToken cancellationToken = default);
     Task<Resident> CreateResidentAsync(IReadOnlyDictionary<string, JsonElement> fields, CancellationToken cancellationToken = default);
     Task<Resident?> UpdateResidentAsync(long residentId, IReadOnlyDictionary<string, JsonElement> fields, CancellationToken cancellationToken = default);

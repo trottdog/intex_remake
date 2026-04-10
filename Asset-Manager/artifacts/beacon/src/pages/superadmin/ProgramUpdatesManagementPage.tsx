@@ -222,7 +222,7 @@ export default function ProgramUpdatesManagementPage() {
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#0e2118] text-white rounded-xl font-bold text-sm hover:bg-[#1a3528] transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#2a9d72] text-white rounded-xl font-bold text-sm hover:bg-[#23856a] transition-colors"
         >
           <Plus className="w-4 h-4" /> New Update
         </button>

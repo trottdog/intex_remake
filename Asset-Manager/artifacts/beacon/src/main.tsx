@@ -5,7 +5,9 @@ import { setBaseUrl } from "@workspace/api-client-react";
 import { getCookie } from "@/lib/cookies";
 import { reconcileConsentCookies } from "@/lib/consent";
 
-const apiBase = import.meta.env.VITE_API_BASE_URL || "";
+const apiBase = import.meta.env.PROD
+  ? ""
+  : (import.meta.env.VITE_API_BASE_URL ?? "");
 setBaseUrl(apiBase);
 
 // Apply saved theme
