@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { flushSync } from "react-dom";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,12 +7,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
 import { loginApi, verifyMfaApi } from "@/services/auth.service";
+import { useGetPublicImpact } from "@/services/public.service";
 import { ApiError } from "@/services/api";
 import lighthouseLogo from "@assets/Minimalist_lighthouse_logo_design_1775623783267.png";
+
+function fmtPeso(n: number | null | undefined) {
+  if (n == null || Number.isNaN(n)) return "—";
+  return `₱${n.toLocaleString("en-PH")}`;
+}
+
+function fmtCount(n: number | null | undefined) {
+  if (n == null || Number.isNaN(n)) return "—";
+  return n.toLocaleString("en-PH");
+}
 
 export default function LoginPage() {
   const { login } = useAuth();
   const [, setLocation] = useLocation();
+  const { data: publicImpact } = useGetPublicImpact();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -20,6 +32,13 @@ export default function LoginPage() {
   const [pendingChallengeToken, setPendingChallengeToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const impactStats = useMemo(() => ([
+    { label: "Residents Served", value: fmtCount(publicImpact?.residentsServedTotal) },
+    { label: "Safe Homes", value: fmtCount(publicImpact?.safehouseCount) },
+    { label: "Donations Raised", value: fmtPeso(publicImpact?.totalDonationsRaised) },
+    { label: "Donations", value: fmtCount(publicImpact?.donationCount) },
+  ]), [publicImpact?.donationCount, publicImpact?.residentsServedTotal, publicImpact?.safehouseCount, publicImpact?.totalDonationsRaised]);
 
   const completeLogin = (token: string, role: string, user: Parameters<typeof login>[1]) => {
     flushSync(() => {
@@ -125,12 +144,7 @@ export default function LoginPage() {
           </p>
         </div>
         <div className="relative z-10 grid grid-cols-2 gap-4">
-          {[
-            { label: "Residents Served", value: "60+" },
-            { label: "Safe Homes", value: "9" },
-            { label: "Donations Raised", value: "₱30,000+" },
-            { label: "Donations", value: "420+" },
-          ].map((stat) => (
+          {impactStats.map((stat) => (
             <div
               key={stat.label}
               className="rounded-2xl border border-white/55 bg-white/92 p-4 shadow-[0_18px_40px_rgba(8,20,15,0.22)] backdrop-blur-sm"

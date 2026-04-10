@@ -13,7 +13,7 @@ function fmtPeso(n: number | null | undefined) {
 }
 
 function fmtCount(n: number | null | undefined) {
-  if (n == null || Number.isNaN(n)) return "0";
+  if (n == null || Number.isNaN(n)) return "—";
   return n.toLocaleString("en-PH");
 }
 
