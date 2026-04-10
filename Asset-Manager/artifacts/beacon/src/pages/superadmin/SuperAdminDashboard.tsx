@@ -5,7 +5,7 @@ import {
   useGetExecutiveDashboardSummary,
 } from "@/services/superadmin.service";
 import { useListSocialMediaPosts } from "@/services";
-import { useListResidents } from "@/services/residents.service";
+import { useGetResidentStats, useListResidents } from "@/services/residents.service";
 import { apiFetch } from "@/services/api";
 import {
   Area,
@@ -186,6 +186,9 @@ export default function SuperAdminDashboard() {
   const months = 12;
 
   const { data, isLoading, error, refetch } = useGetExecutiveDashboardSummary({ safehouseId, months });
+  const { data: residentStats, isLoading: isResidentStatsLoading } = useGetResidentStats({
+    safehouseId: safehouseId ?? undefined,
+  });
   const { data: residentsData, isLoading: isResidentsLoading } = useListResidents({
     page: 1,
     pageSize: 2000,
@@ -247,7 +250,7 @@ export default function SuperAdminDashboard() {
 
   const dashboardKpis = useMemo(() => {
     const survivorsInCare = activeResidents.length;
-    const casesAtRisk = allResidents.filter(isHighOrCriticalRisk).length;
+    const casesAtRisk = residentStats?.highRiskResidents ?? allResidents.filter(isHighOrCriticalRisk).length;
     const totalDonations = data?.totalDonations ?? data?.donationsYtd ?? null;
     const returningDonorsPct = data?.orgRetentionEstimate ?? null;
 
@@ -257,7 +260,7 @@ export default function SuperAdminDashboard() {
       totalDonations,
       returningDonorsPct,
     };
-  }, [activeResidents, allResidents, data?.donationsYtd, data?.orgRetentionEstimate, data?.totalDonations]);
+  }, [activeResidents, allResidents, data?.donationsYtd, data?.orgRetentionEstimate, data?.totalDonations, residentStats?.highRiskResidents]);
 
   const reintegrationData = useMemo(() => {
     const breakdown = data?.reintegrationBreakdown;
@@ -294,7 +297,7 @@ export default function SuperAdminDashboard() {
     }
   };
 
-  if (isLoading || isResidentsLoading) {
+  if (isLoading || isResidentsLoading || isResidentStatsLoading) {
     return (
       <div className="flex h-72 flex-col items-center justify-center gap-3 text-gray-400">
         <Loader2 className="h-8 w-8 animate-spin text-[#2a9d72]" />
@@ -328,20 +331,15 @@ export default function SuperAdminDashboard() {
             onClick={goTo("/superadmin/caseload")}
             tooltip="Active residents currently in care across the organization."
           />
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={goTo("/superadmin/residents")}
-                aria-label="Open High / Critical Risk residents"
-                className="w-full rounded-xl border border-gray-100 bg-white p-4 text-left transition-all hover:border-red-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2a9d72]/30"
-              >
-                <div className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">High / Critical Risk</div>
-                <div className="text-2xl font-bold text-red-600">{fmt(dashboardKpis.casesAtRisk)}</div>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Residents currently marked at high or critical risk level.</TooltipContent>
-          </Tooltip>
+          <KpiCard
+            label="High / Critical Risk"
+            value={fmt(dashboardKpis.casesAtRisk)}
+            icon={AlertTriangle}
+            color="#dc2626"
+            emphasis={dashboardKpis.casesAtRisk > 0}
+            onClick={goTo("/superadmin/residents")}
+            tooltip="Residents currently marked at high or critical risk level."
+          />
           <KpiCard
             label="Total Donations"
             value={fmtPeso(dashboardKpis.totalDonations)}
