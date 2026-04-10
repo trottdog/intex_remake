@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import {
   useGetExecutiveDashboardSummary,
 } from "@/services/superadmin.service";
@@ -80,16 +81,21 @@ function KpiCard({
   icon: Icon,
   color = ACCENT,
   emphasis = false,
+  onClick,
 }: {
   label: string;
   value: string;
   icon: React.ElementType;
   color?: string;
   emphasis?: boolean;
+  onClick: () => void;
 }) {
   return (
-    <div
-      className={`rounded-xl border p-5 transition-all ${
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`Open ${label}`}
+      className={`block w-full rounded-xl border p-5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2a9d72]/30 ${
         emphasis
           ? "border-red-100 bg-white hover:border-red-200 hover:shadow-md"
           : "border-gray-100 bg-white hover:border-[#2a9d72]/30 hover:shadow-md"
@@ -109,11 +115,35 @@ function KpiCard({
           <Icon className="h-5 w-5" style={{ color }} />
         </div>
       </div>
-    </div>
+    </button>
+  );
+}
+
+function ChartPanel({
+  title,
+  onClick,
+  children,
+  className = "",
+}: {
+  title: string;
+  onClick: () => void;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`Open ${title}`}
+      className={`block w-full rounded-xl border border-gray-100 bg-white p-5 text-left transition-all hover:border-[#2a9d72]/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2a9d72]/30 ${className}`}
+    >
+      {children}
+    </button>
   );
 }
 
 export default function SuperAdminDashboard() {
+  const [, setLocation] = useLocation();
   const safehouseId: number | null = null;
   const months = 12;
 
@@ -209,6 +239,8 @@ export default function SuperAdminDashboard() {
     return { totalReferrals, platformBreakdown };
   }, [socialPosts]);
 
+  const goTo = (path: string) => () => setLocation(path);
+
   if (isLoading) {
     return (
       <div className="flex h-72 flex-col items-center justify-center gap-3 text-gray-400">
@@ -235,16 +267,17 @@ export default function SuperAdminDashboard() {
       <h1 className="text-2xl font-bold text-gray-900">Executive Dashboard</h1>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Survivors in Care" value={fmt(dashboardKpis.survivorsInCare)} icon={Users} />
+        <KpiCard label="Survivors in Care" value={fmt(dashboardKpis.survivorsInCare)} icon={Users} onClick={goTo("/superadmin/caseload")} />
         <KpiCard
           label="Cases at Risk"
           value={fmt(dashboardKpis.casesAtRisk)}
           icon={AlertTriangle}
           color="#dc2626"
           emphasis={dashboardKpis.casesAtRisk > 0}
+          onClick={goTo("/superadmin/ml?tab=regression")}
         />
-        <KpiCard label="Total Donations" value={fmtPeso(dashboardKpis.totalDonations)} icon={DollarSign} />
-        <KpiCard label="Returning Donors %" value={fmtPercent(dashboardKpis.returningDonorsPct)} icon={Repeat2} color="#457b9d" />
+        <KpiCard label="Total Donations" value={fmtPeso(dashboardKpis.totalDonations)} icon={DollarSign} onClick={goTo("/superadmin/fundraising")} />
+        <KpiCard label="Returning Donors %" value={fmtPercent(dashboardKpis.returningDonorsPct)} icon={Repeat2} color="#457b9d" onClick={goTo("/superadmin/donors?tab=churn")} />
       </div>
 
       <section className="space-y-4">
@@ -257,6 +290,7 @@ export default function SuperAdminDashboard() {
               icon: Clock3,
               toneAlert: "border-amber-200 bg-amber-50 text-amber-800",
               toneCalm: "border-gray-200 bg-white text-gray-500",
+              href: "/superadmin/case-management?tab=recordings",
             },
             {
               label: "Missing Assigned Support",
@@ -264,6 +298,7 @@ export default function SuperAdminDashboard() {
               icon: UserX,
               toneAlert: "border-red-200 bg-red-50 text-red-800",
               toneCalm: "border-gray-200 bg-white text-gray-500",
+              href: "/superadmin/residents",
             },
             {
               label: "Stalled Progress",
@@ -271,6 +306,7 @@ export default function SuperAdminDashboard() {
               icon: TrendingUp,
               toneAlert: "border-orange-200 bg-orange-50 text-orange-800",
               toneCalm: "border-gray-200 bg-white text-gray-500",
+              href: "/superadmin/case-management?tab=plans",
             },
             {
               label: "Capacity Pressure",
@@ -278,13 +314,17 @@ export default function SuperAdminDashboard() {
               icon: Building2,
               toneAlert: "border-[#bfe2cc] bg-[#eef8f3] text-[#2a9d72]",
               toneCalm: "border-gray-200 bg-white text-gray-500",
+              href: "/superadmin/ml?tab=safehouses",
             },
           ].map((item) => {
             const active = item.value > 0;
             return (
-              <div
+              <button
+                type="button"
                 key={item.label}
-                className={`rounded-xl border p-4 transition-colors ${
+                onClick={goTo(item.href)}
+                aria-label={`Open ${item.label}`}
+                className={`block w-full rounded-xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2a9d72]/30 ${
                   active ? `${item.toneAlert} border-[1.5px]` : item.toneCalm
                 }`}
               >
@@ -295,7 +335,7 @@ export default function SuperAdminDashboard() {
                   <item.icon className={`h-4 w-4 ${active ? "" : "text-gray-300"}`} />
                 </div>
                 <div className={`mt-3 font-bold ${active ? "text-4xl" : "text-3xl text-gray-500"}`}>{fmt(item.value)}</div>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -303,7 +343,7 @@ export default function SuperAdminDashboard() {
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">Reintegration Progress</h2>
-        <div className="min-h-[320px] rounded-xl border border-gray-100 bg-white p-5">
+        <ChartPanel title="reintegration progress" onClick={goTo("/superadmin/ml?tab=reintegration")} className="min-h-[320px]">
           {reintegrationData.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={reintegrationData} layout="vertical" margin={{ left: 0, right: 18 }}>
@@ -321,12 +361,12 @@ export default function SuperAdminDashboard() {
           ) : (
             <div className="flex h-40 items-center justify-center text-sm text-gray-400">No reintegration data</div>
           )}
-        </div>
+        </ChartPanel>
       </section>
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">Donor Health & Retention</h2>
-        <div className="rounded-xl border border-gray-100 bg-white p-5">
+        <ChartPanel title="donor health and retention" onClick={goTo("/superadmin/donors?tab=churn")}>
           <h3 className="text-sm font-semibold text-gray-900">Donation Trend</h3>
           {(data.donationTrend ?? []).length > 0 ? (
             <div className="mt-3">
@@ -359,14 +399,14 @@ export default function SuperAdminDashboard() {
           ) : (
             <div className="flex h-64 items-center justify-center text-sm text-gray-400">No donation trend data</div>
           )}
-        </div>
+        </ChartPanel>
       </section>
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">Social Contribution</h2>
         <div className="grid gap-4 lg:grid-cols-[minmax(0,0.4fr)_minmax(0,1fr)]">
-          <KpiCard label="Referrals Total" value={fmt(socialSummary.totalReferrals)} icon={Share2} />
-          <div className="rounded-xl border border-gray-100 bg-white p-5">
+          <KpiCard label="Referrals Total" value={fmt(socialSummary.totalReferrals)} icon={Share2} onClick={goTo("/superadmin/campaigns?tab=social")} />
+          <ChartPanel title="social contribution by platform" onClick={goTo("/superadmin/campaigns?tab=social")}>
             <h3 className="text-sm font-semibold text-gray-900">Referrals by Platform</h3>
             {socialSummary.platformBreakdown.length > 0 ? (
               <div className="mt-4">
@@ -387,7 +427,7 @@ export default function SuperAdminDashboard() {
             ) : (
               <div className="mt-4 flex h-36 items-center justify-center text-sm text-gray-400">No referral data yet</div>
             )}
-          </div>
+          </ChartPanel>
         </div>
       </section>
     </div>

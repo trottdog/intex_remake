@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Users, ClipboardList, Home, FileText } from "lucide-react";
 import CaseConferencesPage from "@/pages/admin/CaseConferencesPage";
 import InterventionPlansPage from "@/pages/admin/InterventionPlansPage";
@@ -15,7 +15,16 @@ const TABS = [
 type TabId = (typeof TABS)[number]["id"];
 
 export default function OrgCaseManagementPage() {
-  const [tab, setTab] = useState<TabId>("conferences");
+  const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+  const defaultTab = (params.get("tab") as TabId) || "conferences";
+  const [tab, setTab] = useState<TabId>(["conferences", "plans", "visits", "recordings"].includes(defaultTab) ? defaultTab : "conferences");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", tab);
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  }, [tab]);
 
   return (
     <div className="space-y-5">
