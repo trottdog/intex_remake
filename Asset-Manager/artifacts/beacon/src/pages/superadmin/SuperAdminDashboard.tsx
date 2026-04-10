@@ -15,7 +15,7 @@ import {
   CartesianGrid,
   Cell,
   ResponsiveContainer,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   XAxis,
   YAxis,
 } from "recharts";
@@ -32,6 +32,12 @@ import {
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const ACCENT = "#2a9d72";
 const DARK = "#0e2118";
@@ -82,6 +88,7 @@ function KpiCard({
   color = ACCENT,
   emphasis = false,
   onClick,
+  tooltip,
 }: {
   label: string;
   value: string;
@@ -89,6 +96,7 @@ function KpiCard({
   color?: string;
   emphasis?: boolean;
   onClick?: () => void;
+  tooltip?: string;
 }) {
   const className = `block w-full rounded-xl border p-5 text-left transition-all ${
     emphasis
@@ -120,13 +128,30 @@ function KpiCard({
   );
 
   if (!onClick) {
-    return <div className={className}>{content}</div>;
+    if (!tooltip) return <div className={className}>{content}</div>;
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className={className}>{content}</div>
+        </TooltipTrigger>
+        <TooltipContent>{tooltip}</TooltipContent>
+      </Tooltip>
+    );
   }
 
-  return (
+  const button = (
     <button type="button" onClick={onClick} aria-label={`Open ${label}`} className={className}>
       {content}
     </button>
+  );
+
+  if (!tooltip) return button;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipContent>{tooltip}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -287,27 +312,48 @@ export default function SuperAdminDashboard() {
   }
 
   return (
-    <div className="space-y-8 pb-8">
-      <h1 className="text-2xl font-bold text-gray-900">Executive Dashboard</h1>
+    <TooltipProvider>
+      <div className="space-y-8 pb-8">
+        <h1 className="text-2xl font-bold text-gray-900">Executive Dashboard</h1>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Survivors in Care" value={fmt(dashboardKpis.survivorsInCare)} icon={Users} onClick={goTo("/superadmin/caseload")} />
-        <KpiCard
-          label="Cases at Risk"
-          value={fmt(dashboardKpis.casesAtRisk)}
-          icon={AlertTriangle}
-          color="#dc2626"
-          emphasis={dashboardKpis.casesAtRisk > 0}
-          onClick={goTo("/superadmin/donors?tab=supporters")}
-        />
-        <KpiCard label="Total Donations" value={fmtPeso(dashboardKpis.totalDonations)} icon={DollarSign} onClick={goTo("/superadmin/fundraising")} />
-        <KpiCard label="Returning Donors %" value={fmtPercent(dashboardKpis.returningDonorsPct)} icon={Repeat2} color="#457b9d" onClick={goTo("/superadmin/donors?tab=churn")} />
-      </div>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <KpiCard
+            label="Survivors in Care"
+            value={fmt(dashboardKpis.survivorsInCare)}
+            icon={Users}
+            onClick={goTo("/superadmin/caseload")}
+            tooltip="Active residents currently in care across the organization."
+          />
+          <KpiCard
+            label="Cases at Risk"
+            value={fmt(dashboardKpis.casesAtRisk)}
+            icon={AlertTriangle}
+            color="#dc2626"
+            emphasis={dashboardKpis.casesAtRisk > 0}
+            onClick={goTo("/superadmin/donors?tab=supporters")}
+            tooltip="Residents currently marked at high or critical risk level."
+          />
+          <KpiCard
+            label="Total Donations"
+            value={fmtPeso(dashboardKpis.totalDonations)}
+            icon={DollarSign}
+            onClick={goTo("/superadmin/fundraising")}
+            tooltip="Total peso value recorded across donations in the dashboard summary."
+          />
+          <KpiCard
+            label="Returning Donors %"
+            value={fmtPercent(dashboardKpis.returningDonorsPct)}
+            icon={Repeat2}
+            color="#457b9d"
+            onClick={goTo("/superadmin/donors?tab=churn")}
+            tooltip="Estimated donor retention rate from the executive fundraising summary."
+          />
+        </div>
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Cases Needing Attention</h2>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {[
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold text-gray-900">Cases Needing Attention</h2>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {[
             {
               label: "No Recent Update",
               value: careGapSignals.noRecentUpdateCount,
@@ -315,6 +361,7 @@ export default function SuperAdminDashboard() {
               toneAlert: "border-amber-200 bg-amber-50 text-amber-800",
               toneCalm: "border-gray-200 bg-white text-gray-500",
               href: "/superadmin/case-management?tab=recordings",
+              tooltip: "Active residents with no recent process recording update in the last 30 days.",
             },
             {
               label: "Missing Assigned Support",
@@ -323,6 +370,7 @@ export default function SuperAdminDashboard() {
               toneAlert: "border-red-200 bg-red-50 text-red-800",
               toneCalm: "border-gray-200 bg-white text-gray-500",
               href: "/superadmin/residents",
+              tooltip: "Residents missing an assigned social worker or support owner.",
             },
             {
               label: "Stalled Progress",
@@ -331,6 +379,7 @@ export default function SuperAdminDashboard() {
               toneAlert: "border-orange-200 bg-orange-50 text-orange-800",
               toneCalm: "border-gray-200 bg-white text-gray-500",
               href: "/superadmin/case-management?tab=plans",
+              tooltip: "Residents whose latest recording flagged no progress noted.",
             },
             {
               label: "Capacity Pressure",
@@ -338,6 +387,7 @@ export default function SuperAdminDashboard() {
               icon: Building2,
               toneAlert: "border-[#bfe2cc] bg-[#eef8f3] text-[#2a9d72]",
               toneCalm: "border-gray-200 bg-white text-gray-500",
+              tooltip: "Safehouses currently at or above 90% occupancy.",
             },
           ].map((item) => {
             const active = item.value > 0;
@@ -357,34 +407,45 @@ export default function SuperAdminDashboard() {
             );
 
             if (!item.href) {
-              return <div key={item.label} className={cardClassName}>{content}</div>;
+              return (
+                <Tooltip key={item.label}>
+                  <TooltipTrigger asChild>
+                    <div className={cardClassName}>{content}</div>
+                  </TooltipTrigger>
+                  <TooltipContent>{item.tooltip}</TooltipContent>
+                </Tooltip>
+              );
             }
 
             return (
-              <button
-                type="button"
-                key={item.label}
-                onClick={goTo(item.href)}
-                aria-label={`Open ${item.label}`}
-                className={cardClassName}
-              >
-                {content}
-              </button>
+              <Tooltip key={item.label}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={goTo(item.href)}
+                    aria-label={`Open ${item.label}`}
+                    className={cardClassName}
+                  >
+                    {content}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>{item.tooltip}</TooltipContent>
+              </Tooltip>
             );
           })}
-        </div>
-      </section>
+          </div>
+        </section>
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Reintegration Progress</h2>
-        <ChartPanel title="reintegration progress" className="min-h-[320px]">
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold text-gray-900">Reintegration Progress</h2>
+          <ChartPanel title="reintegration progress" className="min-h-[320px]">
           {reintegrationData.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={reintegrationData} layout="vertical" margin={{ left: 0, right: 18 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
                 <XAxis type="number" tick={{ fontSize: 10 }} allowDecimals={false} />
                 <YAxis dataKey="stage" type="category" tick={{ fontSize: 11 }} width={82} />
-                <Tooltip cursor={{ fill: "#f8fafc" }} />
+                <RechartsTooltip cursor={{ fill: "#f8fafc" }} />
                 <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                   {reintegrationData.map((entry) => (
                     <Cell key={entry.stage} fill={entry.color} />
@@ -395,12 +456,12 @@ export default function SuperAdminDashboard() {
           ) : (
             <div className="flex h-40 items-center justify-center text-sm text-gray-400">No reintegration data</div>
           )}
-        </ChartPanel>
-      </section>
+          </ChartPanel>
+        </section>
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Donor Health & Retention</h2>
-        <ChartPanel title="donor health and retention" onClick={goTo("/superadmin/donors?tab=churn")}>
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold text-gray-900">Donor Health & Retention</h2>
+          <ChartPanel title="donor health and retention" onClick={goTo("/superadmin/donors?tab=churn")}>
           <h3 className="text-sm font-semibold text-gray-900">Donation Trend</h3>
           {(data.donationTrend ?? []).length > 0 ? (
             <div className="mt-3">
@@ -415,7 +476,7 @@ export default function SuperAdminDashboard() {
                   <CartesianGrid strokeDasharray="2 4" stroke="#edf2f7" vertical={false} />
                   <XAxis dataKey="label" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 10 }} tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}k`} />
-                  <Tooltip
+                  <RechartsTooltip
                     formatter={(value: number) => [fmtPeso(value), "Amount"]}
                     contentStyle={{ borderRadius: 12, border: "1px solid #e5e7eb", fontSize: 12 }}
                   />
@@ -433,14 +494,20 @@ export default function SuperAdminDashboard() {
           ) : (
             <div className="flex h-64 items-center justify-center text-sm text-gray-400">No donation trend data</div>
           )}
-        </ChartPanel>
-      </section>
+          </ChartPanel>
+        </section>
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Social Contribution</h2>
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,0.4fr)_minmax(0,1fr)]">
-          <KpiCard label="Referrals Total" value={fmt(socialSummary.totalReferrals)} icon={Share2} onClick={goTo("/superadmin/campaigns?tab=social")} />
-          <ChartPanel title="social contribution by platform" onClick={goTo("/superadmin/campaigns?tab=social")}>
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold text-gray-900">Social Contribution</h2>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,0.4fr)_minmax(0,1fr)]">
+            <KpiCard
+              label="Referrals Total"
+              value={fmt(socialSummary.totalReferrals)}
+              icon={Share2}
+              onClick={goTo("/superadmin/campaigns?tab=social")}
+              tooltip="Total donation referrals attributed to tracked social posts."
+            />
+            <ChartPanel title="social contribution by platform" onClick={goTo("/superadmin/campaigns?tab=social")}>
             <h3 className="text-sm font-semibold text-gray-900">Referrals by Platform</h3>
             {socialSummary.platformBreakdown.length > 0 ? (
               <div className="mt-4">
@@ -449,7 +516,7 @@ export default function SuperAdminDashboard() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
                     <XAxis type="number" tick={{ fontSize: 10 }} allowDecimals={false} />
                     <YAxis dataKey="platform" type="category" tick={{ fontSize: 11 }} width={70} />
-                    <Tooltip formatter={(value: number) => [value, "Referrals"]} />
+                    <RechartsTooltip formatter={(value: number) => [value, "Referrals"]} />
                     <Bar dataKey="referrals" radius={[0, 4, 4, 0]}>
                       {socialSummary.platformBreakdown.map((item, index) => (
                         <Cell key={item.platform} fill={PLATFORM_COLORS[index % PLATFORM_COLORS.length]} />
@@ -461,9 +528,10 @@ export default function SuperAdminDashboard() {
             ) : (
               <div className="mt-4 flex h-36 items-center justify-center text-sm text-gray-400">No referral data yet</div>
             )}
-          </ChartPanel>
-        </div>
-      </section>
-    </div>
+            </ChartPanel>
+          </div>
+        </section>
+      </div>
+    </TooltipProvider>
   );
 }
