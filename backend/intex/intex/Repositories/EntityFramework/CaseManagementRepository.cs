@@ -492,7 +492,7 @@ public sealed class CaseManagementRepository(BeaconDbContext dbContext) : ICaseM
                 fieldMap["createdAt"] = JsonSerializer.SerializeToElement(DateTime.UtcNow);
             }
 
-            var entity = DeserializeEntity<InterventionPlan>(fieldMap);
+            var entity = CreateInterventionPlanEntity(fieldMap);
             dbContext.InterventionPlans.Add(entity);
             await dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
@@ -516,7 +516,7 @@ public sealed class CaseManagementRepository(BeaconDbContext dbContext) : ICaseM
         var fieldMap = NormalizeInterventionPlanFields(fields);
         fieldMap["updatedAt"] = JsonSerializer.SerializeToElement(DateTime.UtcNow);
 
-        ApplyMergedValues(entity, fieldMap);
+        ApplyInterventionPlanValues(entity, fieldMap);
         await dbContext.SaveChangesAsync(cancellationToken);
         return await GetInterventionPlanCoreAsync(planId, [], false, cancellationToken);
     }
@@ -915,6 +915,207 @@ public sealed class CaseManagementRepository(BeaconDbContext dbContext) : ICaseM
         }
 
         return normalized;
+    }
+
+    private void ApplyInterventionPlanValues(InterventionPlan entity, IReadOnlyDictionary<string, JsonElement> fields)
+    {
+        var entry = dbContext.Entry(entity);
+
+        foreach (var (key, value) in fields)
+        {
+            switch (key)
+            {
+                case "residentId":
+                    entry.Property(nameof(InterventionPlan.ResidentId)).CurrentValue = ReadNullableInt64(value);
+                    break;
+                case "planCategory":
+                    entry.Property(nameof(InterventionPlan.PlanCategory)).CurrentValue = ReadNullableString(value);
+                    break;
+                case "planDescription":
+                    entry.Property(nameof(InterventionPlan.PlanDescription)).CurrentValue = ReadNullableString(value);
+                    break;
+                case "servicesProvided":
+                    entry.Property(nameof(InterventionPlan.ServicesProvided)).CurrentValue = ReadNullableString(value);
+                    break;
+                case "targetValue":
+                    entry.Property(nameof(InterventionPlan.TargetValue)).CurrentValue = ReadNullableDecimal(value);
+                    break;
+                case "targetDate":
+                    entry.Property(nameof(InterventionPlan.TargetDate)).CurrentValue = ReadNullableDateOnly(value);
+                    break;
+                case "status":
+                    entry.Property(nameof(InterventionPlan.Status)).CurrentValue = ReadNullableString(value);
+                    break;
+                case "caseConferenceDate":
+                    entry.Property(nameof(InterventionPlan.CaseConferenceDate)).CurrentValue = ReadNullableDateOnly(value);
+                    break;
+                case "createdAt":
+                    entry.Property(nameof(InterventionPlan.CreatedAt)).CurrentValue = ReadNullableDateTime(value);
+                    break;
+                case "updatedAt":
+                    entry.Property(nameof(InterventionPlan.UpdatedAt)).CurrentValue = ReadNullableDateTime(value);
+                    break;
+                case "effectivenessOutcomeScore":
+                    entry.Property(nameof(InterventionPlan.EffectivenessOutcomeScore)).CurrentValue = ReadNullableDouble(value);
+                    break;
+                case "effectivenessBand":
+                    entry.Property(nameof(InterventionPlan.EffectivenessBand)).CurrentValue = ReadNullableString(value);
+                    break;
+                case "effectivenessOutcomeDrivers":
+                    entry.Property(nameof(InterventionPlan.EffectivenessOutcomeDrivers)).CurrentValue = ReadNullableJsonDocument(value);
+                    break;
+                case "effectivenessScoreUpdatedAt":
+                    entry.Property(nameof(InterventionPlan.EffectivenessScoreUpdatedAt)).CurrentValue = ReadNullableDateTimeOffset(value);
+                    break;
+            }
+        }
+    }
+
+    private static InterventionPlan CreateInterventionPlanEntity(IReadOnlyDictionary<string, JsonElement> fields)
+    {
+        if (!fields.TryGetValue("planId", out var planIdValue))
+        {
+            throw new InvalidOperationException("planId is required.");
+        }
+
+        var planId = ReadNullableInt64(planIdValue);
+        if (!planId.HasValue)
+        {
+            throw new InvalidOperationException("planId is invalid.");
+        }
+
+        return new InterventionPlan
+        {
+            PlanId = planId.Value,
+            ResidentId = ReadField(fields, "residentId", ReadNullableInt64),
+            PlanCategory = ReadField(fields, "planCategory", ReadNullableString),
+            PlanDescription = ReadField(fields, "planDescription", ReadNullableString),
+            ServicesProvided = ReadField(fields, "servicesProvided", ReadNullableString),
+            TargetValue = ReadField(fields, "targetValue", ReadNullableDecimal),
+            TargetDate = ReadField(fields, "targetDate", ReadNullableDateOnly),
+            Status = ReadField(fields, "status", ReadNullableString),
+            CaseConferenceDate = ReadField(fields, "caseConferenceDate", ReadNullableDateOnly),
+            CreatedAt = ReadField(fields, "createdAt", ReadNullableDateTime),
+            UpdatedAt = ReadField(fields, "updatedAt", ReadNullableDateTime),
+            EffectivenessOutcomeScore = ReadField(fields, "effectivenessOutcomeScore", ReadNullableDouble),
+            EffectivenessBand = ReadField(fields, "effectivenessBand", ReadNullableString),
+            EffectivenessOutcomeDrivers = ReadField(fields, "effectivenessOutcomeDrivers", ReadNullableJsonDocument),
+            EffectivenessScoreUpdatedAt = ReadField(fields, "effectivenessScoreUpdatedAt", ReadNullableDateTimeOffset)
+        };
+    }
+
+    private static T? ReadField<T>(IReadOnlyDictionary<string, JsonElement> fields, string key, Func<JsonElement, T?> parser)
+    {
+        return fields.TryGetValue(key, out var value) ? parser(value) : default;
+    }
+
+    private static string? ReadNullableString(JsonElement value)
+    {
+        if (value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return null;
+        }
+
+        return value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : null;
+    }
+
+    private static long? ReadNullableInt64(JsonElement value)
+    {
+        if (value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return null;
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Number when value.TryGetInt64(out var parsed) => parsed,
+            JsonValueKind.String when long.TryParse(value.GetString(), out var parsed) => parsed,
+            _ => null
+        };
+    }
+
+    private static decimal? ReadNullableDecimal(JsonElement value)
+    {
+        if (value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return null;
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Number when value.TryGetDecimal(out var parsed) => parsed,
+            JsonValueKind.String when decimal.TryParse(value.GetString(), out var parsed) => parsed,
+            _ => null
+        };
+    }
+
+    private static double? ReadNullableDouble(JsonElement value)
+    {
+        if (value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return null;
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Number when value.TryGetDouble(out var parsed) => parsed,
+            JsonValueKind.String when double.TryParse(value.GetString(), out var parsed) => parsed,
+            _ => null
+        };
+    }
+
+    private static DateOnly? ReadNullableDateOnly(JsonElement value)
+    {
+        if (value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return null;
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.String when DateOnly.TryParse(value.GetString(), out var parsed) => parsed,
+            _ => null
+        };
+    }
+
+    private static DateTime? ReadNullableDateTime(JsonElement value)
+    {
+        if (value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return null;
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.String when DateTime.TryParse(value.GetString(), out var parsed) => parsed,
+            _ => null
+        };
+    }
+
+    private static DateTimeOffset? ReadNullableDateTimeOffset(JsonElement value)
+    {
+        if (value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return null;
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.String when DateTimeOffset.TryParse(value.GetString(), out var parsed) => parsed,
+            _ => null
+        };
+    }
+
+    private static JsonDocument? ReadNullableJsonDocument(JsonElement value)
+    {
+        if (value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return null;
+        }
+
+        return JsonDocument.Parse(value.GetRawText());
     }
 
     private async Task<long> GetNextTableIdAsync(
