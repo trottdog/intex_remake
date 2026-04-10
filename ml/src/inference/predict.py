@@ -39,7 +39,41 @@ def transform_features(
         *model_bundle["drop_cols"],
     ]
     raw_features = df.drop(columns=excluded_columns, errors="ignore")
-    transformed = model_bundle["preprocessor"].transform(raw_features)
+    preprocessor = model_bundle["preprocessor"]
+
+    # Align scoring frame columns to the exact fitted training feature schema.
+    expected_columns = list(getattr(preprocessor, "feature_names_in_", []))
+    if expected_columns:
+        for column in expected_columns:
+            if column not in raw_features.columns:
+                raw_features[column] = pd.NA
+        raw_features = raw_features.loc[:, expected_columns]
+
+    # Enforce dtypes expected by the saved column-transformer branches.
+    for branch_name, _transformer, columns in getattr(preprocessor, "transformers_", []):
+        if branch_name == "remainder" or columns is None:
+            continue
+
+        if isinstance(columns, slice):
+            selected_columns = list(raw_features.columns[columns])
+        elif hasattr(columns, "tolist"):
+            selected_columns = list(columns.tolist())
+        elif isinstance(columns, (list, tuple)):
+            selected_columns = list(columns)
+        else:
+            selected_columns = [str(columns)]
+
+        existing_columns = [column for column in selected_columns if column in raw_features.columns]
+        if not existing_columns:
+            continue
+
+        if branch_name == "numeric":
+            for column in existing_columns:
+                raw_features[column] = pd.to_numeric(raw_features[column], errors="coerce")
+        elif branch_name == "categorical":
+            raw_features[existing_columns] = raw_features[existing_columns].astype("object")
+
+    transformed = preprocessor.transform(raw_features)
     return pd.DataFrame(
         transformed,
         columns=model_bundle["feature_names"],

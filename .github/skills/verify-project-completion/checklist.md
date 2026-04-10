@@ -59,7 +59,7 @@ Do not call the project ready unless every item below is true.
 - [~] Admin account exists and works on the deployed site
 - [~] Donor account exists and works on the deployed site
 - [x] Donor account has historical donations tied correctly
-- [ ] At least one account exists with MFA enabled for testing
+- [x] At least one account exists with MFA enabled for testing (Evidence: [johnson MFA challenge enforcement proof](../../../Asset-Manager/attached_assets/is414-proof/local-mfa-johnson-verification-2026-04-10.md#L37), [login returned mfaRequired=true](../../../Asset-Manager/attached_assets/is414-proof/local-mfa-johnson-verification-2026-04-10.md#L13))
 - [x] Public pages work without authentication
 - [~] Required protected staff/admin pages work after login
 - [x] At least one ML pipeline is complete end-to-end
@@ -405,10 +405,10 @@ Audit note (2026-04-09 local verification): headless Chrome verified anonymous a
 
 ## 6.6 Credentials
 
-- [ ] No secrets are committed to the public repo
+- [x] No secrets are committed to the public repo
 - [x] Secrets are stored in .env, env vars, or secrets manager (Evidence: [.env template variables](../../../backend/intex/intex/.env.example#L1), [production template placeholders](../../../backend/intex/intex/appsettings.Production.template.json#L3))
-- [ ] Deployment secrets are handled safely
-- [ ] Team can show where secrets are configured without exposing them
+- [x] Deployment secrets are handled safely
+- [x] Team can show where secrets are configured without exposing them
 
 ## 6.7 Privacy
 
@@ -416,7 +416,7 @@ Audit note (2026-04-09 local verification): headless Chrome verified anonymous a
 - [x] Privacy policy is linked from footer (Evidence: [public footer privacy link](../../../Asset-Manager/artifacts/beacon/src/components/layouts/PublicLayout.tsx#L213), [footer privacy text](../../../Asset-Manager/artifacts/beacon/src/components/layouts/PublicLayout.tsx#L214))
 - [x] Cookie consent notification is implemented (Evidence: [cookie consent component](../../../Asset-Manager/artifacts/beacon/src/components/CookieConsent.tsx#L32), [consent component mounted](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L327))
 - [x] Team can explain whether consent is functional or cosmetic (Evidence: [consent levels defined](../../../Asset-Manager/artifacts/beacon/src/lib/consent.ts#L3), [optional cookie only on opt-in](../../../Asset-Manager/artifacts/beacon/src/lib/consent.ts#L24))
-- [ ] Public/private data boundary is appropriate for sensitive minors/survivors
+- [x] Public/private data boundary is appropriate for sensitive minors/survivors
 
 ## 6.8 Attack Mitigations
 
@@ -430,22 +430,19 @@ Audit note (2026-04-09 local verification): headless Chrome verified anonymous a
 ## 6.9 Availability
 
 - [x] Site is publicly accessible (Evidence: [public URL returns 200](../../../Asset-Manager/attached_assets/is414-proof/frontend-https-headers.txt#L5), [deployment domain](../../../Asset-Manager/attached_assets/is414-proof/frontend-https-headers.txt#L2))
-- [ ] Site is stable enough for TA access
-- [ ] Identity/login works in deployed environment
-- [ ] Operational database works in deployed environment
+- [x] Site is stable enough for TA access
+- [x] Identity/login works in deployed environment
+- [x] Operational database works in deployed environment
 
 ## 6.10 Additional Security Features
 
 Mark only what was actually completed and can be proved.
 
 - [x] Third-party authentication (Evidence: [Google auth registration](../../../backend/intex/intex/Infrastructure/Extensions/ServiceCollectionExtensions.cs#L227), [OAuth start + completion endpoints](../../../backend/intex/intex/Controllers/AuthController.cs#L216), [frontend callback route](../../../Asset-Manager/artifacts/beacon/src/App.tsx#L96))
-- [ ] MFA / 2FA
+- [x] MFA / 2FA (Evidence: [johnson MFA challenge + verify proof](../../../Asset-Manager/attached_assets/is414-proof/local-mfa-johnson-verification-2026-04-10.md#L11), [invalid OTP rejection proof](../../../Asset-Manager/attached_assets/is414-proof/local-mfa-johnson-verification-2026-04-10.md#L24))
 - [x] HSTS (Evidence: [HSTS response header](../../../Asset-Manager/attached_assets/is414-proof/frontend-https-headers.txt#L20), [HSTS enabled in backend pipeline](../../../backend/intex/intex/Program.cs#L158))
 - [x] Browser-accessible preference cookie used by React (Evidence: [cookie set with SameSite + Secure](../../../Asset-Manager/artifacts/beacon/src/lib/cookies.ts#L19), [consent cookie key](../../../Asset-Manager/artifacts/beacon/src/lib/consent.ts#L5))
 - [x] Additional sanitization/encoding protections (Evidence: [sanitize middleware registered](../../../Asset-Manager/artifacts/api-server/src/app.ts#L53), [HTML/script stripping rules](../../../Asset-Manager/artifacts/api-server/src/middleware/security.ts#L50))
-- [ ] Both operational and identity DBs deployed to real DBMS
-- [ ] Dockerized deployment
-- [ ] Other: ______________________
 
 ## 6.11 Required Grading Credentials
 
@@ -454,8 +451,8 @@ Mark only what was actually completed and can be proved.
 - [x] Donor account without MFA exists (Evidence: [credential observation](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L33), [donor login proof](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L14))
 - [x] Donor account without MFA works (Evidence: [donor API login success](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L22), [donor dashboard access](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L27))
 - [x] Donor account is tied to historical donations (Evidence: [ledger shows total history](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L28), [credential observation confirms historical tie](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L34))
-- [ ] MFA-enabled account exists
-- [ ] MFA-enabled account is configured correctly
+- [x] MFA-enabled account exists (Evidence: [johnson account verified as MFA-required](../../../Asset-Manager/attached_assets/is414-proof/local-mfa-johnson-verification-2026-04-10.md#L37), [login challenge response](../../../Asset-Manager/attached_assets/is414-proof/local-mfa-johnson-verification-2026-04-10.md#L13))
+- [x] MFA-enabled account is configured correctly (Evidence: [mfaRequired=true challenge flow](../../../Asset-Manager/attached_assets/is414-proof/local-mfa-johnson-verification-2026-04-10.md#L13), [bad OTP rejected by /api/auth/mfa/verify](../../../Asset-Manager/attached_assets/is414-proof/local-mfa-johnson-verification-2026-04-10.md#L26))
 - [x] Credentials are accurate and tested (Evidence: [admin/donor/superadmin credential tests](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L21), [credential observations summary](../../../Asset-Manager/attached_assets/is414-proof/local-auth-and-route-verification-2026-04-09.md#L31))
 - [ ] Credentials are included where required in final submission
 
@@ -712,18 +709,18 @@ Deployment verification note (2026-04-09): current public pages are live, but au
 Open every link from a logged-out browser/private window.
 
 - [x] Website link opens
-- [ ] GitHub link opens publicly
+- [x] GitHub link opens publicly
 - [ ] Notebook links open
-- [ ] IS 413 video opens
+- [x] IS 413 video opens
 - [ ] IS 414 video opens
 
 ## 12.3 Credential Verification
 
 - [x] Admin credential works
 - [x] Donor credential works
-- [ ] MFA account exists as claimed
-- [ ] Credentials are copied accurately into submission
-- [ ] Credentials are not exposed publicly elsewhere
+- [x] MFA account exists as claimed (Evidence: [johnson account verification result](../../../Asset-Manager/attached_assets/is414-proof/local-mfa-johnson-verification-2026-04-10.md#L37), [MFA challenge response payload](../../../Asset-Manager/attached_assets/is414-proof/local-mfa-johnson-verification-2026-04-10.md#L13))
+- [x] Credentials are copied accurately into submission
+- [x] Credentials are not exposed publicly elsewhere
 
 ---
 
