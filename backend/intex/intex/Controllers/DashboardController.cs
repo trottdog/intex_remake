@@ -520,6 +520,467 @@ public sealed class DashboardController(IDbContextFactory<BeaconDbContext> dbFac
         });
     }
 
+    [Authorize(Policy = PolicyNames.StaffOrAbove)]
+    [HttpGet("admin-reports")]
+    public async Task<IActionResult> GetAdminReports(CancellationToken cancellationToken)
+    {
+        var assignedSafehouses = await userScopeService.GetAssignedSafehousesAsync(User, cancellationToken);
+        var enforceScope = User.GetRole() is BeaconRoles.Staff or BeaconRoles.Admin;
+        var scoped = enforceScope && assignedSafehouses.Count > 0;
+        var scopedSafehouseIds = assignedSafehouses;
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var currentMonthStart = new DateOnly(today.Year, today.Month, 1);
+        var monthWindowStart = currentMonthStart.AddMonths(-11);
+        var comparisonWindowStart = currentMonthStart.AddMonths(-5);
+        var recentQuarterStart = today.AddDays(-90);
+
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+
+        var safehouses = await db.Safehouses.AsNoTracking()
+            .Select(item => new
+            {
+                item.SafehouseId,
+                item.Name,
+                item.Region,
+                item.Status,
+                item.CapacityGirls,
+                item.CurrentOccupancy
+            })
+            .OrderBy(item => item.Name)
+            .ToListAsync(cancellationToken);
+
+        var scopedSafehouseRows = scoped
+            ? safehouses.Where(item => scopedSafehouseIds.Contains(item.SafehouseId)).ToList()
+            : safehouses;
+
+        var primarySafehouse = scopedSafehouseRows
+            .OrderBy(item => item.Name)
+            .FirstOrDefault();
+
+        var residentsQuery = db.Residents.AsNoTracking();
+        if (scoped)
+        {
+            residentsQuery = residentsQuery.Where(item => item.SafehouseId.HasValue && scopedSafehouseIds.Contains(item.SafehouseId.Value));
+        }
+
+        var scopedResidents = await residentsQuery
+            .Select(item => new
+            {
+                item.ResidentId,
+                item.SafehouseId,
+                item.CaseStatus,
+                item.CurrentRiskLevel,
+                item.InitialRiskLevel,
+                item.ReintegrationStatus,
+                item.DateOfAdmission,
+                item.DateClosed
+            })
+            .ToListAsync(cancellationToken);
+
+        var residentIds = scopedResidents.Select(item => item.ResidentId).ToHashSet();
+        var activeResidents = scopedResidents
+            .Where(item => string.Equals(item.CaseStatus, "active", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        var donationsQuery = db.Donations.AsNoTracking()
+            .Where(item => item.DonationDate.HasValue && item.DonationDate.Value >= monthWindowStart);
+        if (scoped)
+        {
+            donationsQuery = donationsQuery.Where(item => item.SafehouseId.HasValue && scopedSafehouseIds.Contains(item.SafehouseId.Value));
+        }
+
+        var scopedDonations = await donationsQuery
+            .Select(item => new
+            {
+                item.DonationDate,
+                item.Amount,
+                item.EstimatedValue,
+                item.IsRecurring,
+                item.DonationType
+            })
+            .ToListAsync(cancellationToken);
+
+        var educationQuery = db.EducationRecords.AsNoTracking();
+        if (scoped)
+        {
+            educationQuery = educationQuery.Where(item => item.ResidentId.HasValue && residentIds.Contains(item.ResidentId.Value));
+        }
+
+        var scopedEducation = await educationQuery
+            .Select(item => new
+            {
+                item.RecordDate,
+                item.AttendanceRate,
+                item.ProgressPercent,
+                item.CompletionStatus
+            })
+            .ToListAsync(cancellationToken);
+
+        var healthQuery = db.HealthWellbeingRecords.AsNoTracking();
+        if (scoped)
+        {
+            healthQuery = healthQuery.Where(item => item.ResidentId.HasValue && residentIds.Contains(item.ResidentId.Value));
+        }
+
+        var scopedHealth = await healthQuery
+            .Select(item => new
+            {
+                item.RecordDate,
+                item.GeneralHealthScore,
+                item.NutritionScore,
+                item.SleepQualityScore,
+                item.EnergyLevelScore,
+                item.MedicalCheckupDone,
+                item.DentalCheckupDone,
+                item.PsychologicalCheckupDone
+            })
+            .ToListAsync(cancellationToken);
+
+        var incidentsQuery = db.IncidentReports.AsNoTracking();
+        if (scoped)
+        {
+            incidentsQuery = incidentsQuery.Where(item =>
+                (item.SafehouseId.HasValue && scopedSafehouseIds.Contains(item.SafehouseId.Value))
+                || (item.ResidentId.HasValue && residentIds.Contains(item.ResidentId.Value)));
+        }
+
+        var scopedIncidents = await incidentsQuery
+            .Select(item => new
+            {
+                item.IncidentDate,
+                item.Resolved
+            })
+            .ToListAsync(cancellationToken);
+
+        var processRecordingsQuery = db.ProcessRecordings.AsNoTracking();
+        if (scoped)
+        {
+            processRecordingsQuery = processRecordingsQuery.Where(item => item.ResidentId.HasValue && residentIds.Contains(item.ResidentId.Value));
+        }
+
+        var scopedProcessRecordings = await processRecordingsQuery
+            .Select(item => new
+            {
+                item.SessionDate
+            })
+            .ToListAsync(cancellationToken);
+
+        var homeVisitationsQuery = db.HomeVisitations.AsNoTracking();
+        if (scoped)
+        {
+            homeVisitationsQuery = homeVisitationsQuery.Where(item => item.ResidentId.HasValue && residentIds.Contains(item.ResidentId.Value));
+        }
+
+        var scopedHomeVisitations = await homeVisitationsQuery
+            .Select(item => new
+            {
+                item.VisitDate
+            })
+            .ToListAsync(cancellationToken);
+
+        var interventionPlansQuery = db.InterventionPlans.AsNoTracking();
+        if (scoped)
+        {
+            interventionPlansQuery = interventionPlansQuery.Where(item => item.ResidentId.HasValue && residentIds.Contains(item.ResidentId.Value));
+        }
+
+        var scopedInterventionPlans = await interventionPlansQuery
+            .Select(item => new
+            {
+                item.Status
+            })
+            .ToListAsync(cancellationToken);
+
+        var allResidents = await db.Residents.AsNoTracking()
+            .Where(item => item.SafehouseId.HasValue)
+            .Select(item => new
+            {
+                item.SafehouseId,
+                item.CaseStatus,
+                item.ReintegrationStatus
+            })
+            .ToListAsync(cancellationToken);
+
+        var comparisonMetrics = await db.SafehouseMonthlyMetrics.AsNoTracking()
+            .Where(item => item.MonthStart.HasValue && item.MonthStart.Value >= comparisonWindowStart)
+            .Select(item => new
+            {
+                item.SafehouseId,
+                item.MonthStart,
+                item.ActiveResidents,
+                item.AvgEducationProgress,
+                item.AvgHealthScore,
+                item.ProcessRecordingCount,
+                item.HomeVisitationCount,
+                item.IncidentCount,
+                item.CompositeHealthScore,
+                item.PeerRank,
+                item.TrendDirection
+            })
+            .ToListAsync(cancellationToken);
+
+        var donationTrends = Enumerable.Range(0, 12)
+            .Select(offset =>
+            {
+                var month = monthWindowStart.AddMonths(offset);
+                var monthRows = scopedDonations
+                    .Where(item => item.DonationDate.HasValue
+                                   && item.DonationDate.Value.Year == month.Year
+                                   && item.DonationDate.Value.Month == month.Month)
+                    .ToList();
+
+                var totalAmount = monthRows.Sum(item => item.Amount ?? 0m);
+                var recurringAmount = monthRows
+                    .Where(item => item.IsRecurring == true)
+                    .Sum(item => item.Amount ?? 0m);
+                var inKindEstimatedValue = monthRows
+                    .Where(item => string.Equals(item.DonationType, "inkind", StringComparison.OrdinalIgnoreCase))
+                    .Sum(item => item.EstimatedValue ?? 0m);
+
+                return new
+                {
+                    period = month.ToString("MMM yyyy"),
+                    monthKey = $"{month.Year:D4}-{month.Month:D2}",
+                    totalAmount = decimal.Round(totalAmount, 2),
+                    recurringAmount = decimal.Round(recurringAmount, 2),
+                    inKindEstimatedValue = decimal.Round(inKindEstimatedValue, 2),
+                    donationCount = monthRows.Count
+                };
+            })
+            .ToList();
+
+        var riskDistribution = new[] { "Low", "Medium", "High", "Critical" }
+            .Select(level => new
+            {
+                level,
+                count = activeResidents.Count(item => string.Equals(item.CurrentRiskLevel ?? item.InitialRiskLevel, level, StringComparison.OrdinalIgnoreCase))
+            })
+            .ToList();
+
+        var outcomeStatus = new[] { "Active", "Closed", "Transferred" }
+            .Select(status => new
+            {
+                status,
+                count = scopedResidents.Count(item => string.Equals(item.CaseStatus, status, StringComparison.OrdinalIgnoreCase))
+            })
+            .ToList();
+
+        var reintegrationStatus = new[] { "Not Started", "On Hold", "In Progress", "Completed" }
+            .Select(status => new
+            {
+                status,
+                count = scopedResidents.Count(item => string.Equals(NormalizeReintegrationReportLabel(item.ReintegrationStatus), status, StringComparison.OrdinalIgnoreCase))
+            })
+            .ToList();
+
+        var educationMonthly = Enumerable.Range(0, 6)
+            .Select(offset =>
+            {
+                var month = comparisonWindowStart.AddMonths(offset);
+                var rows = scopedEducation
+                    .Where(item => item.RecordDate.HasValue
+                                   && item.RecordDate.Value.Year == month.Year
+                                   && item.RecordDate.Value.Month == month.Month)
+                    .ToList();
+
+                var avgProgress = rows.Count > 0 && rows.Any(item => item.ProgressPercent.HasValue)
+                    ? decimal.Round(rows.Where(item => item.ProgressPercent.HasValue).Average(item => item.ProgressPercent!.Value), 1)
+                    : 0m;
+
+                var avgAttendanceRate = rows.Count > 0 && rows.Any(item => item.AttendanceRate.HasValue)
+                    ? decimal.Round(rows.Where(item => item.AttendanceRate.HasValue).Average(item => item.AttendanceRate!.Value) * 100m, 1)
+                    : 0m;
+
+                return new
+                {
+                    period = month.ToString("MMM yyyy"),
+                    monthKey = $"{month.Year:D4}-{month.Month:D2}",
+                    avgProgressPercent = avgProgress,
+                    avgAttendanceRate = avgAttendanceRate
+                };
+            })
+            .ToList();
+
+        var healthMonthly = Enumerable.Range(0, 6)
+            .Select(offset =>
+            {
+                var month = comparisonWindowStart.AddMonths(offset);
+                var rows = scopedHealth
+                    .Where(item => item.RecordDate.HasValue
+                                   && item.RecordDate.Value.Year == month.Year
+                                   && item.RecordDate.Value.Month == month.Month)
+                    .ToList();
+
+                decimal AverageOrZero(IEnumerable<decimal?> values)
+                {
+                    var present = values.Where(value => value.HasValue).Select(value => value!.Value).ToList();
+                    return present.Count > 0 ? decimal.Round(present.Average(), 2) : 0m;
+                }
+
+                return new
+                {
+                    period = month.ToString("MMM yyyy"),
+                    monthKey = $"{month.Year:D4}-{month.Month:D2}",
+                    avgGeneralHealthScore = AverageOrZero(rows.Select(item => item.GeneralHealthScore)),
+                    avgNutritionScore = AverageOrZero(rows.Select(item => item.NutritionScore)),
+                    avgSleepScore = AverageOrZero(rows.Select(item => item.SleepQualityScore)),
+                    avgEnergyScore = AverageOrZero(rows.Select(item => item.EnergyLevelScore))
+                };
+            })
+            .ToList();
+
+        decimal AverageOrNull<T>(IEnumerable<T> items, Func<T, decimal?> selector)
+        {
+            var values = items.Select(selector).Where(value => value.HasValue).Select(value => value!.Value).ToList();
+            return values.Count > 0 ? decimal.Round(values.Average(), 2) : 0m;
+        }
+
+        var openIncidents = scopedIncidents.Count(item => item.Resolved != true);
+        var completedReintegrations = scopedResidents.Count(item => string.Equals(NormalizeReintegrationReportLabel(item.ReintegrationStatus), "Completed", StringComparison.OrdinalIgnoreCase));
+        var totalResidents = scopedResidents.Count;
+        var reintegrationCompletionRate = totalResidents > 0
+            ? Math.Round((completedReintegrations / (double)totalResidents) * 100d, 1)
+            : 0d;
+
+        var safehouseComparisons = safehouses
+            .Select(safehouse =>
+            {
+                var latestMetric = comparisonMetrics
+                    .Where(item => item.SafehouseId == safehouse.SafehouseId)
+                    .OrderByDescending(item => item.MonthStart)
+                    .FirstOrDefault();
+
+                return new
+                {
+                    safehouseId = safehouse.SafehouseId,
+                    safehouseName = safehouse.Name,
+                    region = safehouse.Region,
+                    isPrimary = primarySafehouse?.SafehouseId == safehouse.SafehouseId,
+                    capacityGirls = safehouse.CapacityGirls,
+                    currentOccupancy = safehouse.CurrentOccupancy,
+                    capacityUtilization = safehouse.CapacityGirls.GetValueOrDefault() > 0
+                        ? Math.Round((safehouse.CurrentOccupancy.GetValueOrDefault() / (double)safehouse.CapacityGirls.GetValueOrDefault()) * 100d, 1)
+                        : 0d,
+                    avgEducationProgress = latestMetric?.AvgEducationProgress,
+                    avgHealthScore = latestMetric?.AvgHealthScore,
+                    activeResidents = latestMetric?.ActiveResidents,
+                    processRecordingCount = latestMetric?.ProcessRecordingCount,
+                    homeVisitationCount = latestMetric?.HomeVisitationCount,
+                    incidentCount = latestMetric?.IncidentCount,
+                    compositeHealthScore = latestMetric?.CompositeHealthScore,
+                    peerRank = latestMetric?.PeerRank,
+                    trendDirection = latestMetric?.TrendDirection,
+                    month = latestMetric?.MonthStart.HasValue == true ? latestMetric.MonthStart.Value.ToString("MMM yyyy") : null
+                };
+            })
+            .OrderByDescending(item => item.compositeHealthScore ?? 0d)
+            .ThenBy(item => item.safehouseName)
+            .ToList();
+
+        var reintegrationComparison = safehouses
+            .Select(safehouse =>
+            {
+                var rows = allResidents
+                    .Where(item => item.SafehouseId == safehouse.SafehouseId)
+                    .ToList();
+
+                var completed = rows.Count(item => string.Equals(NormalizeReintegrationReportLabel(item.ReintegrationStatus), "Completed", StringComparison.OrdinalIgnoreCase));
+                var total = rows.Count;
+
+                return new
+                {
+                    safehouseId = safehouse.SafehouseId,
+                    safehouseName = safehouse.Name,
+                    isPrimary = primarySafehouse?.SafehouseId == safehouse.SafehouseId,
+                    totalResidents = total,
+                    completedCount = completed,
+                    successRate = total > 0 ? Math.Round((completed / (double)total) * 100d, 1) : 0d,
+                    notStarted = rows.Count(item => string.Equals(NormalizeReintegrationReportLabel(item.ReintegrationStatus), "Not Started", StringComparison.OrdinalIgnoreCase)),
+                    onHold = rows.Count(item => string.Equals(NormalizeReintegrationReportLabel(item.ReintegrationStatus), "On Hold", StringComparison.OrdinalIgnoreCase)),
+                    inProgress = rows.Count(item => string.Equals(NormalizeReintegrationReportLabel(item.ReintegrationStatus), "In Progress", StringComparison.OrdinalIgnoreCase)),
+                    completed
+                };
+            })
+            .OrderByDescending(item => item.successRate)
+            .ThenBy(item => item.safehouseName)
+            .ToList();
+
+        return Ok(new
+        {
+            generatedAt = DateTime.UtcNow.ToString("O"),
+            scope = new
+            {
+                primarySafehouseId = primarySafehouse?.SafehouseId,
+                primarySafehouseName = primarySafehouse?.Name,
+                scopedSafehouseIds = scopedSafehouseRows.Select(item => item.SafehouseId).ToList(),
+                scopedSafehouseNames = scopedSafehouseRows.Select(item => item.Name).Where(item => !string.IsNullOrWhiteSpace(item)).ToList(),
+                reportWindowMonths = 12
+            },
+            summary = new
+            {
+                totalDonationsRaised = decimal.Round(scopedDonations.Sum(item => item.Amount ?? 0m), 2),
+                donationCount = scopedDonations.Count,
+                recurringDonationCount = scopedDonations.Count(item => item.IsRecurring == true),
+                inKindDonationValue = decimal.Round(scopedDonations
+                    .Where(item => string.Equals(item.DonationType, "inkind", StringComparison.OrdinalIgnoreCase))
+                    .Sum(item => item.EstimatedValue ?? 0m), 2),
+                activeResidents = activeResidents.Count,
+                totalResidents,
+                highRiskResidents = activeResidents.Count(item => IsHighRisk(item.CurrentRiskLevel ?? item.InitialRiskLevel)),
+                openIncidents,
+                processRecordings = scopedProcessRecordings.Count,
+                homeVisitations = scopedHomeVisitations.Count,
+                activeInterventionPlans = scopedInterventionPlans.Count(item =>
+                    !string.IsNullOrWhiteSpace(item.Status)
+                    && !string.Equals(item.Status, "closed", StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(item.Status, "achieved", StringComparison.OrdinalIgnoreCase)),
+                completedReintegrations,
+                reintegrationCompletionRate,
+                avgEducationProgress = AverageOrNull(scopedEducation, item => item.ProgressPercent),
+                avgAttendanceRate = decimal.Round(AverageOrNull(scopedEducation, item => item.AttendanceRate) * 100m, 1),
+                avgHealthScore = AverageOrNull(scopedHealth, item => item.GeneralHealthScore),
+                avgNutritionScore = AverageOrNull(scopedHealth, item => item.NutritionScore)
+            },
+            donationTrends,
+            residentOutcomes = new
+            {
+                caseStatus = outcomeStatus,
+                riskDistribution,
+                reintegrationStatus,
+                activeResidents = activeResidents.Count,
+                closedCases = outcomeStatus.First(item => item.status == "Closed").count,
+                transferredCases = outcomeStatus.First(item => item.status == "Transferred").count,
+                newAdmissionsThisQuarter = scopedResidents.Count(item => item.DateOfAdmission.HasValue && item.DateOfAdmission.Value >= recentQuarterStart),
+                casesClosedThisQuarter = scopedResidents.Count(item => item.DateClosed.HasValue && item.DateClosed.Value >= recentQuarterStart)
+            },
+            educationMetrics = new
+            {
+                avgProgressPercent = AverageOrNull(scopedEducation, item => item.ProgressPercent),
+                avgAttendanceRate = decimal.Round(AverageOrNull(scopedEducation, item => item.AttendanceRate) * 100m, 1),
+                completedCount = scopedEducation.Count(item => string.Equals(item.CompletionStatus, "completed", StringComparison.OrdinalIgnoreCase)),
+                inProgressCount = scopedEducation.Count(item => string.Equals(item.CompletionStatus, "inprogress", StringComparison.OrdinalIgnoreCase) || string.Equals(item.CompletionStatus, "in_progress", StringComparison.OrdinalIgnoreCase)),
+                notStartedCount = scopedEducation.Count(item => string.Equals(item.CompletionStatus, "notstarted", StringComparison.OrdinalIgnoreCase) || string.Equals(item.CompletionStatus, "not_started", StringComparison.OrdinalIgnoreCase)),
+                monthlyTrend = educationMonthly
+            },
+            healthMetrics = new
+            {
+                avgGeneralHealthScore = AverageOrNull(scopedHealth, item => item.GeneralHealthScore),
+                avgNutritionScore = AverageOrNull(scopedHealth, item => item.NutritionScore),
+                avgSleepScore = AverageOrNull(scopedHealth, item => item.SleepQualityScore),
+                avgEnergyScore = AverageOrNull(scopedHealth, item => item.EnergyLevelScore),
+                medicalCoverageRate = scopedHealth.Count > 0 ? Math.Round((scopedHealth.Count(item => item.MedicalCheckupDone == true) / (double)scopedHealth.Count) * 100d, 1) : 0d,
+                dentalCoverageRate = scopedHealth.Count > 0 ? Math.Round((scopedHealth.Count(item => item.DentalCheckupDone == true) / (double)scopedHealth.Count) * 100d, 1) : 0d,
+                psychologicalCoverageRate = scopedHealth.Count > 0 ? Math.Round((scopedHealth.Count(item => item.PsychologicalCheckupDone == true) / (double)scopedHealth.Count) * 100d, 1) : 0d,
+                monthlyTrend = healthMonthly,
+                improvementDelta = healthMonthly.Count >= 2
+                    ? Math.Round((double)(healthMonthly[^1].avgGeneralHealthScore - healthMonthly[0].avgGeneralHealthScore), 2)
+                    : 0d
+            },
+            safehouseComparisons,
+            reintegrationComparisons = reintegrationComparison
+        });
+    }
+
     [Authorize(Policy = PolicyNames.AdminOrAbove)]
     [HttpGet("executive-summary")]
     public async Task<IActionResult> GetExecutiveSummary([FromQuery] long? safehouseId, [FromQuery] int months = 12, CancellationToken cancellationToken = default)
@@ -779,6 +1240,23 @@ public sealed class DashboardController(IDbContextFactory<BeaconDbContext> dbFac
             "ready" => "ready",
             "completed" => "completed",
             _ => "not_started"
+        };
+    }
+
+    private static string NormalizeReintegrationReportLabel(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "Not Started";
+        }
+
+        var normalized = value.Trim().Replace("_", " ").ToLowerInvariant();
+        return normalized switch
+        {
+            "on hold" => "On Hold",
+            "in progress" => "In Progress",
+            "completed" => "Completed",
+            _ => "Not Started"
         };
     }
 }
